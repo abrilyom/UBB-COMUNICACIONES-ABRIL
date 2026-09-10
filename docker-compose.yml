@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  servidor-aviso:
+    image: php:apache
+    container_name: servidor-aviso
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./:/var/www/html
+      - ./ubb.crt:/etc/ssl/certs/ssl-cert-snakeoil.pem
+      - ./ubb.key:/etc/ssl/private/ssl-cert-snakeoil.key
+    command: sh -c "a2enmod ssl && a2ensite default-ssl && apache2-foreground"
