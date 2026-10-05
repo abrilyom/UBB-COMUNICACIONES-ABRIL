@@ -1,15 +1,10 @@
-version: "3.8"
-
 services:
-  servidor-aviso:
+
+  servidor-pagos-yomyom:
     image: php:apache
-    container_name: servidor-aviso
+    container_name: servidor-pagos-yomyom
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - "8080:80"
     volumes:
       - ./:/var/www/html
-      - ./ubb.crt:/etc/ssl/certs/ssl-cert-snakeoil.pem
-      - ./ubb.key:/etc/ssl/private/ssl-cert-snakeoil.key
-    command: sh -c "a2enmod ssl && a2ensite default-ssl && apache2-foreground"
