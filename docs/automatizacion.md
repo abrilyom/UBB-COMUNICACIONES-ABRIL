@@ -121,13 +121,25 @@ La configuración vive en `/etc/ubb-notificaciones.env` (fuera del repositorio).
    php sincronizar_pagos_uisp.php --desde=2026-10-15 --confirmar
    ```
 
-4. Programarlo (revisa los últimos 7 días cada 15 minutos; es seguro repetirlo):
+4. Programarlo en el crontab de root de **dns-server** (PHP vive en el contenedor `servidor-aviso-yomyom`; revisa los últimos 7 días cada 15 minutos y es seguro repetirlo):
 
    ```cron
-   */15 * * * *  cd /var/www/html/pagos/scripts && php sincronizar_pagos_uisp.php --confirmar >> /var/log/ubb/pagos_uisp.log 2>&1
+   */15 * * * *  docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/sincronizar_pagos_uisp.php --confirmar >> /var/log/ubb/pagos_uisp.log 2>&1
    ```
 
 Variables opcionales: `UBB_UISP_URL`, `UBB_UISP_TOKEN_FILE`, `UBB_UISP_CA` (certificado del CRM para verificar TLS; sin ella no se verifica) y `UBB_UISP_DIAS`.
+
+### Red: cómo llega dns-server al CRM
+
+Hay **dos redes distintas numeradas 192.168.102.0/24**: la de dns-server (`192.168.102.222`, router `192.168.102.1`) y la del CRM (`ubb-server6`, `192.168.102.253`). Por eso dns-server no puede usar `192.168.102.253`.
+
+Se usa la otra dirección del CRM, **`10.1.41.254`** (interfaz `vlan41`), y en **ubb-server6** se agregó una ruta para que le conteste a dns-server por `vlan41` en lugar de por su red local:
+
+```bash
+ip route add 192.168.102.222/32 via 10.1.41.1 dev vlan41
+```
+
+Esa ruta debe quedar fija en la configuración de red de ubb-server6 (netplan). Si se pierde, la sincronización falla con *"No se pudo conectar con UISP"* y el panel muestra el error; ningún pago se pierde, se cargan en la siguiente ejecución que funcione (últimos 7 días, o con `--desde`).
 
 ## Alcance actual de Grezz
 
