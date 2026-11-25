@@ -160,6 +160,8 @@ En el cron, después de sincronizar:
 */15 * * * *  (docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/sincronizar_pagos_uisp.php --confirmar && docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/aplicar_pagos_uisp.php --confirmar) >> /var/log/ubb/pagos_uisp.log 2>&1
 ```
 
+**Deshacer:** `deshacer_pagos_uisp.php` revierte la aplicación completa en una sola transacción: borra los pagos `UISP-…` y sus aplicaciones, regresa a `PENDIENTE` las mensualidades que ya no quedan cubiertas y limpia `estado_aplicacion`. No toca pagos manuales ni bancarios, ni el historial traído de UISP. Guarda un respaldo JSON en `pagos/reportes/`. Simula por defecto; `--confirmar` para deshacer.
+
 **Cuando llegue la API de BBVA:** el mismo dinero aparecería en UISP y en el banco. Antes de activar ambas fuentes hay que decidir cuál aplica los pagos, para no registrarlos dos veces.
 
 ### Red: cómo llega dns-server al CRM
