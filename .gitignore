@@ -3,50 +3,29 @@
 .env.*
 !.env.example
 
-# Configuraciones locales de conexión
+# Conexiones y configuración privada (tienen contraseñas)
 pagos/conexion.php
 pagos/conexion_planes.php
 pagos/conexion_plataforma.php
 pagos/conexion_pruebas.php
 pagos/conexion_pruebas_web.php
-
-# Dependencias instaladas
-/vendor/
-/pagos/vendor/
-
-# Comprobantes y archivos generados
-/pagos/comprobantes/
-/pagos/vista_previa_ticket_temporal.pdf
-
-# Respaldos
-/respaldos/
-*.bak
-*.bak-*
-*.bak_*
-*.respaldo
-*.respaldo_*
-*.backup
-
-# Archivos temporales
-*.log
-.DS_Store
-Thumbs.db
-
-# --- Contraseñas y configuración privada ---
-pagos/conexion.php
-pagos/conexion_plataforma.php
-pagos/conexion_planes.php
 pagos/api/conexion_radius.php
 pagos/api/configuracion.php
 
-# --- Datos de clientes ---
+# Dependencias instaladas (se reinstalan con composer install)
+vendor/
+
+# Datos de clientes
 *.sql
 *.sql.gz
+!db/migraciones/*.sql
 pagos/comprobantes/
 pagos/reportes/
 pagos/vista_previa_ticket_temporal.pdf
 
-# --- Respaldos manuales ---
+# Respaldos manuales (Git ya guarda el historial)
+respaldos/
+pagos/respaldo*/
 *.bak
 *.bak*
 *.respaldo*
@@ -54,9 +33,9 @@ pagos/vista_previa_ticket_temporal.pdf
 *.save
 *.antes_*
 *_antes_*.php
-*.antes_*.php
-respaldos/
-pagos/respaldo*/
 
-# --- Dependencias ---
-vendor/
+# Archivos temporales y de editores
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
