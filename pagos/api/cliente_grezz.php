@@ -178,21 +178,21 @@ function listarServiciosGrezz(): array
     $archivoCache = '/tmp/ubb_grezz_servicios_cache.json';
     $archivoBloqueo = '/tmp/ubb_grezz_servicios_cache.lock';
 
-    $bloqueo = fopen($archivoBloqueo, 'c');
+    // El archivo de bloqueo puede pertenecer a otro usuario (por ejemplo,
+    // www-data desde la web y root desde un script). Si no se puede abrir,
+    // se consulta a Grezz directamente sin usar la caché.
+    $bloqueo = @fopen($archivoBloqueo, 'c');
 
     if ($bloqueo === false) {
-        return [
-            'transporte_ok' => false,
-            'codigo_http' => 0,
-            'error' => 'No se pudo acceder al bloqueo de caché.',
-            'respuesta' => null
-        ];
+        $bloqueo = null;
+        $archivoCache = null;
+    } else {
+        flock($bloqueo, LOCK_EX);
     }
-
-    flock($bloqueo, LOCK_EX);
 
     try {
         if (
+            $archivoCache !== null &&
             is_file($archivoCache) &&
             (time() - filemtime($archivoCache)) < 300
         ) {
@@ -265,11 +265,13 @@ function listarServiciosGrezz(): array
             'respuesta' => $datos
         ];
 
-        file_put_contents(
-            $archivoCache,
-            json_encode($resultado, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-            LOCK_EX
-        );
+        if ($archivoCache !== null) {
+            @file_put_contents(
+                $archivoCache,
+                json_encode($resultado, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                LOCK_EX
+            );
+        }
 
         return $resultado;
 
@@ -281,7 +283,9 @@ function listarServiciosGrezz(): array
             'respuesta' => null
         ];
     } finally {
-        flock($bloqueo, LOCK_UN);
-        fclose($bloqueo);
+        if ($bloqueo !== null) {
+            flock($bloqueo, LOCK_UN);
+            fclose($bloqueo);
+        }
     }
 }

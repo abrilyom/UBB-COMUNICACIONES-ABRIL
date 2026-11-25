@@ -13,9 +13,16 @@ declare(strict_types=1);
  *   - que el servicio no esté ya suspendido en Grezz,
  *   - que no exista otra solicitud pendiente para el servicio.
  *
+ * Frenos de seguridad:
+ *   - UBB_AUTOMATIZACION_DESDE=AAAA-MM-DD (obligatoria para --confirmar):
+ *     solo cuentan las mensualidades que vencen a partir de esa fecha.
+ *     Evita cortar por adeudos históricos que se cobraron fuera del sistema.
+ *   - UBB_MAX_SUSPENSIONES (por defecto 20): si hay más candidatos, no se
+ *     envía nada salvo que se agregue --forzar.
+ *
  * Uso:
  *   php suspender_vencidos.php               (simulación, no guarda nada)
- *   php suspender_vencidos.php --confirmar   (registra y envía a Grezz)
+ *   UBB_AUTOMATIZACION_DESDE=2026-12-01 php suspender_vencidos.php --confirmar
  *
  * Recomendado: ejecutar primero conciliar_automatico.php --confirmar
  * para que los pagos del día ya estén aplicados.
@@ -29,13 +36,16 @@ require_once __DIR__ . '/../includes/notificaciones_cola.php';
 $opciones = array_slice($argv, 1);
 
 foreach ($opciones as $opcion) {
-    if ($opcion !== '--confirmar') {
+    if (!in_array($opcion, ['--confirmar', '--forzar'], true)) {
         fwrite(STDERR, "Opción desconocida: $opcion\n");
         exit(1);
     }
 }
 
 $confirmar = in_array('--confirmar', $opciones, true);
+$forzar = in_array('--forzar', $opciones, true);
+$maxSuspensiones = (int)(getenv('UBB_MAX_SUSPENSIONES') ?: 20);
+$automatizacionDesde = getenv('UBB_AUTOMATIZACION_DESDE') ?: null;
 $nombreBloqueo = 'ubb_suspension_automatica';
 $conexion = null;
 $bloqueo = false;
@@ -60,8 +70,25 @@ try {
     $hoy = new DateTimeImmutable('today');
     $limite = $hoy->modify('-' . UBB_DIAS_GRACIA . ' days')->format('Y-m-d');
 
+    if ($automatizacionDesde !== null) {
+        $fechaDesde = DateTimeImmutable::createFromFormat('!Y-m-d', $automatizacionDesde);
+
+        if (!$fechaDesde || $fechaDesde->format('Y-m-d') !== $automatizacionDesde) {
+            throw new RuntimeException('UBB_AUTOMATIZACION_DESDE debe tener el formato AAAA-MM-DD.');
+        }
+    } elseif ($confirmar) {
+        throw new RuntimeException(
+            'Para suspender define UBB_AUTOMATIZACION_DESDE=AAAA-MM-DD: la fecha desde la cual ' .
+            'los pagos se registran en este sistema. Así no se corta por adeudos históricos.'
+        );
+    }
+
+    $desdeSql = $automatizacionDesde ?? '1000-01-01';
+
     echo "Fecha: " . $hoy->format('Y-m-d')
-        . " | Se suspenden mensualidades vencidas antes del $limite\n\n";
+        . " | Se suspenden mensualidades vencidas antes del $limite\n";
+    echo "Mensualidades consideradas desde: "
+        . ($automatizacionDesde ?? 'TODAS (sin UBB_AUTOMATIZACION_DESDE)') . "\n\n";
 
     // Mensualidad vencida más antigua con saldo, por servicio.
     $stmt = $conexion->prepare("
@@ -85,11 +112,12 @@ try {
         WHERE o.concepto = 'MENSUALIDAD'
           AND o.estado = 'PENDIENTE'
           AND o.fecha_vencimiento < ?
+          AND o.fecha_vencimiento >= ?
           AND o.monto > COALESCE(a.total_pagado, 0)
         GROUP BY o.id_servicio, o.id_cliente
         ORDER BY vencimiento_mas_antiguo ASC
     ");
-    $stmt->bind_param('s', $limite);
+    $stmt->bind_param('ss', $limite, $desdeSql);
     $stmt->execute();
     $candidatos = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
@@ -100,6 +128,32 @@ try {
     if (!$candidatos) {
         echo "No hay servicios por suspender.\n";
         exit(0);
+    }
+
+    // Desglose por mes del adeudo más antiguo, para detectar adeudos históricos.
+    $porMes = [];
+
+    foreach ($candidatos as $fila) {
+        $mes = substr((string)$fila['vencimiento_mas_antiguo'], 0, 7);
+        $porMes[$mes] = ($porMes[$mes] ?? 0) + 1;
+    }
+
+    ksort($porMes);
+    echo "Desglose por mes del adeudo más antiguo:\n";
+
+    foreach ($porMes as $mes => $total) {
+        echo "  $mes: $total servicio(s)\n";
+    }
+
+    echo "\n";
+
+    if ($confirmar && count($candidatos) > $maxSuspensiones && !$forzar) {
+        throw new RuntimeException(sprintf(
+            'Hay %d servicios por suspender y el máximo por ejecución es %d. ' .
+            'No se envió nada. Revisa la simulación; si es correcto, agrega --forzar.',
+            count($candidatos),
+            $maxSuspensiones
+        ));
     }
 
     $estadosGrezz = mapaEstadosGrezz();

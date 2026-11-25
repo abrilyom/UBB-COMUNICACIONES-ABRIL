@@ -70,8 +70,14 @@ Ejemplo para `crontab -e` dentro del contenedor o servidor donde corre PHP:
 5 9 * * *        cd /var/www/html/pagos/scripts && php enviar_notificaciones.php --enviar >> /var/log/ubb/notificaciones.log 2>&1
 
 # Suspensiones diarias a las 10:00, después de conciliar
-0 10 * * *       cd /var/www/html/pagos/scripts && (php conciliar_automatico.php --confirmar && php suspender_vencidos.php --confirmar) >> /var/log/ubb/suspension.log 2>&1
+0 10 * * *       cd /var/www/html/pagos/scripts && (php conciliar_automatico.php --confirmar && UBB_AUTOMATIZACION_DESDE=2026-12-01 php suspender_vencidos.php --confirmar) >> /var/log/ubb/suspension.log 2>&1
 ```
+
+### Frenos de seguridad de la suspensión
+
+- `UBB_AUTOMATIZACION_DESDE` (obligatoria para confirmar): solo se consideran las mensualidades que vencen desde esa fecha, para no cortar por adeudos históricos cobrados fuera del sistema.
+- `UBB_MAX_SUSPENSIONES` (20 por defecto): si en un día hay más servicios por suspender, no se envía nada hasta que una persona lo revise y ejecute con `--forzar`.
+- Si Grezz no responde, no se suspende a nadie.
 
 ## Notificaciones
 
