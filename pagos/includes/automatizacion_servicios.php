@@ -13,6 +13,17 @@ require_once __DIR__ . '/../api/gestor_solicitudes.php';
 require_once __DIR__ . '/../api/procesador_grezz.php';
 
 /**
+ * Servicios que no deben suspenderse ni reactivarse automáticamente
+ * mientras se valida su asignación (regla del proyecto).
+ */
+const UBB_SERVICIOS_PROTEGIDOS = [1255, 1299];
+
+function servicioProtegido(int $idServicio): bool
+{
+    return in_array($idServicio, UBB_SERVICIOS_PROTEGIDOS, true);
+}
+
+/**
  * Estado actual del servicio según Grezz (ACTIVO, SUSPENDIDO, ...) o null
  * si no se pudo consultar.
  */
@@ -98,6 +109,16 @@ function solicitarCambioServicio(
     bool $confirmar
 ): array {
     $accion = strtoupper($accion);
+
+    if (servicioProtegido($idServicio)) {
+        return [
+            'accion' => $accion,
+            'registrada' => false,
+            'estado' => null,
+            'mensaje' => "Servicio $idServicio protegido: no se modifica hasta su validación.",
+            'id_solicitud' => null,
+        ];
+    }
 
     if (!$confirmar) {
         return [

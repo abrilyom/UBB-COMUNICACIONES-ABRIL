@@ -157,6 +157,22 @@ function enviarSmsTwilio(array $config, string $telefono, string $texto): array
 try {
     $conexion = conectarPagosCli();
     $config = cargarConfigNotificaciones();
+
+    // En pruebas nunca se escribe a clientes reales: todo va a un número de prueba.
+    $telefonoPruebas = null;
+
+    if ((getenv('UBB_PAGOS_ENTORNO') ?: 'produccion') === 'pruebas') {
+        $telefonoPruebas = normalizarTelefonoMx(getenv('UBB_TELEFONO_PRUEBAS') ?: null);
+
+        if ($enviar && $telefonoPruebas === null) {
+            throw new RuntimeException(
+                'En el entorno de pruebas define UBB_TELEFONO_PRUEBAS (10 dígitos): ' .
+                'todos los mensajes se enviarán a ese número y no a los clientes.'
+            );
+        }
+
+        echo "Entorno de pruebas: los mensajes se envían a " . ($telefonoPruebas ?? '(sin número)') . "\n";
+    }
     $proveedor = strtolower((string)($config['PROVEEDOR'] ?? 'ninguno'));
 
     echo "Proveedor: $proveedor\n";
@@ -212,7 +228,7 @@ try {
         $datos = json_decode((string)$fila['datos_json'], true) ?: [];
         $cliente = $clientes[$idCliente] ?? null;
         $nombre = trim(($cliente['nombre'] ?? '') . ' ' . ($cliente['apellido_paterno'] ?? ''));
-        $telefono = normalizarTelefonoMx($cliente['telefono'] ?? null);
+        $telefono = $telefonoPruebas ?? normalizarTelefonoMx($cliente['telefono'] ?? null);
         $texto = redactarNotificacion($tipo, $nombre, $idServicio, $datos);
 
         echo "— #$idNotificacion $tipo | cliente $idCliente | tel. " . ($telefono ?? 'SIN TELÉFONO') . "\n";

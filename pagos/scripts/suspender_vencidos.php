@@ -194,6 +194,12 @@ try {
             $estadoActual
         );
 
+        if (servicioProtegido($idServicio)) {
+            $contadores['no_gestionados']++;
+            echo "  · Servicio protegido hasta su validación. No se modifica.\n\n";
+            continue;
+        }
+
         if ($estadoActual === 'SUSPENDIDO') {
             $contadores['ya_suspendidos']++;
             echo "  · Ya está suspendido. Sin cambios.\n\n";
