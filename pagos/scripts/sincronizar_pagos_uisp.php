@@ -135,7 +135,7 @@ final class ClienteUisp
             $cuerpo = curl_exec($ch);
             $error = curl_error($ch);
             $codigo = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
-            curl_close($ch);
+            unset($ch);
 
             $reintentable = $cuerpo === false || $codigo >= 500 || $codigo === 429;
 
