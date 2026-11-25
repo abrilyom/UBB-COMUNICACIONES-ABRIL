@@ -142,37 +142,37 @@ function urlPagina($numero) {
 <title>Historial UISP | UBB Comunicaciones</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#f3f1fa;color:#221749;
+body{margin:0;background:#f4f3f8;color:#322c47;
 font-family:Arial,Helvetica,sans-serif}
-header{background:#5f109a;color:#fff;padding:24px 5%}
+header{background:#a96db5;color:#fff;padding:24px 5%}
 header h1{margin:0 0 7px;font-size:25px}
-header p{margin:0;color:#f0e1fc}
+header p{margin:0;color:#f5e4f8}
 main{max-width:1450px;margin:28px auto;padding:0 20px}
-.panel{background:#fff;border:1px solid #e3dcf3;border-radius:14px;
+.panel{background:#fff;border:1px solid #ebe2ed;border-radius:14px;
 padding:22px;margin-bottom:20px;box-shadow:0 4px 15px #36204d0b}
 .filtros{display:flex;flex-wrap:wrap;align-items:end;gap:14px}
 .campo{display:flex;flex-direction:column;gap:7px}
 label{font-size:13px;font-weight:bold}
-input,select,button,.limpiar{padding:11px;border:1px solid #dbc9e9;
+input,select,button,.limpiar{padding:11px;border:1px solid #ded1e1;
 border-radius:8px;font-size:14px}
-button{background:#5f109a;color:#fff;border:0;font-weight:bold;cursor:pointer}
-.limpiar{color:#5f109a;text-decoration:none}
+button{background:#a96db5;color:#fff;border:0;font-weight:bold;cursor:pointer}
+.limpiar{color:#83498f;text-decoration:none}
 .tarjetas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
-.tarjeta{background:#fff;border:1px solid #e3dcf3;border-radius:12px;padding:20px}
+.tarjeta{background:#fff;border:1px solid #ebe2ed;border-radius:12px;padding:20px}
 .tarjeta small{color:#706780}
-.tarjeta strong{display:block;font-size:26px;color:#5f109a;margin-top:8px}
+.tarjeta strong{display:block;font-size:26px;color:#83498f;margin-top:8px}
 .tabla{overflow-x:auto}
 table{width:100%;border-collapse:collapse;white-space:nowrap;font-size:13px}
-th,td{padding:12px 10px;text-align:left;border-bottom:1px solid #efe5f7}
-th{background:#f8f3fc;color:#5f109a}
+th,td{padding:12px 10px;text-align:left;border-bottom:1px solid #f1eaf2}
+th{background:#f9f4fa;color:#83498f}
 td.numero{text-align:right;font-variant-numeric:tabular-nums}
 .pie{display:flex;justify-content:space-between;align-items:center;
 gap:12px;flex-wrap:wrap;margin-top:18px}
-.pie a{color:#5f109a;text-decoration:none;font-weight:bold}
+.pie a{color:#83498f;text-decoration:none;font-weight:bold}
 .nota{color:#706780;font-size:13px;line-height:1.5}
-td.aplicacion{white-space:normal;min-width:260px;color:#3a1b85}
+td.aplicacion{white-space:normal;min-width:260px;color:#635d72}
 .etiqueta{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;
-font-weight:bold;background:#efe5f7;color:#5f109a;margin-right:4px}
+font-weight:bold;background:#f1eaf2;color:#83498f;margin-right:4px}
 .etiqueta.ok{background:#e3f4e8;color:#1f7a3d}
 .etiqueta.revisar{background:#fdecea;color:#b3261e}
 @media(max-width:650px){.tarjetas{grid-template-columns:1fr}

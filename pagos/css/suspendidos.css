@@ -10,10 +10,10 @@
 .cs-panel {
     min-width: 0;
     padding: 26px !important;
-    border: 1px solid #ecdef6 !important;
+    border: 1px solid #efe3f1 !important;
     border-radius: 18px !important;
     background: #fff !important;
-    box-shadow: 0 5px 20px rgba(59,20,89,.055) !important;
+    box-shadow: 0 5px 20px rgba(111,59,121,.055) !important;
 }
 
 .cs-encabezado {
@@ -39,9 +39,9 @@
     width: 58px;
     height: 58px;
     color: #fff;
-    background: #8918e0;
+    background: #bd91c6;
     border-radius: 16px;
-    box-shadow: 0 5px 13px rgba(115,21,188,.2);
+    box-shadow: 0 5px 13px rgba(170,115,181,.2);
 }
 
 .cs-icono-principal svg {
@@ -52,7 +52,7 @@
 .cs-eyebrow {
     display: block;
     margin-bottom: 5px;
-    color: #8b20dd;
+    color: #a279aa;
     font-size: 10px;
     font-weight: 800;
     letter-spacing: 1.5px;
@@ -60,7 +60,7 @@
 
 .cs-titulo-bloque h1 {
     margin: 0;
-    color: #36174e;
+    color: #482d4d;
     font-size: clamp(21px, 2.2vw, 27px);
     font-weight: 750;
     line-height: 1.25;
@@ -113,22 +113,22 @@
     min-width: 200px;
     height: 44px;
     padding: 0 13px;
-    border: 1px solid #e8daf2;
+    border: 1px solid #eae0ec;
     border-radius: 10px;
     background: #fff;
     transition: border-color .2s, box-shadow .2s;
 }
 
 .cs-busqueda:focus-within {
-    border-color: #9c3de5;
-    box-shadow: 0 0 0 3px rgba(137,24,224,.09);
+    border-color: #c5a8cb;
+    box-shadow: 0 0 0 3px rgba(189,145,198,.09);
 }
 
 .cs-busqueda svg {
     width: 18px;
     height: 18px;
     flex: 0 0 auto;
-    color: #8f2eda;
+    color: #a186a6;
 }
 
 .cs-busqueda input {
@@ -137,7 +137,7 @@
     border: 0;
     outline: 0;
     background: transparent;
-    color: #441469;
+    color: #5a455e;
     font: inherit;
     font-size: 12px;
 }
@@ -150,10 +150,10 @@
 .cs-paginas-form select {
     height: 44px;
     padding: 0 34px 0 12px;
-    border: 1px solid #e8daf2;
+    border: 1px solid #eae0ec;
     border-radius: 10px;
     background: #fff;
-    color: #5a1b8b;
+    color: #725e76;
     font: inherit;
     font-size: 12px;
     outline: none;
@@ -161,7 +161,7 @@
 
 .cs-select:focus,
 .cs-paginas-form select:focus {
-    border-color: #9c3de5;
+    border-color: #c5a8cb;
 }
 
 .cs-btn {
@@ -178,19 +178,19 @@
 }
 
 .cs-btn-secundario {
-    border: 1px solid #e6d6f2;
-    background: #f8f3fc;
-    color: #771bbe;
+    border: 1px solid #e9ddeb;
+    background: #f9f5fa;
+    color: #95639f;
 }
 
 .cs-btn-secundario:hover {
-    background: #f0e3f9;
+    background: #f3e6f6;
 }
 
 .cs-tabla-contenedor {
     width: 100%;
     overflow-x: auto;
-    border: 1px solid #eee4f6;
+    border: 1px solid #f0e9f1;
     border-radius: 12px;
 }
 
@@ -204,8 +204,8 @@
 
 .cs-tabla thead th {
     padding: 15px 14px;
-    border-bottom: 1px solid #ece1f5;
-    background: #f9f4fc;
+    border-bottom: 1px solid #eee6f0;
+    background: #faf5fb;
     color: #786783;
     font-size: 10px;
     font-weight: 800;
@@ -215,7 +215,7 @@
 
 .cs-tabla tbody td {
     padding: 15px 14px;
-    border-bottom: 1px solid #f0e8f7;
+    border-bottom: 1px solid #f1edf2;
     color: #51465d;
     font-size: 12px;
     vertical-align: middle;
@@ -226,7 +226,7 @@
 }
 
 .cs-tabla tbody tr:hover {
-    background: #fdfaff;
+    background: #fefaff;
 }
 
 .cs-cliente {
@@ -237,7 +237,7 @@
 }
 
 .cs-cliente strong {
-    color: #441469;
+    color: #5a455e;
     font-size: 12px;
     font-weight: 700;
 }
@@ -282,10 +282,10 @@
     gap: 7px;
     min-height: 34px;
     padding: 0 11px;
-    border: 1px solid #e6d4f4;
+    border: 1px solid #eadbed;
     border-radius: 8px;
-    background: #f8f3fc;
-    color: #771abe;
+    background: #f9f5fa;
+    color: #95629f;
     font-size: 11px;
     font-weight: 700;
     cursor: pointer;
@@ -293,8 +293,8 @@
 }
 
 .cs-btn-ver:hover {
-    border-color: #cdaae7;
-    background: #efe3f9;
+    border-color: #d5b5dc;
+    background: #f3e7f5;
 }
 
 .cs-btn-ver svg {
@@ -343,10 +343,10 @@
     min-width: 31px;
     height: 31px;
     padding: 0 7px;
-    border: 1px solid #eadcf4;
+    border: 1px solid #ece2ee;
     border-radius: 8px;
     background: #fff;
-    color: #7720ba;
+    color: #906d97;
     font-size: 11px;
     text-decoration: none;
     transition: .2s;
@@ -354,8 +354,8 @@
 
 .cs-pagina:hover,
 .cs-pagina.activa {
-    border-color: #801acf;
-    background: #801acf;
+    border-color: #a777b1;
+    background: #a777b1;
     color: #fff;
 }
 
@@ -396,7 +396,7 @@
 .cs-modal-fondo {
     position: absolute;
     inset: 0;
-    background: rgba(33,13,49,.58);
+    background: rgba(39,20,43,.58);
     backdrop-filter: blur(3px);
 }
 
@@ -407,10 +407,10 @@
     max-height: 90vh;
     overflow-y: auto;
     padding: 24px;
-    border: 1px solid #e9dbf4;
+    border: 1px solid #ece1ee;
     border-radius: 17px;
     background: #fff;
-    box-shadow: 0 20px 65px rgba(33,10,50,.22);
+    box-shadow: 0 20px 65px rgba(40,15,45,.22);
 }
 
 .cs-modal-encabezado {
@@ -419,11 +419,11 @@
     justify-content: space-between;
     gap: 15px;
     padding-bottom: 18px;
-    border-bottom: 1px solid #eee4f6;
+    border-bottom: 1px solid #f0e9f1;
 }
 
 .cs-modal-etiqueta {
-    color: #9431e0;
+    color: #a985b0;
     font-size: 9px;
     font-weight: 800;
     letter-spacing: 1.3px;
@@ -431,7 +431,7 @@
 
 .cs-modal-encabezado h2 {
     margin: 5px 0 0;
-    color: #3f1163;
+    color: #553b5a;
     font-size: 19px;
 }
 
@@ -442,8 +442,8 @@
     height: 34px;
     border: 0;
     border-radius: 9px;
-    background: #f5eefa;
-    color: #7720b9;
+    background: #f6f1f7;
+    color: #8f6c96;
     font-size: 23px;
     cursor: pointer;
 }
@@ -461,9 +461,9 @@
     gap: 6px;
     min-width: 0;
     padding: 12px;
-    border: 1px solid #eee4f6;
+    border: 1px solid #f0e9f1;
     border-radius: 10px;
-    background: #fdfaff;
+    background: #fefaff;
 }
 
 .cs-modal-dato-principal {
@@ -478,7 +478,7 @@
 
 .cs-modal-dato strong {
     overflow-wrap: anywhere;
-    color: #4c1676;
+    color: #644f68;
     font-size: 12px;
     font-weight: 700;
 }
@@ -487,7 +487,7 @@
     display: flex;
     justify-content: flex-end;
     padding-top: 15px;
-    border-top: 1px solid #eee4f6;
+    border-top: 1px solid #f0e9f1;
 }
 
 .cs-btn-modal-cerrar {
@@ -495,7 +495,7 @@
     padding: 0 20px;
     border: 0;
     border-radius: 9px;
-    background: #7719bf;
+    background: #a778b0;
     color: #fff;
     font-size: 12px;
     font-weight: 700;
@@ -571,13 +571,13 @@
 
 /* Ajuste de color del botón Limpiar */
 .cs-btn-secundario {
-    border: 1px solid #7719bf;
-    background: #7719bf;
+    border: 1px solid #a778b0;
+    background: #a778b0;
     color: #FFFFFF;
 }
 
 .cs-btn-secundario:hover {
-    border-color: #6414a0;
-    background: #6414a0;
+    border-color: #a777b1;
+    background: #a777b1;
     color: #FFFFFF;
 }

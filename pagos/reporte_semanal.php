@@ -203,20 +203,20 @@ $porcentaje = $ingresosAnterior > 0
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Reporte de pagos | UBB Comunicaciones</title>
 <style>
-:root{--morado:#5f109a;--fondo:#f3f1fa;--texto:#221749;--borde:#eadcf4}
+:root{--morado:#a96db5;--fondo:#f4f3f8;--texto:#41395c;--borde:#ece2ee}
 *{box-sizing:border-box}
 body{margin:0;background:var(--fondo);font-family:Arial,Helvetica,sans-serif;color:var(--texto)}
 .contenedor{max-width:1250px;margin:auto;padding:26px}
-.reporte-titulo{background:linear-gradient(120deg,#5f109a,#811fcd);color:white;padding:25px 28px;border-radius:18px;margin-bottom:22px}
+.reporte-titulo{background:linear-gradient(120deg,#a96db5,#a37dab);color:white;padding:25px 28px;border-radius:18px;margin-bottom:22px}
 .reporte-titulo h1{margin:0 0 8px;font-size:25px}
 .reporte-titulo p{margin:0;opacity:.9}
-.panel{background:white;border:1px solid var(--borde);border-radius:15px;padding:20px;margin-bottom:20px;box-shadow:0 5px 18px rgba(60,20,91,.04)}
+.panel{background:white;border:1px solid var(--borde);border-radius:15px;padding:20px;margin-bottom:20px;box-shadow:0 5px 18px rgba(113,58,124,.04)}
 .filtros{display:flex;gap:14px;align-items:end;flex-wrap:wrap}
 .campo{display:flex;flex-direction:column;gap:7px;min-width:150px}
 label{font-size:13px;font-weight:bold}
-input,select{padding:11px;border:1px solid #ddcbec;border-radius:9px;background:white;color:var(--texto)}
+input,select{padding:11px;border:1px solid #e1d3e4;border-radius:9px;background:white;color:var(--texto)}
 .boton{display:inline-block;padding:11px 15px;border-radius:9px;border:0;background:var(--morado);color:white;text-decoration:none;font-weight:bold;cursor:pointer}
-.boton.secundario{background:#f0e5f8;color:var(--morado)}
+.boton.secundario{background:#f2e9f4;color:var(--morado)}
 .tarjetas{display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:15px;margin-bottom:20px}
 .tarjeta{background:white;border:1px solid var(--borde);border-radius:15px;padding:20px}
 .tarjeta small{color:#716982;font-weight:bold}
@@ -225,9 +225,9 @@ input,select{padding:11px;border:1px solid #ddcbec;border-radius:9px;background:
 h2.seccion{font-size:18px;margin:0 0 15px}
 .tabla{overflow-x:auto}
 table{width:100%;border-collapse:collapse;white-space:nowrap}
-th,td{text-align:left;padding:12px 10px;border-bottom:1px solid #f0e6f7;font-size:13px}
-th{background:#f8f3fc;color:#5f1a93}
-.estado{font-size:11px;font-weight:bold;padding:5px 8px;border-radius:20px;background:#f0e5f8}
+th,td{text-align:left;padding:12px 10px;border-bottom:1px solid #f2eaf3;font-size:13px}
+th{background:#f9f5fa;color:#785d7e}
+.estado{font-size:11px;font-weight:bold;padding:5px 8px;border-radius:20px;background:#f2e9f4}
 .estado.PAGADO{background:#e1f6e9;color:#197444}
 .estado.PENDIENTE{background:#fff0cc;color:#805900}
 .estado.CANCELADO{background:#ffe4e4;color:#a02c2c}

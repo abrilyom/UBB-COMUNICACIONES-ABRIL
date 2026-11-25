@@ -285,37 +285,37 @@ $auditoria = $conexion->query("
 }
 .conc-card {
     background:#fff;
-    border:1px solid #ebe4f7;
+    border:1px solid #f1e9f2;
     border-radius:14px;
     padding:18px;
-    box-shadow:0 3px 12px rgba(49,13,77,.04);
+    box-shadow:0 3px 12px rgba(89,34,100,.04);
 }
 .conc-card span { display:block;color:#77718b;font-size:13px; }
 .conc-card strong {
-    display:block;color:#440c6f;font-size:26px;margin-top:8px;
+    display:block;color:#63336d;font-size:26px;margin-top:8px;
 }
 .conc-card small { display:block;color:#77718b;margin-top:5px; }
 .conc-filtros {
     display:flex;flex-wrap:wrap;gap:10px;margin:20px 0;
 }
 .conc-filtros input,.conc-filtros select {
-    min-height:42px;border:1px solid #e1d1ee;
+    min-height:42px;border:1px solid #e5d7e8;
     border-radius:9px;padding:8px 12px;background:#fff;
 }
 .conc-filtros button {
     min-height:42px;padding:8px 18px;border:0;
-    border-radius:9px;background:#6f15b4;color:#fff;cursor:pointer;
+    border-radius:9px;background:#a974b4;color:#fff;cursor:pointer;
 }
 .conc-tabla {
-    overflow-x:auto;background:#fff;border:1px solid #ebe4f7;
+    overflow-x:auto;background:#fff;border:1px solid #f1e9f2;
     border-radius:13px;margin-bottom:25px;
 }
 .conc-tabla table { width:100%;border-collapse:collapse;min-width:1050px; }
 .conc-tabla th,.conc-tabla td {
-    padding:12px;border-bottom:1px solid #f0e7f7;
+    padding:12px;border-bottom:1px solid #f2ebf3;
     text-align:left;font-size:13px;vertical-align:top;
 }
-.conc-tabla th { background:#f9f4fd;color:#5c198f; }
+.conc-tabla th { background:#faf6fb;color:#765a7b; }
 .conc-tabla small {
     display:block;color:#77718b;margin-top:5px;overflow-wrap:anywhere;
 }
@@ -327,14 +327,14 @@ $auditoria = $conexion->query("
 .revision { background:#fce8ef;color:#a52c56; }
 .conciliado { background:#e4f6eb;color:#247044; }
 .ignorado { background:#eeeef2;color:#666; }
-.conc-ref { color:#6413a2;font-weight:700;overflow-wrap:anywhere; }
+.conc-ref { color:#875092;font-weight:700;overflow-wrap:anywhere; }
 .conc-ayuda {
-    background:#f9f4fd;border:1px solid #ebdcf7;
+    background:#faf6fb;border:1px solid #efe1f2;
     border-radius:12px;padding:15px 18px;margin-bottom:18px;
-    color:#5e1c91;font-size:13px;line-height:1.6;
+    color:#765f7b;font-size:13px;line-height:1.6;
 }
 .conc-vacio { padding:30px!important;text-align:center!important;color:#77718b; }
-.conc-seccion { color:#440c6f;margin:28px 0 12px; }
+.conc-seccion { color:#63336d;margin:28px 0 12px; }
 @media(max-width:900px) { .conc-grid {grid-template-columns:repeat(2,minmax(0,1fr));} }
 @media(max-width:520px) {
     .conc-grid {gap:9px;}
