@@ -1,0 +1,480 @@
+<?php
+declare(strict_types=1);
+
+/*
+ * APLICAR PAGOS DE UISP A LAS MENSUALIDADES
+ *
+ * Toma los pagos que sincronizar_pagos_uisp.php trajo de UISP
+ * (uisp_pagos_importacion con uisp_payment_id) y los registra en `pagos`,
+ * aplicados a las mensualidades pendientes (obligaciones_pago), igual que la
+ * conciliación bancaria. Así los módulos (pagos de hoy, próximos, vencidos,
+ * suspensiones) reflejan lo que el personal capturó en UISP.
+ *
+ * Reglas (ante cualquier duda, el pago va a REVISION con su motivo):
+ *   - El cliente UISP debe estar ligado a un solo cliente UBB (clientes.uisp_id).
+ *   - Solo métodos de dinero: EFECTIVO, TRANSFERENCIA, DEPOSITO, TARJETA.
+ *     Cortesía, personalizado y cheque van a revisión.
+ *   - El cliente debe tener mensualidades pendientes en UN solo servicio.
+ *   - Se aplica a la mensualidad más antigua y, si sobra, a las siguientes.
+ *     La que llega a saldo 0 queda PAGADA. Pagos parciales sí se aplican.
+ *   - Si el pago supera todo lo que debe el servicio: revisión.
+ *   - Si el servicio tiene un pago PENDIENTE en UBB (transferencia sin
+ *     confirmar) o un pago PAGADO igual en ±3 días: revisión, para no contar
+ *     el mismo dinero dos veces.
+ *   - El pago se crea como PAGADO con referencia UISP-<id de pago UISP>.
+ *   - No llama a Grezz ni suspende o reactiva servicios.
+ *
+ * Uso:
+ *   php aplicar_pagos_uisp.php                         (simulación)
+ *   php aplicar_pagos_uisp.php --confirmar             (guarda)
+ *   php aplicar_pagos_uisp.php --reintentar-revision   (vuelve a evaluar los que están en REVISION)
+ *   php aplicar_pagos_uisp.php --desde=2026-11-01      (solo pagos desde esa fecha)
+ *
+ * Entorno de pruebas:
+ *   UBB_PAGOS_ENTORNO=pruebas php aplicar_pagos_uisp.php
+ */
+
+require_once __DIR__ . '/../includes/entorno_cli.php';
+
+const UISP_APLICAR_PROCESO = 'APLICAR_PAGOS_UISP';
+const UISP_METODOS_DINERO = ['EFECTIVO', 'TRANSFERENCIA', 'DEPOSITO', 'TARJETA'];
+const UISP_DIAS_DUPLICADO = 3;
+
+final class RevisionPagoUisp extends RuntimeException
+{
+}
+
+/* ===================== Opciones ===================== */
+
+$confirmar = false;
+$reintentar = false;
+$desde = null;
+
+foreach (array_slice($argv, 1) as $opcion) {
+    if ($opcion === '--confirmar') {
+        $confirmar = true;
+    } elseif ($opcion === '--reintentar-revision') {
+        $reintentar = true;
+    } elseif (preg_match('/^--desde=(\d{4}-\d{2}-\d{2})$/', $opcion, $m)) {
+        $desde = $m[1];
+    } else {
+        fwrite(STDERR, "Opción desconocida: $opcion\n");
+        exit(1);
+    }
+}
+
+/* ===================== Utilidades ===================== */
+
+function centavos($monto): int
+{
+    return (int)round((float)$monto * 100);
+}
+
+function pesos(int $centavos): string
+{
+    return number_format($centavos / 100, 2, '.', '');
+}
+
+/** "2026-10-15T09:03:15-06:00" → "2026-10-15 09:03:15" en hora de México. */
+function fechaLocal(string $fechaUisp): string
+{
+    return (new DateTimeImmutable($fechaUisp))
+        ->setTimezone(new DateTimeZone('America/Mexico_City'))
+        ->format('Y-m-d H:i:s');
+}
+
+function marcarResultado(
+    mysqli $conexion,
+    int $idImportacion,
+    string $estado,
+    ?int $idPago,
+    ?int $idCliente,
+    ?int $idServicio,
+    ?string $motivo
+): void {
+    $motivo = $motivo !== null ? mb_substr($motivo, 0, 500, 'UTF-8') : null;
+
+    $stmt = $conexion->prepare("
+        UPDATE uisp_pagos_importacion
+        SET estado_aplicacion = ?, id_pago_ubb = ?, id_cliente_ubb = ?,
+            id_servicio_ubb = ?, motivo_revision = ?, aplicado_en = NOW()
+        WHERE id_importacion = ?
+    ");
+    $stmt->bind_param('siiisi', $estado, $idPago, $idCliente, $idServicio, $motivo, $idImportacion);
+    $stmt->execute();
+    $stmt->close();
+}
+
+/* ===================== Proceso ===================== */
+
+$conexion = null;
+$plataforma = null;
+$bloqueo = false;
+$nombreBloqueo = 'ubb_aplicar_pagos_uisp';
+$inicio = new DateTimeImmutable();
+
+$contadores = [
+    'revisados' => 0,
+    'aplicados' => 0,
+    'importe_aplicado' => 0.0,
+    'mensualidades_pagadas' => 0,
+    'revision' => 0,
+];
+$motivos = [];
+
+/** Lo aplicado durante una simulación, para que los pagos siguientes del mismo cliente lo vean. */
+$simulado = [];
+$mostradosAplicados = 0;
+$mostradosRevision = 0;
+
+try {
+    $conexion = conectarPagosCli();
+    obtenerBloqueoScript($conexion, $nombreBloqueo);
+    $bloqueo = true;
+
+    $columna = $conexion->query("SHOW COLUMNS FROM uisp_pagos_importacion LIKE 'estado_aplicacion'");
+    if ($columna->num_rows === 0) {
+        throw new RuntimeException('Falta aplicar db/migraciones/2026-11-28_aplicar_pagos_uisp.sql.');
+    }
+
+    echo $confirmar
+        ? "MODO: CONFIRMAR (se guardarán los cambios)\n\n"
+        : "MODO: SIMULACIÓN (no se guardará nada)\n\n";
+
+    // Relación cliente UISP → cliente UBB (puede haber más de uno: eso es revisión).
+    $plataforma = conectarPlataformaCli();
+    $clientesUisp = [];
+    $r = $plataforma->query("
+        SELECT id_cliente, TRIM(uisp_id) AS uisp_id
+        FROM clientes
+        WHERE uisp_id IS NOT NULL AND TRIM(uisp_id) <> ''
+    ");
+    while ($fila = $r->fetch_assoc()) {
+        $clientesUisp[$fila['uisp_id']][] = (int)$fila['id_cliente'];
+    }
+    $plataforma->close();
+    $plataforma = null;
+
+    $estados = $reintentar
+        ? "(estado_aplicacion IS NULL OR estado_aplicacion = 'REVISION')"
+        : 'estado_aplicacion IS NULL';
+    $filtroFecha = $desde !== null
+        ? "AND LEFT(fecha_original_uisp, 10) >= '" . $conexion->real_escape_string($desde) . "'"
+        : '';
+
+    $pagosUisp = $conexion->query("
+        SELECT id_importacion, uisp_payment_id, uisp_client_id, monto, moneda,
+               fecha_original_uisp, metodo_original_uisp, metodo_normalizado
+        FROM uisp_pagos_importacion
+        WHERE uisp_payment_id IS NOT NULL
+          AND $estados
+          $filtroFecha
+        ORDER BY fecha_original_uisp ASC, id_importacion ASC
+    ")->fetch_all(MYSQLI_ASSOC);
+
+    echo "Pagos de UISP por aplicar: " . count($pagosUisp) . "\n\n";
+
+    foreach ($pagosUisp as $p) {
+        $contadores['revisados']++;
+        $idImportacion = (int)$p['id_importacion'];
+        $idPagoUisp = (int)$p['uisp_payment_id'];
+        $referencia = 'UISP-' . $idPagoUisp;
+        $centavosPago = centavos($p['monto']);
+        $metodo = (string)$p['metodo_normalizado'];
+        $idCliente = null;
+        $idServicio = null;
+
+        $conexion->begin_transaction();
+
+        try {
+            if ($p['moneda'] !== 'MXN') {
+                throw new RevisionPagoUisp('La moneda no es MXN.');
+            }
+            if ($centavosPago <= 0) {
+                throw new RevisionPagoUisp('Importe no válido.');
+            }
+            if (!in_array($metodo, UISP_METODOS_DINERO, true)) {
+                throw new RevisionPagoUisp(
+                    "Método \"{$p['metodo_original_uisp']}\": no es un ingreso de dinero que se aplique solo."
+                );
+            }
+
+            $clientes = $clientesUisp[trim((string)$p['uisp_client_id'])] ?? [];
+            if (count($clientes) === 0) {
+                throw new RevisionPagoUisp("El cliente UISP {$p['uisp_client_id']} no está ligado a ningún cliente UBB.");
+            }
+            if (count($clientes) > 1) {
+                throw new RevisionPagoUisp(
+                    "El cliente UISP {$p['uisp_client_id']} está ligado a varios clientes UBB: " . implode(', ', $clientes) . '.'
+                );
+            }
+            $idCliente = $clientes[0];
+
+            // Si ya existe el pago (ejecución interrumpida), solo se marca.
+            $stmt = $conexion->prepare('SELECT id_pago, id_servicio FROM pagos WHERE referencia = ? LIMIT 1');
+            $stmt->bind_param('s', $referencia);
+            $stmt->execute();
+            $existente = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+
+            if ($existente) {
+                if ($confirmar) {
+                    marcarResultado($conexion, $idImportacion, 'APLICADO', (int)$existente['id_pago'],
+                        $idCliente, (int)$existente['id_servicio'], null);
+                    $conexion->commit();
+                } else {
+                    $conexion->rollback();
+                }
+                $contadores['aplicados']++;
+                continue;
+            }
+
+            // Mensualidades pendientes del cliente, bloqueadas.
+            $stmt = $conexion->prepare("
+                SELECT id_obligacion, id_servicio, periodo, fecha_vencimiento, monto
+                FROM obligaciones_pago
+                WHERE id_cliente = ?
+                  AND concepto = 'MENSUALIDAD'
+                  AND estado = 'PENDIENTE'
+                  AND fecha_vencimiento IS NOT NULL
+                ORDER BY fecha_vencimiento ASC, id_obligacion ASC
+                FOR UPDATE
+            ");
+            $stmt->bind_param('i', $idCliente);
+            $stmt->execute();
+            $obligaciones = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+            $stmt->close();
+
+            $aplicado = $conexion->prepare("
+                SELECT COALESCE(SUM(po.monto_aplicado), 0)
+                FROM pagos_obligaciones po
+                INNER JOIN pagos p ON p.id_pago = po.id_pago
+                WHERE po.id_obligacion = ? AND p.estado_pago = 'PAGADO'
+            ");
+
+            $pendientes = [];
+            foreach ($obligaciones as $o) {
+                $idObligacion = (int)$o['id_obligacion'];
+                $aplicado->bind_param('i', $idObligacion);
+                $aplicado->execute();
+                $centavosAplicados = centavos($aplicado->get_result()->fetch_row()[0])
+                    + ($simulado[$idObligacion] ?? 0);
+                $saldo = centavos($o['monto']) - $centavosAplicados;
+
+                if ($saldo > 0) {
+                    $o['saldo'] = $saldo;
+                    $pendientes[] = $o;
+                }
+            }
+            $aplicado->close();
+
+            $servicios = array_values(array_unique(array_map(fn($o) => (int)$o['id_servicio'], $pendientes)));
+
+            if (count($servicios) === 0) {
+                throw new RevisionPagoUisp("El cliente UBB $idCliente no tiene mensualidades pendientes.");
+            }
+            if (count($servicios) > 1) {
+                throw new RevisionPagoUisp(
+                    "El cliente UBB $idCliente tiene adeudo en varios servicios (" . implode(', ', $servicios) .
+                    '); no se sabe a cuál corresponde el pago.'
+                );
+            }
+            $idServicio = $servicios[0];
+
+            // Pago PENDIENTE en UBB del mismo servicio (p. ej. transferencia sin confirmar).
+            $stmt = $conexion->prepare("
+                SELECT id_pago FROM pagos
+                WHERE id_cliente = ? AND id_servicio = ? AND estado_pago = 'PENDIENTE'
+                LIMIT 1
+            ");
+            $stmt->bind_param('ii', $idCliente, $idServicio);
+            $stmt->execute();
+            $pendienteUbb = $stmt->get_result()->fetch_row();
+            $stmt->close();
+
+            if ($pendienteUbb) {
+                throw new RevisionPagoUisp(
+                    "El servicio $idServicio tiene un pago pendiente en UBB (id_pago {$pendienteUbb[0]}); puede ser el mismo pago."
+                );
+            }
+
+            // Pago PAGADO igual registrado en UBB por otra vía en ±3 días.
+            $fechaPago = fechaLocal((string)$p['fecha_original_uisp']);
+            $montoTexto = pesos($centavosPago);
+            $dias = UISP_DIAS_DUPLICADO;
+
+            $stmt = $conexion->prepare("
+                SELECT id_pago FROM pagos
+                WHERE id_cliente = ? AND id_servicio = ? AND estado_pago = 'PAGADO'
+                  AND monto = ?
+                  AND fecha_pago BETWEEN DATE_SUB(?, INTERVAL ? DAY) AND DATE_ADD(?, INTERVAL ? DAY)
+                  AND COALESCE(referencia, '') NOT LIKE 'UISP-%'
+                LIMIT 1
+            ");
+            $stmt->bind_param('iissisi', $idCliente, $idServicio, $montoTexto, $fechaPago, $dias, $fechaPago, $dias);
+            $stmt->execute();
+            $duplicado = $stmt->get_result()->fetch_row();
+            $stmt->close();
+
+            if ($duplicado) {
+                throw new RevisionPagoUisp(
+                    "Ya hay un pago igual registrado en UBB (id_pago {$duplicado[0]}) en ±$dias días; puede ser el mismo."
+                );
+            }
+
+            $saldoTotal = array_sum(array_column($pendientes, 'saldo'));
+
+            if ($centavosPago > $saldoTotal) {
+                throw new RevisionPagoUisp(sprintf(
+                    'El pago (%s) supera todo lo que debe el servicio %d (%s).',
+                    $montoTexto,
+                    $idServicio,
+                    pesos($saldoTotal)
+                ));
+            }
+
+            // Repartir el pago de la mensualidad más antigua a la más nueva.
+            $restante = $centavosPago;
+            $aplicaciones = [];
+
+            foreach ($pendientes as $o) {
+                if ($restante === 0) {
+                    break;
+                }
+                $monto = min($restante, $o['saldo']);
+                $aplicaciones[] = [
+                    'id_obligacion' => (int)$o['id_obligacion'],
+                    'periodo' => $o['periodo'],
+                    'centavos' => $monto,
+                    'liquida' => $monto === $o['saldo'],
+                ];
+                $restante -= $monto;
+            }
+
+            $detalle = implode(', ', array_map(
+                fn($a) => $a['periodo'] . ' $' . pesos($a['centavos']) . ($a['liquida'] ? ' (pagada)' : ' (parcial)'),
+                $aplicaciones
+            ));
+
+            if ($mostradosAplicados++ < 20) {
+                echo "  ✔ UISP $idPagoUisp | $fechaPago | cliente $idCliente servicio $idServicio | "
+                    . "$montoTexto $metodo → $detalle\n";
+            }
+
+            $contadores['aplicados']++;
+            $contadores['importe_aplicado'] += $centavosPago / 100;
+            $contadores['mensualidades_pagadas'] += count(array_filter($aplicaciones, fn($a) => $a['liquida']));
+
+            if (!$confirmar) {
+                foreach ($aplicaciones as $a) {
+                    $simulado[$a['id_obligacion']] = ($simulado[$a['id_obligacion']] ?? 0) + $a['centavos'];
+                }
+                $conexion->rollback();
+                continue;
+            }
+
+            $observaciones = "Pago registrado en UISP (pago $idPagoUisp, cliente UISP {$p['uisp_client_id']}, "
+                . "método \"{$p['metodo_original_uisp']}\"). Aplicado automáticamente: $detalle.";
+            $estadoPago = 'PAGADO';
+
+            $stmt = $conexion->prepare("
+                INSERT INTO pagos (id_cliente, id_servicio, monto, fecha_pago, metodo_pago,
+                                   referencia, estado_pago, observaciones)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ");
+            $stmt->bind_param('iissssss', $idCliente, $idServicio, $montoTexto, $fechaPago,
+                $metodo, $referencia, $estadoPago, $observaciones);
+            $stmt->execute();
+            $idPago = (int)$conexion->insert_id;
+            $stmt->close();
+
+            $insertarAplicacion = $conexion->prepare("
+                INSERT INTO pagos_obligaciones (id_pago, id_obligacion, monto_aplicado, fecha_aplicacion)
+                VALUES (?, ?, ?, NOW())
+            ");
+            $marcarPagada = $conexion->prepare("
+                UPDATE obligaciones_pago SET estado = 'PAGADA'
+                WHERE id_obligacion = ? AND estado = 'PENDIENTE'
+            ");
+
+            foreach ($aplicaciones as $a) {
+                $montoAplicado = pesos($a['centavos']);
+                $insertarAplicacion->bind_param('iis', $idPago, $a['id_obligacion'], $montoAplicado);
+                $insertarAplicacion->execute();
+
+                if ($a['liquida']) {
+                    $marcarPagada->bind_param('i', $a['id_obligacion']);
+                    $marcarPagada->execute();
+
+                    if ($marcarPagada->affected_rows !== 1) {
+                        throw new RuntimeException("No se pudo marcar como PAGADA la obligación {$a['id_obligacion']}.");
+                    }
+                }
+            }
+            $insertarAplicacion->close();
+            $marcarPagada->close();
+
+            marcarResultado($conexion, $idImportacion, 'APLICADO', $idPago, $idCliente, $idServicio, null);
+            $conexion->commit();
+        } catch (RevisionPagoUisp $e) {
+            $conexion->rollback();
+            $contadores['revision']++;
+            $motivo = $e->getMessage();
+            $tipo = preg_replace('/[0-9]+|\(.*?\)|"[^"]*"/', '#', $motivo);
+            $motivos[$tipo] = ($motivos[$tipo] ?? 0) + 1;
+
+            if ($mostradosRevision++ < 30) {
+                echo "  ⚠ UISP $idPagoUisp | {$p['fecha_original_uisp']} | {$p['monto']} | REVISIÓN: $motivo\n";
+            }
+
+            if ($confirmar) {
+                marcarResultado($conexion, $idImportacion, 'REVISION', null, $idCliente, $idServicio, $motivo);
+            }
+        } catch (Throwable $e) {
+            $conexion->rollback();
+            throw new RuntimeException("Pago UISP $idPagoUisp: " . $e->getMessage(), 0, $e);
+        }
+    }
+
+    $contadores['importe_aplicado'] = round($contadores['importe_aplicado'], 2);
+
+    echo "\n===== RESUMEN =====\n";
+    echo "Revisados:              {$contadores['revisados']}\n";
+    echo "Aplicados:              {$contadores['aplicados']} | $" . number_format($contadores['importe_aplicado'], 2) . "\n";
+    echo "Mensualidades pagadas:  {$contadores['mensualidades_pagadas']}\n";
+    echo "A revisión manual:      {$contadores['revision']}\n";
+
+    if ($motivos) {
+        arsort($motivos);
+        echo "\nMotivos de revisión:\n";
+        foreach ($motivos as $tipo => $cantidad) {
+            echo "  $cantidad × $tipo\n";
+        }
+    }
+
+    if (!$confirmar) {
+        echo "\nSimulación: no se guardó nada. Agrega --confirmar para guardar.\n";
+    }
+
+    registrarEjecucion($conexion, UISP_APLICAR_PROCESO, $confirmar, $inicio, $contadores);
+} catch (Throwable $e) {
+    fwrite(STDERR, "ERROR: " . $e->getMessage() . PHP_EOL);
+
+    if ($conexion instanceof mysqli) {
+        registrarEjecucion($conexion, UISP_APLICAR_PROCESO, $confirmar, $inicio, $contadores, $e->getMessage());
+    }
+
+    $codigoSalida = 1;
+} finally {
+    if ($plataforma instanceof mysqli) {
+        $plataforma->close();
+    }
+    if ($conexion instanceof mysqli) {
+        if ($bloqueo) {
+            liberarBloqueoScript($conexion, $nombreBloqueo);
+        }
+        $conexion->close();
+    }
+}
+
+exit($codigoSalida ?? 0);

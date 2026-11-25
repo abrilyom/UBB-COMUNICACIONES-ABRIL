@@ -50,6 +50,20 @@ if (!in_array($metodo, $metodos, true)) {
     $metodo = "";
 }
 
+// Aplicación a mensualidades (columnas de la migración 2026-11-28).
+$tieneAplicacion = $db->query(
+    "SHOW COLUMNS FROM uisp_pagos_importacion LIKE 'estado_aplicacion'"
+)->num_rows > 0;
+$estadosAplicacion = [
+    "APLICADO" => "Aplicado a mensualidades",
+    "REVISION" => "En revisión manual",
+    "SIN" => "Sin aplicar todavía",
+];
+$aplicacion = $_GET["aplicacion"] ?? "";
+if (!$tieneAplicacion || !isset($estadosAplicacion[$aplicacion])) {
+    $aplicacion = "";
+}
+
 $where = ["1=1"];
 
 if ($desde !== "") {
@@ -63,6 +77,12 @@ if ($hasta !== "") {
 if ($metodo !== "") {
     $where[] = "metodo_normalizado = '" .
         $db->real_escape_string($metodo) . "'";
+}
+
+if ($aplicacion === "SIN") {
+    $where[] = "uisp_payment_id IS NOT NULL AND estado_aplicacion IS NULL";
+} elseif ($aplicacion !== "") {
+    $where[] = "estado_aplicacion = '" . $db->real_escape_string($aplicacion) . "'";
 }
 
 $filtro = implode(" AND ", $where);
@@ -88,7 +108,10 @@ $offset = ($pagina - 1) * $porPagina;
 
 $resultado = $db->query(
     "SELECT uisp_client_id, cliente_nombre_uisp, monto, moneda,
-            fecha_original_uisp, metodo_original_uisp
+            fecha_original_uisp, metodo_original_uisp" .
+    ($tieneAplicacion
+        ? ", uisp_payment_id, estado_aplicacion, motivo_revision, id_cliente_ubb, id_servicio_ubb"
+        : "") . "
      FROM uisp_pagos_importacion
      WHERE $filtro
      ORDER BY fecha_original_uisp DESC
@@ -146,6 +169,11 @@ td.numero{text-align:right;font-variant-numeric:tabular-nums}
 gap:12px;flex-wrap:wrap;margin-top:18px}
 .pie a{color:#5b2a86;text-decoration:none;font-weight:bold}
 .nota{color:#706780;font-size:13px;line-height:1.5}
+td.aplicacion{white-space:normal;min-width:260px;color:#4d4560}
+.etiqueta{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;
+font-weight:bold;background:#eee9f3;color:#5b2a86;margin-right:4px}
+.etiqueta.ok{background:#e3f4e8;color:#1f7a3d}
+.etiqueta.revisar{background:#fdecea;color:#b3261e}
 @media(max-width:650px){.tarjetas{grid-template-columns:1fr}
 header h1{font-size:21px}.panel{padding:15px}}
 </style>
@@ -178,6 +206,19 @@ header h1{font-size:21px}.panel{padding:15px}}
           <?php endforeach; ?>
         </select>
       </div>
+      <?php if ($tieneAplicacion): ?>
+      <div class="campo">
+        <label for="aplicacion">Aplicación a mensualidades</label>
+        <select id="aplicacion" name="aplicacion">
+          <option value="">Todos</option>
+          <?php foreach ($estadosAplicacion as $valor => $texto): ?>
+          <option value="<?= h($valor) ?>" <?= $aplicacion === $valor ? "selected" : "" ?>>
+            <?= h($texto) ?>
+          </option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+      <?php endif; ?>
       <button type="submit">Aplicar filtros</button>
       <a class="limpiar" href="reporte_uisp.php">Limpiar</a>
     </form>
@@ -210,11 +251,14 @@ header h1{font-size:21px}.panel{padding:15px}}
             <th>Método</th>
             <th>Moneda</th>
             <th style="text-align:right">Importe</th>
+            <?php if ($tieneAplicacion): ?>
+            <th>Aplicación</th>
+            <?php endif; ?>
           </tr>
         </thead>
         <tbody>
         <?php if ($resultado->num_rows === 0): ?>
-          <tr><td colspan="6">No hay movimientos con esos filtros.</td></tr>
+          <tr><td colspan="<?= $tieneAplicacion ? 7 : 6 ?>">No hay movimientos con esos filtros.</td></tr>
         <?php else: ?>
           <?php while ($fila = $resultado->fetch_assoc()): ?>
           <tr>
@@ -224,6 +268,21 @@ header h1{font-size:21px}.panel{padding:15px}}
             <td><?= h($fila["metodo_original_uisp"]) ?></td>
             <td><?= h($fila["moneda"]) ?></td>
             <td class="numero">$<?= number_format((float)$fila["monto"], 2) ?></td>
+            <?php if ($tieneAplicacion): ?>
+            <td class="aplicacion">
+              <?php if ($fila["estado_aplicacion"] === "APLICADO"): ?>
+                <span class="etiqueta ok">Aplicado</span>
+                cliente <?= h($fila["id_cliente_ubb"]) ?> · servicio <?= h($fila["id_servicio_ubb"]) ?>
+              <?php elseif ($fila["estado_aplicacion"] === "REVISION"): ?>
+                <span class="etiqueta revisar">Revisar</span>
+                <?= h($fila["motivo_revision"]) ?>
+              <?php elseif ($fila["uisp_payment_id"] !== null): ?>
+                <span class="etiqueta">Pendiente</span>
+              <?php else: ?>
+                <span class="etiqueta">Histórico CSV</span>
+              <?php endif; ?>
+            </td>
+            <?php endif; ?>
           </tr>
           <?php endwhile; ?>
         <?php endif; ?>

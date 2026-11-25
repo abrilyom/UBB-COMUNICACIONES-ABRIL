@@ -129,6 +129,34 @@ La configuración vive en `/etc/ubb-notificaciones.env` (fuera del repositorio).
 
 Variables opcionales: `UBB_UISP_URL`, `UBB_UISP_TOKEN_FILE`, `UBB_UISP_CA` (certificado del CRM para verificar TLS; sin ella no se verifica) y `UBB_UISP_DIAS`.
 
+### Aplicar los pagos de UISP a las mensualidades
+
+Sincronizar solo guarda el historial. Para que los módulos (pagos de hoy, próximos, vencidos, suspensiones) los reflejen, `pagos/scripts/aplicar_pagos_uisp.php` registra cada pago en `pagos` y lo aplica a `obligaciones_pago`, igual que la conciliación bancaria:
+
+| Caso | Resultado |
+|---|---|
+| Cliente UISP ligado a un solo cliente UBB (`clientes.uisp_id`) con adeudo en un solo servicio | Pago `PAGADO` (referencia `UISP-<id>`) aplicado de la mensualidad más antigua a la más nueva; la que llega a 0 queda `PAGADA` |
+| Pago parcial | Se aplica; la mensualidad sigue pendiente |
+| Pago mayor a todo el adeudo, varios servicios con adeudo, cliente sin ligar o sin mensualidades pendientes | `REVISION` |
+| Cortesía, personalizado o cheque | `REVISION` (no es un ingreso de dinero) |
+| El servicio tiene un pago `PENDIENTE` en UBB o un pago igual `PAGADO` en ±3 días | `REVISION` (evita contar el mismo dinero dos veces) |
+
+El resultado queda en `uisp_pagos_importacion.estado_aplicacion` (`APLICADO` / `REVISION` con `motivo_revision`). El personal los revisa en **Historial UISP** (`reporte_uisp.php`, filtro "Aplicación a mensualidades"). No llama a Grezz ni suspende o reactiva servicios.
+
+```bash
+mariadb ubb_pagos < db/migraciones/2026-11-28_aplicar_pagos_uisp.sql
+docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/aplicar_pagos_uisp.php              # simulación
+docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/aplicar_pagos_uisp.php --confirmar
+```
+
+En el cron, después de sincronizar:
+
+```cron
+*/15 * * * *  (docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/sincronizar_pagos_uisp.php --confirmar && docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/aplicar_pagos_uisp.php --confirmar) >> /var/log/ubb/pagos_uisp.log 2>&1
+```
+
+**Cuando llegue la API de BBVA:** el mismo dinero aparecería en UISP y en el banco. Antes de activar ambas fuentes hay que decidir cuál aplica los pagos, para no registrarlos dos veces.
+
 ### Red: cómo llega dns-server al CRM
 
 Hay **dos redes distintas numeradas 192.168.102.0/24**: la de dns-server (`192.168.102.222`, router `192.168.102.1`) y la del CRM (`ubb-server6`, `192.168.102.253`). Por eso dns-server no puede usar `192.168.102.253`.

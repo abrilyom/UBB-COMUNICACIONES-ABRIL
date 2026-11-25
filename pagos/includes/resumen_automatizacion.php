@@ -66,6 +66,15 @@ function resumenAutomatizacion(mysqli $conexion, array $estadoPagos, ?array $ser
         FROM notificaciones_cola
     ");
 
+    // Pagos capturados en UISP: aplicados a mensualidades y en revisión.
+    $r['pagos_uisp'] = consultaEscalarSegura($conexion, "
+        SELECT
+            SUM(estado_aplicacion = 'APLICADO' AND aplicado_en >= CURDATE() - INTERVAL 7 DAY) AS aplicados_7d,
+            SUM(estado_aplicacion = 'REVISION') AS revision
+        FROM uisp_pagos_importacion
+        WHERE uisp_payment_id IS NOT NULL
+    ");
+
     // Última ejecución de cada proceso.
     $r['ejecuciones'] = [];
 

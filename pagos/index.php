@@ -405,6 +405,7 @@ $auto_sol = $automatizacion['solicitudes'];
 $auto_avisos = $automatizacion['avisos'];
 $auto_cortes = $automatizacion['cortes'];
 $auto_ejec = $automatizacion['ejecuciones'] ?? [];
+$auto_uisp = $automatizacion['pagos_uisp'] ?? null;
 
 ?>
 
@@ -563,6 +564,10 @@ $auto_ejec = $automatizacion['ejecuciones'] ?? [];
                     </li>
                     <li class="<?= ($auto_ejec['PAGOS_UISP']['resultado'] ?? '') === 'ERROR' ? 'auto-alerta' : '' ?>">
                         Pagos UISP: <?= htmlspecialchars(textoUltimaEjecucion($auto_ejec['PAGOS_UISP'] ?? null), ENT_QUOTES, 'UTF-8') ?>
+                    </li>
+                    <li class="<?= (int)($auto_uisp['revision'] ?? 0) > 0 ? 'auto-alerta' : '' ?>">
+                        <?= numeroAuto($auto_uisp['aplicados_7d'] ?? ($auto_uisp === null ? null : 0)) ?> de UISP aplicados (7 días) ·
+                        <?= numeroAuto($auto_uisp['revision'] ?? ($auto_uisp === null ? null : 0)) ?> en revisión
                     </li>
                 </ul>
                 <span class="auto-ejecucion"><?= htmlspecialchars(textoUltimaEjecucion($auto_ejec['CONCILIACION'] ?? null), ENT_QUOTES, 'UTF-8') ?></span>
