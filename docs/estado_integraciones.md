@@ -22,7 +22,7 @@ Identificadores compartidos: `id_cliente`, `id_servicio`, `id_plan`. Para UISP: 
 | API privada de UBB Pagos (para otras plataformas) | ✅ Implementada | `api/v1/clientes.php`, `servicios.php`, `solicitudes.php` |
 | Conciliación bancaria (CSV) | ✅ Implementada y probada | `scripts/importar_movimientos_bancarios.php`, `scripts/conciliar_automatico.php` |
 | API de BBVA | ⏳ Pendiente del banco | — usará el mismo proceso de conciliación |
-| Pagos registrados en UISP | ✅ Implementada (solo lectura, API del CRM en 10.1.41.254:8445, cada 15 min) | `scripts/sincronizar_pagos_uisp.php` → `uisp_pagos_importacion` (ver `docs/automatizacion.md`) |
+| Pagos registrados en UISP | 🟡 Implementada; carga inicial hecha (25/11/2026). Automático pendiente de la ruta en ubb-server6 | `scripts/sincronizar_pagos_uisp.php` → `uisp_pagos_importacion` (ver `docs/automatizacion.md`) |
 | Notificaciones WhatsApp / SMS | 🟡 Implementada, sin proveedor contratado | `scripts/generar_recordatorios.php`, `scripts/enviar_notificaciones.php` |
 | `integracion_winbox` (Jamileth) | Solo consulta | No se modifica |
 

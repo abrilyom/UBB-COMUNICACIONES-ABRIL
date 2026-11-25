@@ -133,13 +133,13 @@ Variables opcionales: `UBB_UISP_URL`, `UBB_UISP_TOKEN_FILE`, `UBB_UISP_CA` (cert
 
 Hay **dos redes distintas numeradas 192.168.102.0/24**: la de dns-server (`192.168.102.222`, router `192.168.102.1`) y la del CRM (`ubb-server6`, `192.168.102.253`). Por eso dns-server no puede usar `192.168.102.253`.
 
-Se usa la otra dirección del CRM, **`10.1.41.254`** (interfaz `vlan41`), y en **ubb-server6** se agregó una ruta para que le conteste a dns-server por `vlan41` en lugar de por su red local:
+Se usa la otra dirección del CRM, **`10.1.41.254`** (interfaz `vlan41`), y en **ubb-server6** hace falta una ruta para que le conteste a dns-server por `vlan41` en lugar de por su red local. Se probó el 25/11/2026 (funcionó) y se retiró: **pendiente de que el administrador de ubb-server6 la autorice**.
 
 ```bash
 ip route add 192.168.102.222/32 via 10.1.41.1 dev vlan41
 ```
 
-Esa ruta debe quedar fija en la configuración de red de ubb-server6 (netplan). Si se pierde, la sincronización falla con *"No se pudo conectar con UISP"* y el panel muestra el error; ningún pago se pierde, se cargan en la siguiente ejecución que funcione (últimos 7 días, o con `--desde`).
+Autorizada, debe quedar fija en un archivo aparte de netplan (por ejemplo `/etc/netplan/90-ruta-dns-server.yaml`, ruta `192.168.102.222/32 via 10.1.41.1` en `vlan41`). Sin ella, la sincronización falla con *"No se pudo conectar con UISP"* y el panel muestra el error; ningún pago se pierde, se cargan en la siguiente ejecución que funcione (últimos 7 días, o con `--desde`).
 
 ## Alcance actual de Grezz
 
