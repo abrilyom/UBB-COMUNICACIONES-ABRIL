@@ -608,3 +608,11 @@ body.ca-modal-activo {
         grid-column: auto;
     }
 }
+
+/* Situación de pago real bajo el estado técnico */
+.ca-situacion-pago {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: #6b5b8a;
+}

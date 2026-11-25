@@ -66,6 +66,38 @@ function conectarPlataformaCli(): mysqli
 }
 
 /**
+ * Guarda el resultado de una ejecución en automatizacion_ejecuciones para
+ * mostrarlo en el panel. Si la tabla no existe, no interrumpe el proceso.
+ */
+function registrarEjecucion(
+    mysqli $conexion,
+    string $proceso,
+    bool $confirmado,
+    DateTimeImmutable $inicio,
+    array $resumen,
+    ?string $error = null
+): void {
+    try {
+        $modo = $confirmado ? 'CONFIRMADO' : 'SIMULACION';
+        $resultado = $error === null ? 'EXITOSA' : 'ERROR';
+        $json = json_encode($resumen, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $mensaje = $error !== null ? mb_substr($error, 0, 500, 'UTF-8') : null;
+        $fechaInicio = $inicio->format('Y-m-d H:i:s');
+
+        $stmt = $conexion->prepare("
+            INSERT INTO automatizacion_ejecuciones
+                (proceso, modo, resultado, resumen_json, mensaje, fecha_inicio, fecha_fin)
+            VALUES (?, ?, ?, ?, ?, ?, NOW())
+        ");
+        $stmt->bind_param('ssssss', $proceso, $modo, $resultado, $json, $mensaje, $fechaInicio);
+        $stmt->execute();
+        $stmt->close();
+    } catch (Throwable $e) {
+        fwrite(STDERR, "Aviso: no se registró la ejecución ({$e->getMessage()}).\n");
+    }
+}
+
+/**
  * Bloqueo con nombre para evitar dos ejecuciones simultáneas del mismo script.
  */
 function obtenerBloqueoScript(mysqli $conexion, string $nombre): void

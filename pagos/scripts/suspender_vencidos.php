@@ -49,6 +49,7 @@ $automatizacionDesde = getenv('UBB_AUTOMATIZACION_DESDE') ?: null;
 $nombreBloqueo = 'ubb_suspension_automatica';
 $conexion = null;
 $bloqueo = false;
+$inicio = new DateTimeImmutable();
 
 $contadores = [
     'candidatos' => 0,
@@ -129,6 +130,7 @@ try {
 
     if (!$candidatos) {
         echo "No hay servicios por suspender.\n";
+        registrarEjecucion($conexion, 'SUSPENSION', $confirmar, $inicio, $contadores);
         exit(0);
     }
 
@@ -321,7 +323,12 @@ try {
         echo "\nSIMULACIÓN COMPLETADA. Para enviar las solicitudes, agrega --confirmar.\n";
     }
 
+    registrarEjecucion($conexion, 'SUSPENSION', $confirmar, $inicio, $contadores);
+
 } catch (Throwable $e) {
+    if ($conexion instanceof mysqli) {
+        registrarEjecucion($conexion, 'SUSPENSION', $confirmar, $inicio, $contadores, $e->getMessage());
+    }
     fwrite(STDERR, "\nERROR: " . $e->getMessage() . "\n");
     exit(1);
 } finally {

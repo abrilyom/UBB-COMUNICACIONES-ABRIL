@@ -6,99 +6,18 @@ function escaparProximo($valor) {
     return htmlspecialchars((string)($valor ?? ""), ENT_QUOTES, "UTF-8");
 }
 
-function calcularCicloProximo($fechaInstalacion, $hoy) {
-    if (!$fechaInstalacion || $fechaInstalacion === "0000-00-00") {
-        return [
-            "fecha_pago" => null,
-            "limite" => null,
-            "dias" => "Sin fecha de instalación",
-            "situacion" => "Revisar fecha",
-            "tipo" => "revisar"
-        ];
-    }
-
-    try {
-        $instalacion = new DateTimeImmutable($fechaInstalacion);
-        $diaOriginal = (int)$instalacion->format("j");
-
-        $anio = (int)$hoy->format("Y");
-        $mes = (int)$hoy->format("n");
-
-        $primerDia = new DateTimeImmutable(
-            sprintf("%04d-%02d-01", $anio, $mes)
-        );
-
-        $ultimoDia = (int)$primerDia->format("t");
-        $diaPago = min($diaOriginal, $ultimoDia);
-
-        $fechaPago = $primerDia->setDate($anio, $mes, $diaPago);
-        $limite = $fechaPago->modify("+10 days");
-
-        $diferencia = (int)$hoy->diff($fechaPago)->format("%r%a");
-
-        if ($diferencia > 0) {
-            if ($diferencia > 10) {
-                return null;
-            }
-
-            return [
-                "fecha_pago" => $fechaPago,
-                "limite" => $limite,
-                "dias" => "Faltan " . $diferencia . " días",
-                "situacion" => "Próximo a vencer",
-                "tipo" => "proximo"
-            ];
-        }
-
-        if ($diferencia === 0) {
-            return [
-                "fecha_pago" => $fechaPago,
-                "limite" => $limite,
-                "dias" => "Vence hoy",
-                "situacion" => "Vence hoy",
-                "tipo" => "hoy"
-            ];
-        }
-
-        $diasTranscurridos = abs($diferencia);
-
-        if ($hoy <= $limite) {
-            return [
-                "fecha_pago" => $fechaPago,
-                "limite" => $limite,
-                "dias" => $diasTranscurridos . " días desde el vencimiento",
-                "situacion" => "En plazo de gracia",
-                "tipo" => "gracia"
-            ];
-        }
-
-        $diasFueraDePlazo = (int)$limite->diff($hoy)->format("%a");
-
-        return [
-            "fecha_pago" => $fechaPago,
-            "limite" => $limite,
-            "dias" => $diasFueraDePlazo . " días fuera de plazo",
-            "situacion" => "Plazo vencido",
-            "tipo" => "vencido"
-        ];
-
-    } catch (Exception $e) {
-        return [
-            "fecha_pago" => null,
-            "limite" => null,
-            "dias" => "Fecha no válida",
-            "situacion" => "Revisar fecha",
-            "tipo" => "revisar"
-        ];
-    }
-}
-
 $serviciosVencidos = [];
 $errorCarga = null;
 $totalVencidos = 0;
 
+require_once __DIR__ . "/includes/estado_pagos.php";
+
 try {
     $conexion_plataforma = require __DIR__ . "/conexion_plataforma.php";
+    require_once __DIR__ . "/conexion.php";
+
+    // Situación según las mensualidades y pagos reales (no la fecha de instalación).
+    $estadoPagos = estadoPagosPorServicio($conexion);
 
     $sql = "
         SELECT
@@ -131,7 +50,7 @@ try {
     $hoy = new DateTimeImmutable("today");
 
     while ($fila = $resultado->fetch_assoc()) {
-        $ciclo = calcularCicloProximo($fila["fecha_instalacion"], $hoy);
+        $ciclo = $estadoPagos[(int)$fila["id_servicio"]] ?? null;
 
         if ($ciclo === null || ($ciclo["tipo"] ?? "") !== "vencido") {
             continue;
@@ -192,7 +111,7 @@ $paquetesDisponibles = array_values($paquetesDisponibles);
                 <div>
                     <span class="px-etiqueta">CLIENTES</span>
                     <h1>Clientes vencidos</h1>
-                    <p>Servicios que superaron su fecha límite y los 10 días de gracia.</p>
+                    <p>Servicios con una mensualidad sin pagar después de los 10 días de gracia. Se suspenden automáticamente el día 11.</p>
                 </div>
             </div>
             <a href="index.php" class="px-regresar">← Regresar al centro de control</a>
@@ -247,18 +166,19 @@ $paquetesDisponibles = array_values($paquetesDisponibles);
                         <th>CLIENTE</th>
                         <th>ID SERVICIO</th>
                         <th>PAQUETE</th>
-                        <th>FECHA DE PAGO</th>
+                        <th>VENCIMIENTO</th>
                         <th>LÍMITE</th>
                         <th>DÍAS</th>
+                        <th>ADEUDO</th>
                         <th>SITUACIÓN</th>
                         <th>ACCIONES</th>
                     </tr>
                 </thead>
                 <tbody>
                 <?php if ($errorCarga): ?>
-                    <tr><td colspan="8" class="px-vacio"><?= escaparProximo($errorCarga) ?></td></tr>
+                    <tr><td colspan="9" class="px-vacio"><?= escaparProximo($errorCarga) ?></td></tr>
                 <?php elseif (!$serviciosVencidos): ?>
-                    <tr><td colspan="8" class="px-vacio">No hay servicios que mostrar en este periodo.</td></tr>
+                    <tr><td colspan="9" class="px-vacio">No hay servicios que mostrar en este periodo.</td></tr>
                 <?php else: ?>
                     <?php foreach ($serviciosVencidos as $fila): ?>
                         <?php
@@ -314,6 +234,7 @@ $paquetesDisponibles = array_values($paquetesDisponibles);
                             <td><?= $ciclo["fecha_pago"] ? $ciclo["fecha_pago"]->format("d/m/Y") : "Sin información" ?></td>
                             <td><?= $ciclo["limite"] ? $ciclo["limite"]->format("d/m/Y") : "Sin información" ?></td>
                             <td><?= escaparProximo($ciclo["dias"]) ?></td>
+                            <td><strong><?= escaparProximo(textoAdeudo($ciclo)) ?></strong></td>
                             <td>
                                 <span class="px-estado px-estado-<?= escaparProximo($ciclo["tipo"]) ?>">
                                     <?= escaparProximo($ciclo["situacion"]) ?>
@@ -331,6 +252,8 @@ $paquetesDisponibles = array_values($paquetesDisponibles);
                                     data-pago="<?= escaparProximo($ciclo["fecha_pago"] ? $ciclo["fecha_pago"]->format("d/m/Y") : "Sin información") ?>"
                                     data-limite="<?= escaparProximo($ciclo["limite"] ? $ciclo["limite"]->format("d/m/Y") : "Sin información") ?>"
                                     data-dias="<?= escaparProximo($ciclo["dias"]) ?>"
+                                    data-adeudo="<?= escaparProximo(textoAdeudo($ciclo)) ?>"
+                                    data-referencia="<?= escaparProximo($ciclo["referencia"]) ?>"
                                     data-situacion="<?= escaparProximo($ciclo["situacion"]) ?>">
                                     Ver detalles
                                 </button>
@@ -368,6 +291,8 @@ $paquetesDisponibles = array_values($paquetesDisponibles);
                 <div class="px-dato"><span>Fecha de pago</span><strong id="pxPago"></strong></div>
                 <div class="px-dato"><span>Fecha límite</span><strong id="pxLimite"></strong></div>
                 <div class="px-dato"><span>Días</span><strong id="pxDias"></strong></div>
+                <div class="px-dato"><span>Adeudo</span><strong id="pxAdeudo"></strong></div>
+                <div class="px-dato"><span>Referencia de pago</span><strong id="pxReferencia"></strong></div>
                 <div class="px-dato px-dato-ancho"><span>Situación</span><strong id="pxSituacion"></strong></div>
             </div>
             <footer class="px-modal-pie">
@@ -439,7 +364,8 @@ $paquetesDisponibles = array_values($paquetesDisponibles);
         direccion: "pxDireccion", idCliente: "pxIdCliente",
         idServicio: "pxIdServicio", paquete: "pxPaquete",
         instalacion: "pxInstalacion", pago: "pxPago",
-        limite: "pxLimite", dias: "pxDias", situacion: "pxSituacion"
+        limite: "pxLimite", dias: "pxDias", situacion: "pxSituacion",
+        adeudo: "pxAdeudo", referencia: "pxReferencia"
     };
 
     let botonAnterior = null;

@@ -192,7 +192,12 @@ function calcularCicloDashboard($fechaInstalacion, $hoy) {
     }
 }
 
+require_once __DIR__ . "/includes/estado_pagos.php";
+
 try {
+    // Misma regla que proximos.php: mensualidades y pagos reales.
+    $estado_pagos_dashboard = estadoPagosPorServicio($conexion);
+
     $sql_vencimientos = "
         SELECT
             s.id_servicio,
@@ -206,15 +211,11 @@ try {
     ";
 
     $resultado_vencimientos = $conexion_plataforma->query($sql_vencimientos);
-    $hoy_dashboard = new DateTimeImmutable("today");
 
     while ($fila = $resultado_vencimientos->fetch_assoc()) {
-        $ciclo = calcularCicloDashboard(
-            $fila["fecha_instalacion"],
-            $hoy_dashboard
-        );
+        $ciclo = $estado_pagos_dashboard[(int)$fila["id_servicio"]] ?? null;
 
-        if ($ciclo === null) {
+        if ($ciclo === null || $ciclo["tipo"] === "futuro") {
             continue;
         }
 
@@ -384,6 +385,27 @@ $maximo_eje_ingresos = $escala_ingresos * 4;
 $total_ingresos_semana = $total_uisp_semana + $total_ubb_semana;
 $etiqueta_semana = $inicio_semana->format('d/m') . ' – ' . $fin_semana->format('d/m');
 
+/* ===== CENTRO DE AUTOMATIZACIÓN ===== */
+require_once __DIR__ . "/includes/resumen_automatizacion.php";
+
+$automatizacion = resumenAutomatizacion(
+    $conexion,
+    $estado_pagos_dashboard ?? [],
+    $error_servicios ? null : ($consultaGrezz["respuesta"]["servicios"] ?? null)
+);
+
+function numeroAuto($valor): string
+{
+    return $valor === null ? '—' : number_format((int)$valor);
+}
+
+$auto_mov = $automatizacion['movimientos'];
+$auto_conc = $automatizacion['conciliados_auto'];
+$auto_sol = $automatizacion['solicitudes'];
+$auto_avisos = $automatizacion['avisos'];
+$auto_cortes = $automatizacion['cortes'];
+$auto_ejec = $automatizacion['ejecuciones'] ?? [];
+
 ?>
 
 <!DOCTYPE html>
@@ -394,7 +416,7 @@ $etiqueta_semana = $inicio_semana->format('d/m') . ' – ' . $fin_semana->format
 
     <title>UBB Comunicaciones - Gestión de Pagos</title>
 
-    <link rel="stylesheet" href="css/pagos.css?v=20261104_leyenda_estados_v3">
+    <link rel="stylesheet" href="css/pagos.css?v=20261126_automatizacion">
 </head>
 
 <body>
@@ -428,8 +450,8 @@ $etiqueta_semana = $inicio_semana->format('d/m') . ' – ' . $fin_semana->format
             <span class="punto-verde"></span>
 
             <div>
-                <strong>MONITOREO DE PAGOS</strong>
-                <small>Datos locales de pagos; servicios pendientes de integración</small>
+                <strong>AUTOMATIZACIÓN DE PAGOS</strong>
+                <small>Pagos conciliados y servicios coordinados con Grezz</small>
             </div>
         </div>
 
@@ -450,7 +472,7 @@ $etiqueta_semana = $inicio_semana->format('d/m') . ' – ' . $fin_semana->format
 
     <strong class="numero"><?php echo $servicios_activos !== null ? $servicios_activos : '—'; ?></strong>
 
-    <small><?php echo $error_servicios ? 'No disponible: revisar conexión' : 'Servicios activos'; ?></small>
+    <small><?php echo $error_servicios ? 'No disponible: revisar conexión' : 'Servicios DHCP activos en Grezz'; ?></small>
     <span class="capsula-tendencia tendencia-neutra"><?php echo $error_servicios ? 'Sin conexión' : 'Datos reales'; ?></span>
 </div>
 
@@ -476,7 +498,7 @@ $etiqueta_semana = $inicio_semana->format('d/m') . ' – ' . $fin_semana->format
 
             <strong class="numero"><?php echo $total_proximos !== null ? number_format($total_proximos) : '—'; ?></strong>
 
-            <small><?php echo $error_proximos ? 'No disponible: revisar conexión' : 'Servicios en seguimiento'; ?></small>
+            <small><?php echo $error_proximos ? 'No disponible: revisar conexión' : 'Con mensualidad por vencer o vencida'; ?></small>
             <span class="capsula-tendencia tendencia-precaucion"><?php echo $error_proximos ? 'Sin conexión' : 'Datos reales'; ?></span>
         </div>
 
@@ -490,10 +512,113 @@ $etiqueta_semana = $inicio_semana->format('d/m') . ' – ' . $fin_semana->format
 
             <strong class="numero"><?php echo $servicios_suspendidos !== null ? $servicios_suspendidos : '—'; ?></strong>
 
-            <small><?php echo $error_servicios ? 'No disponible: revisar conexión' : 'Servicios suspendidos'; ?></small>
+            <small><?php echo $error_servicios ? 'No disponible: revisar conexión' : 'Servicios DHCP suspendidos en Grezz'; ?></small>
             <span class="capsula-tendencia tendencia-alerta"><?php echo $error_servicios ? 'Sin conexión' : 'Datos reales'; ?></span>
         </div>
 
+    </section>
+
+
+    <!-- =====================================================
+         CENTRO DE AUTOMATIZACIÓN
+         Lo que el sistema hace solo: conciliar pagos, solicitar
+         suspensiones y reactivaciones a Grezz y avisar a los clientes.
+    ====================================================== -->
+
+    <section class="panel auto-centro">
+
+        <div class="auto-encabezado">
+            <div class="auto-titulo">
+                <span class="icono-circular-ingresos" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
+                         stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/>
+                        <circle cx="12" cy="12" r="4"/>
+                    </svg>
+                </span>
+                <div>
+                    <h3>Centro de automatización</h3>
+                    <p>Lo que el sistema hace solo: concilia pagos, coordina cortes y reconexiones con Grezz y avisa a los clientes.</p>
+                </div>
+            </div>
+            <span class="auto-regla">Gracia: 10 días · Corte: día 11</span>
+        </div>
+
+        <div class="auto-flujo">
+
+            <!-- 1. Pagos bancarios -->
+            <a class="auto-paso" href="conciliacion_bancaria.php">
+                <span class="auto-paso-num">1</span>
+                <strong>Pagos bancarios</strong>
+                <div class="auto-cifra">
+                    <?= numeroAuto($auto_conc['total'] ?? null) ?>
+                    <small>conciliados solos (7 días)</small>
+                </div>
+                <ul>
+                    <li>$<?= number_format((float)($auto_conc['importe'] ?? 0), 2) ?> aplicados</li>
+                    <li><?= numeroAuto($auto_mov['pendientes'] ?? ($auto_mov === null ? null : 0)) ?> por conciliar</li>
+                    <li class="<?= (int)($auto_mov['revision'] ?? 0) > 0 ? 'auto-alerta' : '' ?>">
+                        <?= numeroAuto($auto_mov['revision'] ?? ($auto_mov === null ? null : 0)) ?> en revisión manual
+                    </li>
+                </ul>
+                <span class="auto-ejecucion"><?= htmlspecialchars(textoUltimaEjecucion($auto_ejec['CONCILIACION'] ?? null), ENT_QUOTES, 'UTF-8') ?></span>
+            </a>
+
+            <!-- 2. Cortes -->
+            <a class="auto-paso" href="vencidos.php">
+                <span class="auto-paso-num">2</span>
+                <strong>Suspensiones</strong>
+                <div class="auto-cifra">
+                    <?= numeroAuto($auto_cortes['fuera_gracia']) ?>
+                    <small>fuera de gracia</small>
+                </div>
+                <ul>
+                    <li><?= numeroAuto($auto_cortes['gestionables']) ?> se cortan automáticamente</li>
+                    <li><?= numeroAuto($auto_cortes['manuales']) ?> requieren corte manual (PPPoE)</li>
+                    <li><?= numeroAuto($auto_cortes['en_gracia']) ?> en periodo de gracia</li>
+                </ul>
+                <span class="auto-ejecucion"><?= htmlspecialchars(textoUltimaEjecucion($auto_ejec['SUSPENSION'] ?? null), ENT_QUOTES, 'UTF-8') ?></span>
+            </a>
+
+            <!-- 3. Grezz -->
+            <a class="auto-paso" href="suspendidos.php">
+                <span class="auto-paso-num">3</span>
+                <strong>Solicitudes a Grezz</strong>
+                <div class="auto-cifra">
+                    <?= numeroAuto(isset($auto_sol) && $auto_sol !== null
+                        ? (int)($auto_sol['suspensiones_hoy'] ?? 0) + (int)($auto_sol['reactivaciones_hoy'] ?? 0)
+                        : null) ?>
+                    <small>enviadas hoy</small>
+                </div>
+                <ul>
+                    <li><?= numeroAuto($auto_sol['suspensiones_hoy'] ?? ($auto_sol === null ? null : 0)) ?> suspensiones</li>
+                    <li><?= numeroAuto($auto_sol['reactivaciones_hoy'] ?? ($auto_sol === null ? null : 0)) ?> reactivaciones</li>
+                    <li class="<?= (int)($auto_sol['pendientes'] ?? 0) > 0 ? 'auto-alerta' : '' ?>">
+                        <?= numeroAuto($auto_sol['pendientes'] ?? ($auto_sol === null ? null : 0)) ?> sin confirmar
+                    </li>
+                </ul>
+                <span class="auto-ejecucion">Modo simulación hasta validar con Grezz</span>
+            </a>
+
+            <!-- 4. Avisos -->
+            <a class="auto-paso" href="notificaciones.php">
+                <span class="auto-paso-num">4</span>
+                <strong>Avisos a clientes</strong>
+                <div class="auto-cifra">
+                    <?= numeroAuto($auto_avisos['enviados_hoy'] ?? ($auto_avisos === null ? null : 0)) ?>
+                    <small>enviados hoy</small>
+                </div>
+                <ul>
+                    <li><?= numeroAuto($auto_avisos['pendientes'] ?? ($auto_avisos === null ? null : 0)) ?> por enviar</li>
+                    <li class="<?= (int)($auto_avisos['con_problema'] ?? 0) > 0 ? 'auto-alerta' : '' ?>">
+                        <?= numeroAuto($auto_avisos['con_problema'] ?? ($auto_avisos === null ? null : 0)) ?> sin teléfono o con error
+                    </li>
+                </ul>
+                <span class="auto-ejecucion"><?= htmlspecialchars(textoUltimaEjecucion($auto_ejec['NOTIFICACIONES'] ?? null), ENT_QUOTES, 'UTF-8') ?></span>
+            </a>
+
+        </div>
     </section>
 
 

@@ -2,6 +2,11 @@
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 $conexion_plataforma = require __DIR__ . "/conexion_plataforma.php";
+require_once __DIR__ . "/conexion.php";
+require_once __DIR__ . "/includes/estado_pagos.php";
+
+// Situación de pago según mensualidades y pagos reales.
+$estadoPagos = estadoPagosPorServicio($conexion);
 
 date_default_timezone_set("America/Mexico_City");
 
@@ -325,9 +330,9 @@ $hasta = min($inicio + $porPagina, $totalFiltrados);
                         <th>CLIENTE</th>
                         <th>ID SERVICIO</th>
                         <th>PAQUETE</th>
-                        <th>FECHA DE PAGO</th>
+                        <th>PRÓXIMO VENCIMIENTO</th>
                         <th>LÍMITE</th>
-                        <th>ESTADO</th>
+                        <th>ESTADO / PAGO</th>
                         <th>ACCIONES</th>
                     </tr>
                 </thead>
@@ -343,8 +348,13 @@ $hasta = min($inicio + $porPagina, $totalFiltrados);
                         ($fila["apellido_materno"] ?? "")
                     );
 
-                    [$fechaPago, $fechaLimite] =
-                        calcularFechasActivo($fila["fecha_instalacion"]);
+                    // Situación según mensualidades y pagos reales.
+                    $situacionPago = $estadoPagos[(int)$fila["id_servicio"]] ?? null;
+                    $fechaPago = $situacionPago["fecha_pago"] ?? null;
+                    $fechaLimite = $situacionPago["limite"] ?? null;
+                    $textoSituacion = $situacionPago
+                        ? $situacionPago["situacion"] . " · " . textoAdeudo($situacionPago)
+                        : "Al corriente";
                     $fechaInstalacion = $fila["fecha_instalacion"] ?? "";
                     $fechaInstalacionMostrar = $fechaInstalacion && $fechaInstalacion !== "0000-00-00"
                         ? date("d/m/Y", strtotime($fechaInstalacion))
@@ -399,19 +409,20 @@ $hasta = min($inicio + $porPagina, $totalFiltrados);
                         <td>
                             <?= $fechaPago
                                 ? $fechaPago->format("d/m/Y")
-                                : "Sin información" ?>
+                                : "Sin adeudo" ?>
                         </td>
 
                         <td>
                             <?= $fechaLimite
                                 ? $fechaLimite->format("d/m/Y")
-                                : "Sin información" ?>
+                                : "—" ?>
                         </td>
 
                         <td>
                             <span class="ca-estado">
                                 <?= escaparActivo($fila["estado"]) ?>
                             </span>
+                            <small class="ca-situacion-pago"><?= escaparActivo($textoSituacion) ?></small>
                         </td>
 
                         <td class="ca-acciones">

@@ -10399,3 +10399,153 @@ body.confirmacion-pago-abierta {
 }
 
 /* FIN UBB - PALETA LAVANDA DEL FORMULARIO */
+
+/* =========================================================
+   CENTRO DE AUTOMATIZACIÓN
+   ========================================================= */
+.auto-centro {
+    margin-bottom: 22px;
+}
+
+.auto-encabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+}
+
+.auto-titulo {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.auto-titulo h3 {
+    margin: 0;
+    color: #29233d;
+}
+
+.auto-titulo p {
+    margin: 4px 0 0;
+    color: #777184;
+    font-size: 13px;
+}
+
+.auto-regla {
+    background: #eee2f7;
+    color: #5b2a86;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.auto-flujo {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.auto-paso {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 18px 16px 14px;
+    border: 1px solid #e5e1ee;
+    border-radius: 12px;
+    background: #fbf9fd;
+    color: #29233d;
+    text-decoration: none;
+    transition: 0.2s;
+}
+
+.auto-paso:hover {
+    border-color: #8050a2;
+    box-shadow: 0 6px 18px rgba(91, 42, 134, 0.12);
+    transform: translateY(-1px);
+}
+
+/* Flecha entre pasos: el flujo se lee de izquierda a derecha */
+.auto-paso:not(:last-child)::after {
+    content: "›";
+    position: absolute;
+    right: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #8050a2;
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.auto-paso-num {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #5b2a86;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    display: grid;
+    place-items: center;
+}
+
+.auto-paso > strong {
+    font-size: 14px;
+}
+
+.auto-cifra {
+    font-size: 30px;
+    font-weight: 700;
+    color: #5b2a86;
+    line-height: 1.1;
+}
+
+.auto-cifra small {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: #777184;
+}
+
+.auto-paso ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 12.5px;
+    color: #382345;
+    display: grid;
+    gap: 3px;
+}
+
+.auto-paso li.auto-alerta {
+    color: #b91c1c;
+    font-weight: 600;
+}
+
+.auto-ejecucion {
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px dashed #e5e1ee;
+    font-size: 11.5px;
+    color: #777184;
+}
+
+@media (max-width: 1100px) {
+    .auto-flujo {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .auto-paso::after {
+        display: none;
+    }
+}
+
+@media (max-width: 640px) {
+    .auto-flujo {
+        grid-template-columns: 1fr;
+    }
+}

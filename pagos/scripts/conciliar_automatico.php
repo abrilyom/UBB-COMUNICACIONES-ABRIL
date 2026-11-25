@@ -43,6 +43,7 @@ $nombreBloqueo = 'ubb_conciliacion_automatica';
 
 $conexion = null;
 $bloqueo = false;
+$inicio = new DateTimeImmutable();
 
 $contadores = [
     'revisados' => 0,
@@ -218,7 +219,12 @@ try {
         echo "\nSIMULACIÓN COMPLETADA. Para guardar, agrega --confirmar.\n";
     }
 
+    registrarEjecucion($conexion, 'CONCILIACION', $confirmar, $inicio, $contadores);
+
 } catch (Throwable $e) {
+    if ($conexion instanceof mysqli) {
+        registrarEjecucion($conexion, 'CONCILIACION', $confirmar, $inicio, $contadores, $e->getMessage());
+    }
     fwrite(STDERR, "\nERROR: " . $e->getMessage() . "\n");
     exit(1);
 } finally {

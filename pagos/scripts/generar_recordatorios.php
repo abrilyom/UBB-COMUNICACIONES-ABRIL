@@ -33,6 +33,7 @@ foreach ($opciones as $opcion) {
 }
 
 $confirmar = in_array('--confirmar', $opciones, true);
+$inicio = new DateTimeImmutable();
 
 try {
     $conexion = conectarPagosCli();
@@ -106,7 +107,12 @@ try {
         ? "Avisos encolados. Ejecuta enviar_notificaciones.php para mandarlos.\n"
         : "SIMULACIÓN COMPLETADA. Para encolar, agrega --confirmar.\n";
 
+    registrarEjecucion($conexion, 'RECORDATORIOS', $confirmar, $inicio, ['avisos' => $total]);
+
 } catch (Throwable $e) {
+    if (isset($conexion) && $conexion instanceof mysqli) {
+        registrarEjecucion($conexion, 'RECORDATORIOS', $confirmar, $inicio, [], $e->getMessage());
+    }
     fwrite(STDERR, "\nERROR: " . $e->getMessage() . "\n");
     exit(1);
 }

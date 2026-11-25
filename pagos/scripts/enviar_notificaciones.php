@@ -49,6 +49,7 @@ foreach ($opciones as $opcion) {
 }
 
 $enviar = in_array('--enviar', $opciones, true);
+$inicio = new DateTimeImmutable();
 
 function cargarConfigNotificaciones(): array
 {
@@ -191,6 +192,7 @@ try {
     echo "Mensajes por enviar: " . count($pendientes) . "\n\n";
 
     if (!$pendientes) {
+        registrarEjecucion($conexion, 'NOTIFICACIONES', $enviar, $inicio, ['pendientes' => 0]);
         exit(0);
     }
 
@@ -279,7 +281,16 @@ try {
     echo "===== RESUMEN =====\n";
     echo "Enviadas: $enviadas | Con error o sin teléfono: $errores\n";
 
+    registrarEjecucion($conexion, 'NOTIFICACIONES', $enviar, $inicio, [
+        'pendientes' => count($pendientes),
+        'enviadas' => $enviadas,
+        'errores' => $errores,
+    ]);
+
 } catch (Throwable $e) {
+    if (isset($conexion) && $conexion instanceof mysqli) {
+        registrarEjecucion($conexion, 'NOTIFICACIONES', $enviar, $inicio, [], $e->getMessage());
+    }
     fwrite(STDERR, "\nERROR: " . $e->getMessage() . "\n");
     exit(1);
 }

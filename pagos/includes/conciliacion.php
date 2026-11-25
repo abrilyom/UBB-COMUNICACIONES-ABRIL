@@ -17,7 +17,9 @@ declare(strict_types=1);
  *  - Todo ocurre dentro de una transacción con FOR UPDATE.
  */
 
-const UBB_DIAS_GRACIA = 10;
+if (!defined('UBB_DIAS_GRACIA')) {
+    define('UBB_DIAS_GRACIA', 10);
+}
 
 class ConciliacionException extends RuntimeException
 {
