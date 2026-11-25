@@ -10549,3 +10549,55 @@ body.confirmacion-pago-abierta {
         grid-template-columns: 1fr;
     }
 }
+
+
+/* UBB: panel lateral en degradado orquidea (#a770b2) con texto blanco */
+.menu-lateral-ubb {
+    background: linear-gradient(
+        180deg,
+        #ab69b8 0%,
+        #9e51ae 72%,
+        #6f297d 100%
+    ) !important;
+    color: #fff !important;
+}
+
+.menu-lateral-ubb::before,
+.menu-lateral-ubb::after {
+    background-color: rgba(255, 255, 255, .06) !important;
+}
+
+.menu-lateral-ubb nav a {
+    color: #fff !important;
+}
+
+.menu-lateral-ubb nav a .icono-menu {
+    background: rgba(255, 255, 255, .16) !important;
+    border-color: rgba(255, 255, 255, .28) !important;
+    color: #fff !important;
+}
+
+.menu-lateral-ubb nav a .icono-menu svg {
+    stroke: #fff !important;
+}
+
+.menu-lateral-ubb nav a:hover {
+    background: rgba(255, 255, 255, .14) !important;
+    border-color: rgba(255, 255, 255, .20) !important;
+    color: #fff !important;
+}
+
+.menu-lateral-ubb nav a:hover .icono-menu {
+    background: rgba(255, 255, 255, .24) !important;
+}
+
+.menu-lateral-ubb nav a.activo {
+    background: rgba(255, 255, 255, .28) !important;
+    border-color: rgba(255, 255, 255, .35) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 12px rgba(60, 20, 70, .18) !important;
+}
+
+.menu-lateral-ubb .menu-pie-ubb {
+    border-top-color: rgba(255, 255, 255, .25) !important;
+}
