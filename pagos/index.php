@@ -561,6 +561,9 @@ $auto_ejec = $automatizacion['ejecuciones'] ?? [];
                     <li class="<?= (int)($auto_mov['revision'] ?? 0) > 0 ? 'auto-alerta' : '' ?>">
                         <?= numeroAuto($auto_mov['revision'] ?? ($auto_mov === null ? null : 0)) ?> en revisión manual
                     </li>
+                    <li class="<?= ($auto_ejec['PAGOS_UISP']['resultado'] ?? '') === 'ERROR' ? 'auto-alerta' : '' ?>">
+                        Pagos UISP: <?= htmlspecialchars(textoUltimaEjecucion($auto_ejec['PAGOS_UISP'] ?? null), ENT_QUOTES, 'UTF-8') ?>
+                    </li>
                 </ul>
                 <span class="auto-ejecucion"><?= htmlspecialchars(textoUltimaEjecucion($auto_ejec['CONCILIACION'] ?? null), ENT_QUOTES, 'UTF-8') ?></span>
             </a>

@@ -87,6 +87,48 @@ La configuración vive en `/etc/ubb-notificaciones.env` (fuera del repositorio).
 - **SMS (Twilio):** se activa en minutos con una cuenta y número; tiene costo por mensaje.
 - **Sin proveedor:** los mensajes quedan en la cola y el personal los envía desde el módulo Notificaciones.
 
+## Pagos registrados en UISP (mientras llega la API de BBVA)
+
+`pagos/scripts/sincronizar_pagos_uisp.php` lee los pagos que el personal captura en el CRM de UISP y los guarda en `uisp_pagos_importacion`, la misma tabla del CSV del 15/10/2026. Así el historial, el panel y los reportes se actualizan solos.
+
+- **Solo lectura sobre UISP**: usa una llave de aplicación de tipo *Lectura*; no cambia nada en el CRM.
+- **Sin duplicados**: cada pago guarda su `uisp_payment_id` (índice único). Si el pago ya venía en el CSV (misma fecha/hora, cliente y monto), solo se le asigna el ID a esa fila.
+- Guarda además las facturas que cubrió el pago (`facturas_uisp_json`) y el saldo a favor (`credito_uisp`).
+- Normaliza el método igual que el CSV: Efectivo, Transferencia bancaria, Depósito y Tarjeta Débito/Crédito; los demás (cortesía, personalizado, cheque…) quedan como `REVISAR`.
+- Limitación: si un pago se **borra o edita** en UISP después de sincronizarse, aquí no se refleja.
+
+### Instalación
+
+1. Aplicar la migración (primero en pruebas):
+
+   ```bash
+   mariadb ubb_pagos < db/migraciones/2026-11-27_pagos_uisp_api.sql
+   ```
+
+2. Guardar la llave del CRM (Sistema → Seguridad → Claves de aplicación, tipo *Lectura*) fuera del repositorio:
+
+   ```bash
+   sudo install -m 600 /dev/null /etc/ubb-uisp.token && sudo nano /etc/ubb-uisp.token
+   ```
+
+   El archivo debe poder leerlo el usuario que ejecuta PHP.
+
+3. Simular y, si el resumen es correcto, confirmar la carga desde el día del CSV:
+
+   ```bash
+   cd /var/www/html/pagos/scripts
+   php sincronizar_pagos_uisp.php --desde=2026-10-15
+   php sincronizar_pagos_uisp.php --desde=2026-10-15 --confirmar
+   ```
+
+4. Programarlo (revisa los últimos 7 días cada 15 minutos; es seguro repetirlo):
+
+   ```cron
+   */15 * * * *  cd /var/www/html/pagos/scripts && php sincronizar_pagos_uisp.php --confirmar >> /var/log/ubb/pagos_uisp.log 2>&1
+   ```
+
+Variables opcionales: `UBB_UISP_URL`, `UBB_UISP_TOKEN_FILE`, `UBB_UISP_CA` (certificado del CRM para verificar TLS; sin ella no se verifica) y `UBB_UISP_DIAS`.
+
 ## Alcance actual de Grezz
 
 La API de Grezz (RADIUS) por ahora solo expone los **servicios DHCP con equipo relacionado** (344 en la revisión del 25/11/2026: 302 activos, 9 suspendidos y 33 que no pudo resolver, con un campo `error` como `SIN_RELACION`). Los servicios **PPPoE**, que son la mayoría de fibra, todavía no aparecen.
