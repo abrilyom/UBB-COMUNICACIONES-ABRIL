@@ -1,0 +1,62 @@
+# Variables y credenciales
+.env
+.env.*
+!.env.example
+
+# Configuraciones locales de conexión
+pagos/conexion.php
+pagos/conexion_planes.php
+pagos/conexion_plataforma.php
+pagos/conexion_pruebas.php
+pagos/conexion_pruebas_web.php
+
+# Dependencias instaladas
+/vendor/
+/pagos/vendor/
+
+# Comprobantes y archivos generados
+/pagos/comprobantes/
+/pagos/vista_previa_ticket_temporal.pdf
+
+# Respaldos
+/respaldos/
+*.bak
+*.bak-*
+*.bak_*
+*.respaldo
+*.respaldo_*
+*.backup
+
+# Archivos temporales
+*.log
+.DS_Store
+Thumbs.db
+
+# --- Contraseñas y configuración privada ---
+pagos/conexion.php
+pagos/conexion_plataforma.php
+pagos/conexion_planes.php
+pagos/api/conexion_radius.php
+pagos/api/configuracion.php
+
+# --- Datos de clientes ---
+*.sql
+*.sql.gz
+pagos/comprobantes/
+pagos/reportes/
+pagos/vista_previa_ticket_temporal.pdf
+
+# --- Respaldos manuales ---
+*.bak
+*.bak*
+*.respaldo*
+*.backup*
+*.save
+*.antes_*
+*_antes_*.php
+*.antes_*.php
+respaldos/
+pagos/respaldo*/
+
+# --- Dependencias ---
+vendor/

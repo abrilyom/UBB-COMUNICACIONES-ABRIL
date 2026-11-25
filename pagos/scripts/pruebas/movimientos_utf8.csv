@@ -1,0 +1,2 @@
+﻿banco,cuenta_alias,fecha_movimiento,tipo_movimiento,monto,moneda,ordenante,referencia_bancaria,concepto,clave_rastreo,identificador_externo
+PRUEBA,,2026-11-06 10:15:00,ABONO,450.00,MXN,,,,RASTREO-UTF8-001,

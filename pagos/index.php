@@ -1,3 +1,391 @@
+<?php
+
+require_once "conexion.php";
+require_once "conexion_plataforma.php";
+require_once __DIR__ . "/api/cliente_grezz.php";
+
+// =====================================================
+// INDICADORES REALES DEL DASHBOARD
+// =====================================================
+
+// Pagos registrados hoy y ayer.
+// Se utiliza la fecha de MariaDB para mantener consistencia
+// con el servidor que almacena los pagos.
+
+$pagos_hoy = 0;
+$pagos_ayer = 0;
+
+$consulta_pagos_hoy = $conexion->query("
+    SELECT COUNT(*) AS total
+    FROM pagos
+    WHERE DATE(fecha_pago) = CURDATE()
+      AND estado_pago = 'PAGADO'
+");
+
+if ($consulta_pagos_hoy) {
+    $fila = $consulta_pagos_hoy->fetch_assoc();
+    $pagos_hoy = (int)$fila['total'];
+}
+
+$consulta_pagos_ayer = $conexion->query("
+    SELECT COUNT(*) AS total
+    FROM pagos
+    WHERE DATE(fecha_pago) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)
+      AND estado_pago = 'PAGADO'
+");
+
+if ($consulta_pagos_ayer) {
+    $fila = $consulta_pagos_ayer->fetch_assoc();
+    $pagos_ayer = (int)$fila['total'];
+}
+
+$texto_tendencia_pagos = "Sin comparación disponible";
+$clase_tendencia_pagos = "tendencia-neutra";
+
+if ($pagos_ayer > 0) {
+    $variacion_pagos = (($pagos_hoy - $pagos_ayer) / $pagos_ayer) * 100;
+    $simbolo_pagos = $variacion_pagos > 0
+        ? "↗"
+        : ($variacion_pagos < 0 ? "↘" : "→");
+
+    $texto_tendencia_pagos = $simbolo_pagos . " " .
+        ($variacion_pagos > 0 ? "+" : "") .
+        round($variacion_pagos) . "% vs. ayer";
+
+    $clase_tendencia_pagos = $variacion_pagos > 0
+        ? "tendencia-positiva"
+        : ($variacion_pagos < 0
+            ? "tendencia-negativa"
+            : "tendencia-neutra");
+
+} elseif ($pagos_ayer === 0 && $pagos_hoy > 0) {
+    $texto_tendencia_pagos = "Nuevos pagos · ayer hubo 0";
+    $clase_tendencia_pagos = "tendencia-positiva";
+}
+
+// Estados operativos consultados desde Grezz (solo lectura).
+$servicios_activos = null;
+$servicios_suspendidos = null;
+$error_servicios = false;
+$servicios_estado_grezz = [
+    "ACTIVO" => 0,
+    "SUSPENDIDO" => 0,
+    "SIN_DATOS" => 0
+];
+
+try {
+    $consultaGrezz = listarServiciosGrezz();
+
+    if (
+        empty($consultaGrezz["transporte_ok"]) ||
+        (int)$consultaGrezz["codigo_http"] !== 200 ||
+        !isset($consultaGrezz["respuesta"]["servicios"]) ||
+        !is_array($consultaGrezz["respuesta"]["servicios"])
+    ) {
+        throw new RuntimeException("Respuesta de Grezz no disponible o inválida.");
+    }
+
+    foreach ($consultaGrezz["respuesta"]["servicios"] as $servicioGrezz) {
+        $estado = strtoupper(trim((string)($servicioGrezz["estado_actual"] ?? "")));
+
+        if ($estado === "ACTIVO") {
+            $servicios_estado_grezz["ACTIVO"]++;
+        } elseif ($estado === "SUSPENDIDO") {
+            $servicios_estado_grezz["SUSPENDIDO"]++;
+        } else {
+            $servicios_estado_grezz["SIN_DATOS"]++;
+        }
+    }
+
+    $servicios_activos = $servicios_estado_grezz["ACTIVO"];
+    $servicios_suspendidos = $servicios_estado_grezz["SUSPENDIDO"];
+
+} catch (Throwable $e) {
+    $error_servicios = true;
+    $servicios_activos = null;
+    $servicios_suspendidos = null;
+
+    error_log("Dashboard UBB: error al consultar Grezz: " . $e->getMessage());
+}
+
+
+// =====================================================
+// PRÓXIMOS VENCIMIENTOS: MISMA REGLA QUE proximos.php
+// Consulta exclusivamente de lectura a ubb_plataforma.
+// =====================================================
+
+date_default_timezone_set("America/Mexico_City");
+
+$total_proximos = null;
+$error_proximos = false;
+$vencimientos_dashboard = [];
+
+function calcularCicloDashboard($fechaInstalacion, $hoy) {
+    if (!$fechaInstalacion || $fechaInstalacion === "0000-00-00") {
+        return [
+            "fecha_pago" => null,
+            "dias" => "Sin fecha de instalación",
+            "situacion" => "Revisar fecha"
+        ];
+    }
+
+    try {
+        $instalacion = new DateTimeImmutable($fechaInstalacion);
+        $diaOriginal = (int)$instalacion->format("j");
+        $anio = (int)$hoy->format("Y");
+        $mes = (int)$hoy->format("n");
+
+        $primerDia = new DateTimeImmutable(
+            sprintf("%04d-%02d-01", $anio, $mes)
+        );
+
+        $ultimoDia = (int)$primerDia->format("t");
+        $diaPago = min($diaOriginal, $ultimoDia);
+
+        $fechaPago = $primerDia->setDate($anio, $mes, $diaPago);
+        $limite = $fechaPago->modify("+10 days");
+
+        $diferencia = (int)$hoy->diff($fechaPago)->format("%r%a");
+
+        if ($diferencia > 10) {
+            return null;
+        }
+
+        if ($diferencia > 0) {
+            return [
+                "fecha_pago" => $fechaPago,
+                "dias" => "Faltan " . $diferencia . " días",
+                "situacion" => "Próximo a vencer"
+            ];
+        }
+
+        if ($diferencia === 0) {
+            return [
+                "fecha_pago" => $fechaPago,
+                "dias" => "Vence hoy",
+                "situacion" => "Vence hoy"
+            ];
+        }
+
+        if ($hoy <= $limite) {
+            return [
+                "fecha_pago" => $fechaPago,
+                "dias" => abs($diferencia) . " días desde el vencimiento",
+                "situacion" => "En plazo de gracia"
+            ];
+        }
+
+        $diasFuera = (int)$limite->diff($hoy)->format("%a");
+
+        return [
+            "fecha_pago" => $fechaPago,
+            "dias" => $diasFuera . " días fuera de plazo",
+            "situacion" => "Plazo vencido"
+        ];
+
+    } catch (Exception $e) {
+        return [
+            "fecha_pago" => null,
+            "dias" => "Fecha no válida",
+            "situacion" => "Revisar fecha"
+        ];
+    }
+}
+
+try {
+    $sql_vencimientos = "
+        SELECT
+            s.id_servicio,
+            c.nombre,
+            c.apellido_paterno,
+            c.apellido_materno,
+            s.fecha_instalacion
+        FROM servicios s
+        INNER JOIN clientes c ON c.id_cliente = s.id_cliente
+        WHERE s.estado = 'ACTIVO'
+    ";
+
+    $resultado_vencimientos = $conexion_plataforma->query($sql_vencimientos);
+    $hoy_dashboard = new DateTimeImmutable("today");
+
+    while ($fila = $resultado_vencimientos->fetch_assoc()) {
+        $ciclo = calcularCicloDashboard(
+            $fila["fecha_instalacion"],
+            $hoy_dashboard
+        );
+
+        if ($ciclo === null) {
+            continue;
+        }
+
+        $fila["nombre_completo"] = trim(
+            ($fila["nombre"] ?? "") . " " .
+            ($fila["apellido_paterno"] ?? "") . " " .
+            ($fila["apellido_materno"] ?? "")
+        );
+
+        $fila["ciclo"] = $ciclo;
+        $vencimientos_dashboard[] = $fila;
+    }
+
+    $total_proximos = count($vencimientos_dashboard);
+
+    // Primero mostrar las fechas de pago más cercanas.
+    usort($vencimientos_dashboard, function ($a, $b) {
+        $fechaA = $a["ciclo"]["fecha_pago"];
+        $fechaB = $b["ciclo"]["fecha_pago"];
+
+        if ($fechaA === null) return 1;
+        if ($fechaB === null) return -1;
+
+        return $fechaA <=> $fechaB;
+    });
+
+} catch (Throwable $e) {
+    $error_proximos = true;
+    $total_proximos = null;
+    $vencimientos_dashboard = [];
+
+    error_log(
+        "Dashboard UBB: no fue posible consultar próximos vencimientos: " .
+        $e->getMessage()
+    );
+}
+
+/* ===== ESTADOS OPERATIVOS DE GREZZ PARA LA GRAFICA ===== */
+
+$servicios_estado = [
+    "ACTIVO" => 0,
+    "SUSPENDIDO" => 0,
+    "SIN_DATOS" => 0
+];
+
+$error_grafica_servicios = $error_servicios;
+
+if (!$error_grafica_servicios) {
+    $servicios_estado = $servicios_estado_grezz;
+}
+
+$total_estados = array_sum($servicios_estado);
+
+$porcentaje_activo = $total_estados > 0
+    ? $servicios_estado["ACTIVO"] * 100 / $total_estados : 0;
+
+$porcentaje_suspendido = $total_estados > 0
+    ? $servicios_estado["SUSPENDIDO"] * 100 / $total_estados : 0;
+
+$porcentaje_sin_datos = $total_estados > 0
+    ? $servicios_estado["SIN_DATOS"] * 100 / $total_estados : 0;
+
+$porcentaje_acumulado = $porcentaje_activo + $porcentaje_suspendido;
+
+/* ===== INGRESOS DE LA SEMANA SELECCIONADA ===== */
+$zona = new DateTimeZone(date_default_timezone_get());
+$fecha_hoy = new DateTimeImmutable('today', $zona);
+$fecha_seleccionada = $_GET['semana'] ?? $fecha_hoy->format('Y-m-d');
+
+if (!is_string($fecha_seleccionada) ||
+    !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha_seleccionada)) {
+    $fecha_seleccionada = $fecha_hoy->format('Y-m-d');
+}
+
+$obj_fecha = DateTimeImmutable::createFromFormat('!Y-m-d', $fecha_seleccionada, $zona);
+if (!$obj_fecha || $obj_fecha->format('Y-m-d') !== $fecha_seleccionada) {
+    $obj_fecha = $fecha_hoy;
+    $fecha_seleccionada = $fecha_hoy->format('Y-m-d');
+}
+
+$inicio_semana = $obj_fecha->modify('monday this week');
+$fin_semana = $inicio_semana->modify('+6 days');
+$inicio_siguiente_semana = $inicio_semana->modify('+7 days');
+
+$ingresos_uisp = [];
+$ingresos_ubb = [];
+
+for ($i = 0; $i < 7; $i++) {
+    $fecha = $inicio_semana->modify("+$i days")->format('Y-m-d');
+    $ingresos_uisp[$fecha] = 0.0;
+    $ingresos_ubb[$fecha] = 0.0;
+}
+
+$inicio_sql = $inicio_semana->format('Y-m-d');
+$fin_sql = $inicio_siguiente_semana->format('Y-m-d');
+
+/* ===== HISTORICO UISP: SOLO LECTURA ===== */
+$stmt_uisp = $conexion->prepare(
+    "SELECT
+         DATE(LEFT(fecha_original_uisp, 10)) AS dia,
+         SUM(monto) AS ingresos
+     FROM uisp_pagos_importacion
+     WHERE LEFT(fecha_original_uisp, 10) >= ?
+       AND LEFT(fecha_original_uisp, 10) < ?
+       AND moneda = 'MXN'
+     GROUP BY dia
+     ORDER BY dia"
+);
+
+$stmt_uisp->bind_param('ss', $inicio_sql, $fin_sql);
+$stmt_uisp->execute();
+$resultado_uisp = $stmt_uisp->get_result();
+
+while ($fila = $resultado_uisp->fetch_assoc()) {
+    $dia = $fila['dia'];
+    if (array_key_exists($dia, $ingresos_uisp)) {
+        $ingresos_uisp[$dia] = (float)$fila['ingresos'];
+    }
+}
+$stmt_uisp->close();
+
+/* ===== PAGOS NUEVOS UBB: EXCLUIR LOS CUATRO REGISTROS DE PRUEBA ===== */
+$stmt_ubb = $conexion->prepare(
+    "SELECT
+         DATE(fecha_pago) AS dia,
+         SUM(monto) AS ingresos
+     FROM pagos
+     WHERE estado_pago = 'PAGADO'
+       AND id_pago NOT IN (1, 2, 3, 4)
+       AND fecha_pago >= ?
+       AND fecha_pago < ?
+     GROUP BY DATE(fecha_pago)
+     ORDER BY dia"
+);
+
+$inicio_sql_datetime = $inicio_semana->format('Y-m-d 00:00:00');
+$fin_sql_datetime = $inicio_siguiente_semana->format('Y-m-d 00:00:00');
+
+$stmt_ubb->bind_param('ss', $inicio_sql_datetime, $fin_sql_datetime);
+$stmt_ubb->execute();
+$resultado_ubb = $stmt_ubb->get_result();
+
+while ($fila = $resultado_ubb->fetch_assoc()) {
+    $dia = $fila['dia'];
+    if (array_key_exists($dia, $ingresos_ubb)) {
+        $ingresos_ubb[$dia] = (float)$fila['ingresos'];
+    }
+}
+$stmt_ubb->close();
+
+$total_uisp_semana = array_sum($ingresos_uisp);
+$total_ubb_semana = array_sum($ingresos_ubb);
+
+$maximo_diario = 0.0;
+foreach ($ingresos_uisp as $fecha => $importe) {
+    $maximo_diario = max(
+        $maximo_diario,
+        $importe,
+        $ingresos_ubb[$fecha]
+    );
+}
+
+$escala_ingresos = $maximo_diario > 0
+    ? ceil($maximo_diario / 4 / 100) * 100 : 100;
+$maximo_eje_ingresos = $escala_ingresos * 4;
+
+$total_ingresos_semana = $total_uisp_semana + $total_ubb_semana;
+$etiqueta_semana = $inicio_semana->format('d/m') . ' – ' . $fin_semana->format('d/m');
+
+?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -6,7 +394,7 @@
 
     <title>UBB Comunicaciones - Gestión de Pagos</title>
 
-    <link rel="stylesheet" href="css/pagos.css">
+    <link rel="stylesheet" href="css/pagos.css?v=20261104_leyenda_estados_v3">
 </head>
 
 <body>
@@ -15,38 +403,14 @@
      ENCABEZADO
 ========================================================= -->
 
-<header class="encabezado">
-
-    <div class="marca">
-        <h1>UBB COMUNICACIONES</h1>
-        <p>Pagos</p>
-    </div>
-
-    <div class="barra-superior">
-
-        <div class="buscador">
-            <span>🔍</span>
-            <input
-                type="text"
-                id="buscarCliente"
-                placeholder="Buscar cliente..."
-            >
-        </div>
-
-        <div class="administrador">
-            Administrador
-            <span>▾</span>
-        </div>
-
-    </div>
-
-</header>
+<?php require __DIR__ . "/includes/encabezado.php"; ?>
 
 
 <!-- =========================================================
      CONTENIDO PRINCIPAL
 ========================================================= -->
 
+<?php require __DIR__ . "/includes/panel_lateral.php"; ?>
 <main class="contenedor">
 
     <!-- =====================================================
@@ -56,17 +420,16 @@
     <section class="encabezado-control">
 
         <div>
-            <span class="etiqueta-seccion">CENTRO DE CONTROL</span>
-
-            <h2>Monitoreo y automatización de pagos y servicios</h2>
+            <div class="titulo-centro-fila"><span class="icono-centro-control" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="5" rx="2"/><rect x="13" y="10" width="8" height="11" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/></svg></span><h2 class="titulo-centro-control">CENTRO DE CONTROL</h2></div>
+            <p class="subtitulo-centro-control">Resumen general de pagos y servicios de internet</p>
         </div>
 
         <div class="automatizacion">
             <span class="punto-verde"></span>
 
             <div>
-                <strong>AUTOMATIZACIÓN ACTIVA</strong>
-                <small>Última actualización: hace unos segundos</small>
+                <strong>MONITOREO DE PAGOS</strong>
+                <small>Datos locales de pagos; servicios pendientes de integración</small>
             </div>
         </div>
 
@@ -79,163 +442,56 @@
 
     <section class="tarjetas">
 
-        <div class="tarjeta tarjeta-activos">
-            <div class="tarjeta-titulo">
-                <span>🟢</span>
+        <div class="tarjeta tarjeta-activos" onclick="window.location.href='activos.php'">
+           <div class="tarjeta-titulo">
+                <span class="icono-tarjeta" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M16 3.2a4 4 0 0 1 0 7.6M20 21v-2a4 4 0 0 0-3-3.9"/></svg></span>
                 <span>ACTIVOS</span>
-            </div>
+           </div>
 
-            <strong class="numero">842</strong>
+    <strong class="numero"><?php echo $servicios_activos !== null ? $servicios_activos : '—'; ?></strong>
 
-            <small>Clientes con servicio activo</small>
-        </div>
+    <small><?php echo $error_servicios ? 'No disponible: revisar conexión' : 'Servicios activos'; ?></small>
+    <span class="capsula-tendencia tendencia-neutra"><?php echo $error_servicios ? 'Sin conexión' : 'Datos reales'; ?></span>
+</div>
 
 
-        <div class="tarjeta tarjeta-pagos">
+  <div class="tarjeta tarjeta-pagos" onclick="window.location.href='pagos_hoy.php'">
+    <div class="tarjeta-titulo">
+        <span class="icono-tarjeta" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19M6 15h4"/></svg></span>
+        <span>PAGOS HOY</span>
+    </div>
+    
+          <strong class="numero"><?php echo $pagos_hoy; ?></strong>
+
+    <small>Pagos registrados hoy</small>
+    <span class="capsula-tendencia <?php echo $clase_tendencia_pagos; ?>"><?php echo htmlspecialchars($texto_tendencia_pagos, ENT_QUOTES, "UTF-8"); ?></span>
+</div>
+
+
+        <div class="tarjeta tarjeta-proximos" onclick="window.location.href='./proximos.php';">
             <div class="tarjeta-titulo">
-                <span>💳</span>
-                <span>PAGOS HOY</span>
-            </div>
-
-            <strong class="numero">126</strong>
-
-            <small>Pagos registrados hoy</small>
-        </div>
-
-
-        <div class="tarjeta tarjeta-proximos">
-            <div class="tarjeta-titulo">
-                <span>🟡</span>
+                <span class="icono-tarjeta" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M12 13v3l2 1"/></svg></span>
                 <span>PRÓXIMOS</span>
             </div>
 
-            <strong class="numero">37</strong>
+            <strong class="numero"><?php echo $total_proximos !== null ? number_format($total_proximos) : '—'; ?></strong>
 
-            <small>Próximos vencimientos</small>
+            <small><?php echo $error_proximos ? 'No disponible: revisar conexión' : 'Servicios en seguimiento'; ?></small>
+            <span class="capsula-tendencia tendencia-precaucion"><?php echo $error_proximos ? 'Sin conexión' : 'Datos reales'; ?></span>
         </div>
 
 
-        <div class="tarjeta tarjeta-suspendidos">
+        <div class="tarjeta tarjeta-suspendidos" onclick="window.location.href='suspendidos.php'">
+
             <div class="tarjeta-titulo">
-                <span>🔴</span>
+                <span class="icono-tarjeta" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10.3 3.9 2.5 17.4A2 2 0 0 0 4.2 20h15.6a2 2 0 0 0 1.7-2.6L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg></span>
                 <span>SUSPENDIDOS</span>
             </div>
 
-            <strong class="numero">18</strong>
+            <strong class="numero"><?php echo $servicios_suspendidos !== null ? $servicios_suspendidos : '—'; ?></strong>
 
-            <small>Servicios suspendidos</small>
-        </div>
-
-    </section>
-
-
-    <!-- =====================================================
-         CLIENTES Y SERVICIOS
-    ====================================================== -->
-
-    <section class="panel">
-
-        <div class="panel-encabezado">
-
-            <div>
-                <span class="etiqueta-seccion">CLIENTES Y SERVICIOS</span>
-                <h3>Estado actual de los clientes</h3>
-            </div>
-
-        </div>
-
-
-        <!-- FILTROS -->
-
-        <div class="filtros-clientes">
-
-            <button class="filtro activo">
-                🟢 Activos <strong>842</strong>
-            </button>
-
-            <button class="filtro proximo">
-                🟡 Próximos <strong>37</strong>
-            </button>
-
-            <button class="filtro suspendido">
-                🔴 Suspendidos <strong>18</strong>
-            </button>
-
-        </div>
-
-
-        <!-- TABLA -->
-
-        <div class="tabla-contenedor">
-
-            <table>
-
-                <thead>
-                    <tr>
-                        <th>Cliente</th>
-                        <th>Referencia</th>
-                        <th>Vencimiento</th>
-                        <th>Estado</th>
-                    </tr>
-                </thead>
-
-                <tbody id="tablaClientes">
-
-                    <tr>
-                        <td>Juan Pérez</td>
-                        <td>UBB-00125</td>
-                        <td>05/10/2026</td>
-                        <td>
-                            <span class="estado activo">
-                                🟢 Activo
-                            </span>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>Ana Torres</td>
-                        <td>UBB-00128</td>
-                        <td>04/10/2026</td>
-                        <td>
-                            <span class="estado activo">
-                                🟢 Activo
-                            </span>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>María López</td>
-                        <td>UBB-00126</td>
-                        <td>06/10/2026</td>
-                        <td>
-                            <span class="estado proximo">
-                                🟡 Próximo
-                            </span>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>Pedro García</td>
-                        <td>UBB-00127</td>
-                        <td>28/09/2026</td>
-                        <td>
-                            <span class="estado suspendido">
-                                🔴 Suspendido
-                            </span>
-                        </td>
-                    </tr>
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-
-        <div class="ver-clientes">
-            <button onclick="mostrarClientes()">
-                Ver todos los clientes →
-            </button>
+            <small><?php echo $error_servicios ? 'No disponible: revisar conexión' : 'Servicios suspendidos'; ?></small>
+            <span class="capsula-tendencia tendencia-alerta"><?php echo $error_servicios ? 'Sin conexión' : 'Datos reales'; ?></span>
         </div>
 
     </section>
@@ -245,391 +501,246 @@
          PAGOS + ESTADO DE SERVICIOS
     ====================================================== -->
 
-    <section class="dos-columnas">
 
-        <!-- PAGOS -->
-
-        <div class="panel">
-
-            <div class="panel-titulo">
-                <span>💳</span>
-                <div>
-                    <span class="etiqueta-seccion">PAGOS</span>
-                    <h3>Pagos del mes</h3>
-                </div>
-            </div>
-
-
-            <div class="grafica">
-
-                <div class="barra">
-                    <span>Sem 1</span>
-                    <div class="barra-fondo">
-                        <div class="barra-valor valor-1"></div>
-                    </div>
-                </div>
-
-                <div class="barra">
-                    <span>Sem 2</span>
-                    <div class="barra-fondo">
-                        <div class="barra-valor valor-2"></div>
-                    </div>
-                </div>
-
-                <div class="barra">
-                    <span>Sem 3</span>
-                    <div class="barra-fondo">
-                        <div class="barra-valor valor-3"></div>
-                    </div>
-                </div>
-
-                <div class="barra">
-                    <span>Sem 4</span>
-                    <div class="barra-fondo">
-                        <div class="barra-valor valor-4"></div>
-                    </div>
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <!-- ESTADO DE SERVICIOS -->
-
-        <div class="panel">
-
-            <div class="panel-titulo">
-                <span>📡</span>
-
-                <div>
-                    <span class="etiqueta-seccion">
-                        ESTADO DE SERVICIOS
-                    </span>
-
-                    <h3>Resumen</h3>
-                </div>
-            </div>
-
-
-            <div class="resumen-servicios">
-
-                <div>
-                    <span class="estado activo">🟢 Activos</span>
-                    <strong>842</strong>
-                </div>
-
-                <div>
-                    <span class="estado proximo">🟡 Próximos</span>
-                    <strong>37</strong>
-                </div>
-
-                <div>
-                    <span class="estado suspendido">🔴 Suspendidos</span>
-                    <strong>18</strong>
-                </div>
-
-            </div>
-
-        </div>
-
-    </section>
-
-
-    <!-- =====================================================
-         AUTOMATIZACIÓN + ACCIONES
-    ====================================================== -->
-
-    <section class="dos-columnas">
-
-        <!-- AUTOMATIZACIÓN -->
-
-        <div class="panel">
-
-            <div class="panel-titulo">
-
-                <span>⚙️</span>
-
-                <div>
-                    <span class="etiqueta-seccion">
-                        AUTOMATIZACIÓN
-                    </span>
-
-                    <h3>Procesamiento de pagos</h3>
-                </div>
-
-            </div>
-
-
-            <div class="lista-automatizacion">
-
-                <div>
-                    <span>✓ Pagos identificados</span>
-                    <strong>124</strong>
-                </div>
-
-                <div>
-                    <span>✓ Pagos validados</span>
-                    <strong>121</strong>
-                </div>
-
-                <div>
-                    <span>✓ Servicios actualizados</span>
-                    <strong>118</strong>
-                </div>
-
-                <div>
-                    <span>◉ Procesando</span>
-                    <strong>3</strong>
-                </div>
-
-                <div>
-                    <span>⚠ Por revisar</span>
-                    <strong>2</strong>
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <!-- ACCIONES RÁPIDAS -->
-
-        <div class="panel">
-
-            <div class="panel-titulo">
-
-                <span>⚡</span>
-
-                <div>
-                    <span class="etiqueta-seccion">
-                        ACCIONES RÁPIDAS
-                    </span>
-
-                    <h3>Operaciones</h3>
-                </div>
-
-            </div>
-
-
-            <div class="acciones">
-
-                <a href="registrar.php" class="accion">
-                    <span>＋</span>
-                    <div>
-                        <strong>Registrar pago</strong>
-                        <small>Registrar un pago recibido</small>
-                    </div>
-                </a>
-
-
-                <a href="historial.php" class="accion">
-                    <span>📋</span>
-                    <div>
-                        <strong>Historial</strong>
-                        <small>Consultar pagos realizados</small>
-                    </div>
-                </a>
-
-
-                <button class="accion" onclick="mostrarMensaje()">
-                    <span>🧾</span>
-                    <div>
-                        <strong>Referencias</strong>
-                        <small>Consultar referencias de clientes</small>
-                    </div>
-                </button>
-
-            </div>
-
-        </div>
-
-    </section>
-
-
-    <!-- =====================================================
-         ACTIVIDAD DE HOY
-    ====================================================== -->
-
-    <section class="panel">
-
-        <div class="panel-titulo">
-
-            <span>🕐</span>
-
-            <div>
-                <span class="etiqueta-seccion">
-                    ACTIVIDAD DE HOY
-                </span>
-
-                <h3>Movimientos recientes</h3>
-            </div>
-
-        </div>
-
-
-        <div class="tabla-contenedor">
-
-            <table>
-
-                <thead>
-
-                    <tr>
-                        <th>Hora</th>
-                        <th>Cliente</th>
-                        <th>Método</th>
-                        <th>Monto</th>
-                        <th>Estado</th>
-                    </tr>
-
-                </thead>
-
-
-                <tbody>
-
-                    <tr>
-                        <td>10:42</td>
-                        <td>Juan Pérez</td>
-                        <td>Transferencia</td>
-                        <td>$500</td>
-                        <td>
-                            <span class="estado procesado">
-                                ✓ Procesado
-                            </span>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>10:38</td>
-                        <td>María López</td>
-                        <td>Depósito</td>
-                        <td>$450</td>
-                        <td>
-                            <span class="estado procesado">
-                                ✓ Procesado
-                            </span>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>10:31</td>
-                        <td>Cliente #235</td>
-                        <td>Transferencia</td>
-                        <td>$500</td>
-                        <td>
-                            <span class="estado revisar">
-                                ⚠ Revisar
-                            </span>
-                        </td>
-                    </tr>
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-    </section>
-
-
-    <!-- =====================================================
-         PRÓXIMOS VENCIMIENTOS
-    ====================================================== -->
-
-    <section class="panel">
-
-        <div class="panel-titulo">
-
-            <span>📅</span>
-
-            <div>
-                <span class="etiqueta-seccion">
-                    PRÓXIMOS VENCIMIENTOS
-                </span>
-
-                <h3>Clientes próximos a vencer</h3>
-            </div>
-
-        </div>
-
-
-        <div class="tabla-contenedor">
-
-            <table>
-
-                <thead>
-
-                    <tr>
-                        <th>Cliente</th>
-                        <th>Fecha</th>
-                        <th>Estado</th>
-                        <th>Recordatorio</th>
-                    </tr>
-
-                </thead>
-
-
-                <tbody>
-
-                    <tr>
-                        <td>Juan Pérez</td>
-                        <td>05/10</td>
-
-                        <td>
-                            <span class="estado proximo">
-                                🟡 Próximo
-                            </span>
-                        </td>
-
-                        <td>
-                            <span class="pendiente">
-                                Pendiente
-                            </span>
-                        </td>
-                    </tr>
-
-
-                    <tr>
-                        <td>María López</td>
-                        <td>06/10</td>
-
-                        <td>
-                            <span class="estado proximo">
-                                🟡 Próximo
-                            </span>
-                        </td>
-
-                        <td>
-                            <span class="enviado">
-                                ✓ Enviado
-                            </span>
-                        </td>
-                    </tr>
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-    </section>
-
-
-    <!-- =====================================================
-         HISTORIAL
-    ====================================================== -->
-
-    <div class="botones-historial">
-
-        <a href="historial.php">
-            Historial del día
-        </a>
-
-        <a href="historial.php">
-            Historial del mes
-        </a>
-
+       <!-- PAGOS + DISTRIBUCIÓN -->
+
+<section class="graficas-servicios">
+
+    <!-- PAGOS -->
+    <div class="panel">
+
+        <div class="panel-titulo encabezado-grafica-ingresos">
+    <div class="titulo-grafica titulo-ingresos-limpio">
+    <span class="icono-circular-ingresos" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="20" height="20"
+             fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19V5"></path>
+            <path d="M4 19h17"></path>
+            <rect x="7" y="11" width="3" height="5" rx="1" fill="currentColor" stroke="none"></rect>
+            <rect x="13" y="7" width="3" height="9" rx="1" fill="currentColor" stroke="none"></rect>
+            <rect x="19" y="3" width="2" height="13" rx="1" fill="currentColor" stroke="none"></rect>
+        </svg>
+    </span>
+    <h3>Ingresos por semana</h3>
+</div>
+
+    <form class="selector-semana" method="get" action="index.php">
+        <label class="selector-semana-control" for="fecha-semana">
+            <svg class="icono-calendario-control" viewBox="0 0 24 24"
+                 width="17" height="17" fill="none" stroke="currentColor"
+                 stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+                 aria-hidden="true">
+                <rect x="3" y="5" width="18" height="16" rx="2"></rect>
+                <path d="M16 3v4M8 3v4M3 10h18"></path>
+            </svg>
+            <span class="texto-rango-semana">
+                <?= htmlspecialchars($inicio_semana->format('j') . ' ' . [
+                    1=>'ene.', 2=>'feb.', 3=>'mar.', 4=>'abr.',
+                    5=>'may.', 6=>'jun.', 7=>'jul.', 8=>'ago.',
+                    9=>'sep.', 10=>'oct.', 11=>'nov.', 12=>'dic.'
+                ][(int)$inicio_semana->format('n')] . ' ' . $inicio_semana->format('Y')
+                . ' – ' .
+                $fin_semana->format('j') . ' ' . [
+                    1=>'ene.', 2=>'feb.', 3=>'mar.', 4=>'abr.',
+                    5=>'may.', 6=>'jun.', 7=>'jul.', 8=>'ago.',
+                    9=>'sep.', 10=>'oct.', 11=>'nov.', 12=>'dic.'
+                ][(int)$fin_semana->format('n')] . ' ' . $fin_semana->format('Y'),
+                ENT_QUOTES, 'UTF-8') ?>
+            </span>
+            <svg class="flecha-selector-semana" viewBox="0 0 24 24"
+                 width="15" height="15" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                 aria-hidden="true">
+                <path d="m6 9 6 6 6-6"></path>
+            </svg>
+        </label>
+        <input
+            id="fecha-semana"
+            type="date"
+            name="semana"
+            value="<?= htmlspecialchars($fecha_seleccionada, ENT_QUOTES, 'UTF-8') ?>"
+            aria-label="Elegir una fecha para consultar su semana"
+            onchange="this.form.submit()">
+    </form>
+</div>
+
+<div class="resumen-ingresos-semana resumen-ingresos-doble">
+    <div class="resumen-fuente resumen-fuente-uisp">
+        <span>Histórico UISP</span>
+        <strong>$<?= number_format($total_uisp_semana, 2) ?></strong>
     </div>
+    <div class="resumen-fuente resumen-fuente-ubb">
+        <span>Pagos nuevos UBB</span>
+        <strong>$<?= number_format($total_ubb_semana, 2) ?></strong>
+    </div>
+</div>
+
+<div class="grafica grafica-ingresos">
+    <div class="grafica-vertical">
+        <div class="eje-grafica">
+            <?php for ($nivel = 4; $nivel >= 0; $nivel--): ?>
+                <span>$<?= number_format($escala_ingresos * $nivel, 0) ?></span>
+            <?php endfor; ?>
+        </div>
+
+        <div class="area-barras">
+            <?php foreach ($ingresos_uisp as $fecha => $importe_uisp):
+                $importe_ubb = $ingresos_ubb[$fecha];
+
+                $altura_uisp = $maximo_eje_ingresos > 0
+                    ? (int)round($importe_uisp / $maximo_eje_ingresos * 150) : 0;
+
+                $altura_ubb = $maximo_eje_ingresos > 0
+                    ? (int)round($importe_ubb / $maximo_eje_ingresos * 150) : 0;
+
+                $fecha_obj = new DateTimeImmutable($fecha);
+                $dias_es = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+                $etiqueta_dia = $dias_es[(int)$fecha_obj->format('N') - 1];
+
+                $detalle = $fecha
+                    . ' | UISP: $' . number_format($importe_uisp, 2)
+                    . ' | UBB: $' . number_format($importe_ubb, 2);
+            ?>
+            <div class="barra-vertical grupo-barras-dia"
+                 title="<?= htmlspecialchars($detalle, ENT_QUOTES, 'UTF-8') ?>">
+
+                <div class="barras-dobles">
+                    <div class="barra-fuente barra-uisp"
+                         style="height: <?= $altura_uisp ?>px !important;"
+                         title="UISP: $<?= number_format($importe_uisp, 2) ?>">
+                    </div>
+
+                    <div class="barra-fuente barra-ubb"
+                         style="height: <?= $altura_ubb ?>px !important;"
+                         title="UBB: $<?= number_format($importe_ubb, 2) ?>">
+                    </div>
+                </div>
+
+                <span class="etiqueta-fecha">
+                    <?= $etiqueta_dia ?><br><?= $fecha_obj->format('d/m') ?>
+                </span>
+            </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+
+    <div class="leyenda-ingresos leyenda-ingresos-doble">
+        <span class="leyenda-uisp"></span> Histórico UISP
+        <span class="leyenda-ubb"></span> Pagos nuevos UBB
+    </div>
+</div>
+    </div>
+
+
+    <!-- DISTRIBUCIÓN DE SERVICIOS -->
+    <div class="panel">
+
+        <div class="panel-titulo titulo-estados-pago">
+            <span class="icono-circular-ingresos" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="20" height="20"
+                     fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 4h16v16H4z"></path>
+                    <path d="M8 8h8M8 12h5"></path>
+                    <path d="m8 16 2 2 5-5"></path>
+                </svg>
+            </span>
+            <h3>Estado de servicios</h3>
+        </div>
+
+        <?php if ($error_grafica_servicios): ?>
+            <p>No fue posible consultar los estados de los servicios.</p>
+        <?php else: ?>
+
+        <div class="grafica-circular dona-ubb">
+            <div class="dona-ubb-visual"
+                 role="img"
+                 aria-label="Distribución de <?= $total_estados ?> servicios: <?= $servicios_estado["ACTIVO"] ?> activos, <?= $servicios_estado["SUSPENDIDO"] ?> suspendidos y <?= $servicios_estado["SIN_DATOS"] ?> sin datos."
+                 style="background: conic-gradient(
+                    #16a34a 0% <?= number_format($porcentaje_activo, 2, '.', '') ?>%,
+                    #f0b429 <?= number_format($porcentaje_activo, 2, '.', '') ?>% <?= number_format($porcentaje_acumulado, 2, '.', '') ?>%,
+                    #94a3b8 <?= number_format($porcentaje_acumulado, 2, '.', '') ?>% 100%
+                 );">
+                <div class="dona-ubb-centro">
+                    <strong><?= number_format($total_estados) ?></strong>
+                    <span>Servicios totales</span>
+                </div>
+            </div>
+
+            <div class="leyenda-pastel leyenda-ubb">
+                <div class="item-leyenda item-leyenda-ubb">
+                    <span class="punto-leyenda pagado"></span>
+                    <div class="detalle-leyenda-ubb">
+                        <span class="nombre-estado-ubb">Activos</span>
+                        <strong><?= number_format($servicios_estado["ACTIVO"]) ?></strong>
+                        <small><?= number_format($porcentaje_activo, 1) ?>%</small>
+                    </div>
+                </div>
+
+                <div class="item-leyenda item-leyenda-ubb">
+                    <span class="punto-leyenda pendiente"></span>
+                    <div class="detalle-leyenda-ubb">
+                        <span class="nombre-estado-ubb">Suspendidos</span>
+                        <strong><?= number_format($servicios_estado["SUSPENDIDO"]) ?></strong>
+                        <small><?= number_format($porcentaje_suspendido, 1) ?>%</small>
+                    </div>
+                </div>
+
+                <div class="item-leyenda item-leyenda-ubb">
+                    <span class="punto-leyenda cancelado"></span>
+                    <div class="detalle-leyenda-ubb">
+                        <span class="nombre-estado-ubb">Sin datos</span>
+                        <strong><?= number_format($servicios_estado["SIN_DATOS"]) ?></strong>
+                        <small><?= number_format($porcentaje_sin_datos, 1) ?>%</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <?php endif; ?>
+    </div>
+
+</section>
+
+
+<!-- ESTADO DE SERVICIOS -->
+
+
+
+
+    <!-- ACCESO DIRECTO -->
+
+    <section class="panel">
+
+        <div class="panel-titulo">
+            <span>⚡</span>
+            <div>
+                <span class="etiqueta-seccion">ACCESO DIRECTO</span>
+                <h3>Operaciones</h3>
+            </div>
+        </div>
+
+        <div class="acciones">
+            <a href="reporte_uisp.php" class="accion">
+                <span>📊</span>
+                <div>
+                    <strong>Historial UISP</strong>
+                    <small>Consultar pagos históricos importados</small>
+                </div>
+            </a>
+        </div>
+
+    </section>
+
+
+
+
+
+
+
+
+
 
 
 </main>
@@ -639,45 +750,7 @@
      JAVASCRIPT
 ========================================================= -->
 
-<script>
 
-const buscador = document.getElementById("buscarCliente");
-
-buscador.addEventListener("keyup", function () {
-
-    const texto = this.value.toLowerCase();
-
-    const filas = document.querySelectorAll("#tablaClientes tr");
-
-    filas.forEach(function (fila) {
-
-        const contenido = fila.textContent.toLowerCase();
-
-        if (contenido.includes(texto)) {
-            fila.style.display = "";
-        } else {
-            fila.style.display = "none";
-        }
-
-    });
-
-});
-
-
-function mostrarClientes() {
-
-    alert("Aquí se mostrará la lista completa de clientes.");
-
-}
-
-
-function mostrarMensaje() {
-
-    alert("Módulo de referencias preparado para integrarse con la base de datos.");
-
-}
-
-</script>
 
 </body>
 </html>
