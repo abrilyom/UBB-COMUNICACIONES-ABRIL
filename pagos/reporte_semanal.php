@@ -124,7 +124,7 @@ try {
         $db,
         "SELECT
             COUNT(*) AS cantidad,
-            COALESCE(SUM(CASE WHEN estado_pago='PAGADO' THEN monto ELSE 0 END),0) AS ingresos,
+            COALESCE(SUM(CASE WHEN estado_pago='PAGADO' AND metodo_pago<>'CORTESIA' THEN monto ELSE 0 END),0) AS ingresos,
             SUM(estado_pago='PAGADO') AS pagados,
             SUM(estado_pago='PENDIENTE') AS pendientes,
             COALESCE(SUM(CASE WHEN estado_pago='PENDIENTE' THEN monto ELSE 0 END),0) AS monto_pendiente,
@@ -138,7 +138,7 @@ try {
         $db,
         "SELECT metodo_pago,
             COUNT(*) AS cantidad,
-            COALESCE(SUM(CASE WHEN estado_pago='PAGADO' THEN monto ELSE 0 END),0) AS ingresos
+            COALESCE(SUM(CASE WHEN estado_pago='PAGADO' AND metodo_pago<>'CORTESIA' THEN monto ELSE 0 END),0) AS ingresos
          FROM pagos WHERE $filtros
          GROUP BY metodo_pago ORDER BY ingresos DESC",
         $tipos,
@@ -159,7 +159,7 @@ try {
         $db,
         "SELECT
             COUNT(*) AS cantidad,
-            COALESCE(SUM(CASE WHEN estado_pago='PAGADO' THEN monto ELSE 0 END),0) AS ingresos
+            COALESCE(SUM(CASE WHEN estado_pago='PAGADO' AND metodo_pago<>'CORTESIA' THEN monto ELSE 0 END),0) AS ingresos
          FROM pagos
          WHERE fecha_pago >= ? AND fecha_pago < DATE_ADD(?, INTERVAL 1 DAY)",
         'ss',

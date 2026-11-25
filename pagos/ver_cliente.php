@@ -109,7 +109,7 @@ try {
             COALESCE(SUM(estado_pago = 'PENDIENTE'), 0) AS pendientes,
             COALESCE(SUM(estado_pago = 'CANCELADO'), 0) AS cancelados,
             COALESCE(
-                SUM(CASE WHEN estado_pago = 'PAGADO'
+                SUM(CASE WHEN estado_pago = 'PAGADO' AND metodo_pago <> 'CORTESIA'
                     THEN monto ELSE 0 END), 0
             ) AS total_pagado,
             MAX(CASE WHEN estado_pago = 'PAGADO'

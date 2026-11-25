@@ -118,7 +118,8 @@ if ($consulta) {
 
         $total_movimientos++;
 
-        if ($pago["estado_pago"] === "PAGADO") {
+        // Los créditos de cortesía son descuentos: cubren la mensualidad, no son dinero recibido.
+        if ($pago["estado_pago"] === "PAGADO" && $pago["metodo_pago"] !== "CORTESIA") {
             $total_recaudado += (float)$pago["monto"];
             $total_pagados++;
         }

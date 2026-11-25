@@ -138,7 +138,8 @@ Sincronizar solo guarda el historial. Para que los módulos (pagos de hoy, próx
 | Cliente UISP ligado a un solo cliente UBB (`clientes.uisp_id`) con adeudo en un solo servicio | Pago `PAGADO` (referencia `UISP-<id>`) aplicado de la mensualidad más antigua a la más nueva; la que llega a 0 queda `PAGADA` |
 | Pago parcial | Se aplica; la mensualidad sigue pendiente |
 | Pago mayor a todo el adeudo, varios servicios con adeudo, cliente sin ligar o sin mensualidades pendientes | `REVISION` |
-| Cortesía, personalizado o cheque | `REVISION` (no es un ingreso de dinero) |
+| "Crédito de cortesía" (descuento, p. ej. por falla del servicio) | Se aplica con método `CORTESIA`: cubre la mensualidad, pero los totales de ingresos (panel, Pagos hoy, Historial, Reporte semanal, ficha del cliente) lo excluyen |
+| Personalizado o cheque | `REVISION` (no se sabe si es dinero) |
 | Pago anterior a la primera mensualidad del cliente en UBB (más de 20 días antes de su vencimiento) | `HISTORICO`: se guarda, no se aplica ni se revisa |
 | Pago más de 20 días antes del vencimiento de la mensualidad pendiente más antigua | `REVISION` (puede ser de otro periodo) |
 
@@ -150,6 +151,7 @@ El resultado queda en `uisp_pagos_importacion.estado_aplicacion` (`APLICADO` / `
 ```bash
 mariadb ubb_pagos < db/migraciones/2026-11-28_aplicar_pagos_uisp.sql
 mariadb ubb_pagos < db/migraciones/2026-11-29_pagos_uisp_historico.sql
+mariadb ubb_pagos < db/migraciones/2026-11-30_pago_cortesia.sql
 docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/aplicar_pagos_uisp.php              # simulación
 docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/aplicar_pagos_uisp.php --confirmar
 ```

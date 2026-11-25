@@ -13,7 +13,9 @@ declare(strict_types=1);
  * Reglas (ante cualquier duda, el pago va a REVISION con su motivo):
  *   - El cliente UISP debe estar ligado a un solo cliente UBB (clientes.uisp_id).
  *   - Solo métodos de dinero: EFECTIVO, TRANSFERENCIA, DEPOSITO, TARJETA.
- *     Cortesía, personalizado y cheque van a revisión.
+ *     El "Crédito de cortesía" (descuento, p. ej. por falla del servicio) se
+ *     aplica con método CORTESIA: cubre la mensualidad pero no es ingreso.
+ *     Personalizado y cheque van a revisión.
  *   - El cliente debe tener mensualidades pendientes en UN solo servicio.
  *   - Se aplica a la mensualidad más antigua y, si sobra, a las siguientes.
  *     La que llega a saldo 0 queda PAGADA. Pagos parciales sí se aplican.
@@ -38,6 +40,8 @@ require_once __DIR__ . '/../includes/entorno_cli.php';
 
 const UISP_APLICAR_PROCESO = 'APLICAR_PAGOS_UISP';
 const UISP_METODOS_DINERO = ['EFECTIVO', 'TRANSFERENCIA', 'DEPOSITO', 'TARJETA'];
+/** Descuentos de UISP: cubren la mensualidad, no son dinero recibido. */
+const UISP_METODO_CORTESIA = 'CORTESIA';
 const UISP_DIAS_DUPLICADO = 3;
 /** Un pago cuenta para una mensualidad si llega como mucho estos días antes de su vencimiento (un mes menos la gracia). */
 define('UISP_DIAS_ANTICIPO', max(1, (int)(getenv('UBB_UISP_DIAS_ANTICIPO') ?: 20)));
@@ -127,6 +131,8 @@ $contadores = [
     'mensualidades_pagadas' => 0,
     'revision' => 0,
     'historicos' => 0,
+    'cortesias' => 0,
+    'importe_cortesia' => 0.0,
 ];
 $motivos = [];
 
@@ -188,7 +194,8 @@ try {
         $idPagoUisp = (int)$p['uisp_payment_id'];
         $referencia = 'UISP-' . $idPagoUisp;
         $centavosPago = centavos($p['monto']);
-        $metodo = (string)$p['metodo_normalizado'];
+        $esCortesia = stripos((string)$p['metodo_original_uisp'], 'cortes') !== false;
+        $metodo = $esCortesia ? UISP_METODO_CORTESIA : (string)$p['metodo_normalizado'];
         $idCliente = null;
         $idServicio = null;
 
@@ -201,7 +208,7 @@ try {
             if ($centavosPago <= 0) {
                 throw new RevisionPagoUisp('Importe no válido.');
             }
-            if (!in_array($metodo, UISP_METODOS_DINERO, true)) {
+            if (!$esCortesia && !in_array($metodo, UISP_METODOS_DINERO, true)) {
                 throw new RevisionPagoUisp(
                     "Método \"{$p['metodo_original_uisp']}\": no es un ingreso de dinero que se aplique solo."
                 );
@@ -407,7 +414,12 @@ try {
             }
 
             $contadores['aplicados']++;
-            $contadores['importe_aplicado'] += $centavosPago / 100;
+            if ($esCortesia) {
+                $contadores['cortesias']++;
+                $contadores['importe_cortesia'] += $centavosPago / 100;
+            } else {
+                $contadores['importe_aplicado'] += $centavosPago / 100;
+            }
             $contadores['mensualidades_pagadas'] += count(array_filter($aplicaciones, fn($a) => $a['liquida']));
 
             if (!$confirmar) {
@@ -420,6 +432,9 @@ try {
 
             $observaciones = "Pago registrado en UISP (pago $idPagoUisp, cliente UISP {$p['uisp_client_id']}, "
                 . "método \"{$p['metodo_original_uisp']}\"). Aplicado automáticamente: $detalle.";
+            if ($esCortesia) {
+                $observaciones .= ' Descuento (crédito de cortesía): cubre la mensualidad, no es dinero recibido.';
+            }
             $estadoPago = 'PAGADO';
 
             $stmt = $conexion->prepare("
@@ -492,7 +507,11 @@ try {
 
     echo "\n===== RESUMEN =====\n";
     echo "Revisados:              {$contadores['revisados']}\n";
-    echo "Aplicados:              {$contadores['aplicados']} | $" . number_format($contadores['importe_aplicado'], 2) . "\n";
+    $contadores['importe_cortesia'] = round($contadores['importe_cortesia'], 2);
+
+    echo "Aplicados:              {$contadores['aplicados']} | $" . number_format($contadores['importe_aplicado'], 2) . " en dinero\n";
+    echo "  de ellos, cortesías:  {$contadores['cortesias']} | $" . number_format($contadores['importe_cortesia'], 2)
+        . " (descuentos, no son ingreso)\n";
     echo "Mensualidades pagadas:  {$contadores['mensualidades_pagadas']}\n";
     echo "A revisión manual:      {$contadores['revision']}\n";
     echo "Históricos (no aplican): {$contadores['historicos']} (anteriores a las mensualidades de UBB)\n";

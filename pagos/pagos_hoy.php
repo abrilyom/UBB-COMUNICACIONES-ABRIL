@@ -20,6 +20,7 @@ $sql = "SELECT
         FROM pagos
         WHERE DATE(fecha_pago) = ?
         AND estado_pago = 'PAGADO'
+        AND metodo_pago <> 'CORTESIA'
         ORDER BY fecha_pago DESC";
 
 $stmt = $conexion->prepare($sql);
@@ -37,7 +38,8 @@ $sql_total = "SELECT
                 COALESCE(SUM(monto), 0) AS total
               FROM pagos
               WHERE DATE(fecha_pago) = ?
-              AND estado_pago = 'PAGADO'";
+              AND estado_pago = 'PAGADO'
+              AND metodo_pago <> 'CORTESIA'";
 
 $stmt_total = $conexion->prepare($sql_total);
 $stmt_total->bind_param("s", $hoy);

@@ -20,6 +20,7 @@ $consulta_pagos_hoy = $conexion->query("
     FROM pagos
     WHERE DATE(fecha_pago) = CURDATE()
       AND estado_pago = 'PAGADO'
+      AND metodo_pago <> 'CORTESIA'
 ");
 
 if ($consulta_pagos_hoy) {
@@ -32,6 +33,7 @@ $consulta_pagos_ayer = $conexion->query("
     FROM pagos
     WHERE DATE(fecha_pago) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)
       AND estado_pago = 'PAGADO'
+      AND metodo_pago <> 'CORTESIA'
 ");
 
 if ($consulta_pagos_ayer) {
@@ -321,6 +323,7 @@ $stmt_uisp = $conexion->prepare(
      WHERE LEFT(fecha_original_uisp, 10) >= ?
        AND LEFT(fecha_original_uisp, 10) < ?
        AND moneda = 'MXN'
+       AND metodo_original_uisp NOT LIKE '%cortes%'
      GROUP BY dia
      ORDER BY dia"
 );
@@ -345,6 +348,7 @@ $stmt_ubb = $conexion->prepare(
      FROM pagos
      WHERE estado_pago = 'PAGADO'
        AND id_pago NOT IN (1, 2, 3, 4)
+       AND metodo_pago <> 'CORTESIA'
        AND fecha_pago >= ?
        AND fecha_pago < ?
      GROUP BY DATE(fecha_pago)
