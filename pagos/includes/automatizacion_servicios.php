@@ -48,16 +48,10 @@ function estadoServicioEnGrezz(int $idServicio): ?string
 }
 
 /**
- * Estado de todos los servicios según Grezz: [id_servicio => ESTADO].
- * Si Grezz no pudo resolver un servicio, el valor es "ERROR_<código>"
- * (por ejemplo ERROR_SIN_RELACION).
- *
- * Nota: por ahora la API de Grezz solo expone servicios DHCP con equipo
- * relacionado; los servicios PPPoE todavía no aparecen.
- *
- * Devuelve null si Grezz no respondió correctamente.
+ * Lista completa de servicios de Grezz (id_servicio, estado_actual, ip,
+ * mac, plan, ...) o null si Grezz no respondió correctamente.
  */
-function mapaEstadosGrezz(): ?array
+function serviciosGrezz(): ?array
 {
     $consulta = listarServiciosGrezz();
 
@@ -69,9 +63,96 @@ function mapaEstadosGrezz(): ?array
         return null;
     }
 
+    return $consulta['respuesta']['servicios'];
+}
+
+function normalizarMacUbb(?string $mac): string
+{
+    return strtoupper(preg_replace('/[^0-9A-Fa-f]/', '', (string)$mac) ?? '');
+}
+
+/**
+ * IP y MAC registradas en integracion_winbox (plataforma de Jamileth,
+ * solo lectura), agrupadas por servicio: [id_servicio => [[ip, mac], ...]].
+ */
+function huellasRedPlataforma(mysqli $plataforma, array $idsServicio): array
+{
+    $ids = implode(',', array_map('intval', $idsServicio));
+
+    if ($ids === '') {
+        return [];
+    }
+
+    $huellas = [];
+    $r = $plataforma->query("
+        SELECT id_servicio, ip, mac
+        FROM integracion_winbox
+        WHERE id_servicio IN ($ids)
+    ");
+
+    while ($f = $r->fetch_assoc()) {
+        $huellas[(int)$f['id_servicio']][] = [
+            'ip' => trim((string)$f['ip']),
+            'mac' => normalizarMacUbb($f['mac']),
+        ];
+    }
+
+    return $huellas;
+}
+
+/**
+ * Confirma que el servicio de Grezz es el mismo equipo que el de la
+ * plataforma: al menos un registro con IP y/o MAC comparables y todas
+ * iguales. Sin datos para comparar, devuelve false (no se corta).
+ */
+function redCoincideConPlataforma(array $servicioGrezz, array $huellasServicio): bool
+{
+    $ipG = trim((string)($servicioGrezz['ip'] ?? ''));
+    $macG = normalizarMacUbb($servicioGrezz['mac'] ?? '');
+
+    foreach ($huellasServicio as $h) {
+        $comparables = 0;
+        $iguales = 0;
+
+        if ($ipG !== '' && $h['ip'] !== '') {
+            $comparables++;
+            $iguales += $ipG === $h['ip'] ? 1 : 0;
+        }
+
+        if ($macG !== '' && $h['mac'] !== '') {
+            $comparables++;
+            $iguales += $macG === $h['mac'] ? 1 : 0;
+        }
+
+        if ($comparables > 0 && $iguales === $comparables) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Estado de todos los servicios según Grezz: [id_servicio => ESTADO].
+ * Si Grezz no pudo resolver un servicio, el valor es "ERROR_<código>"
+ * (por ejemplo ERROR_SIN_RELACION).
+ *
+ * Nota: por ahora la API de Grezz solo expone servicios DHCP con equipo
+ * relacionado; los servicios PPPoE todavía no aparecen.
+ *
+ * Devuelve null si Grezz no respondió correctamente.
+ */
+function mapaEstadosGrezz(?array $servicios = null): ?array
+{
+    $servicios ??= serviciosGrezz();
+
+    if ($servicios === null) {
+        return null;
+    }
+
     $mapa = [];
 
-    foreach ($consulta['respuesta']['servicios'] as $servicio) {
+    foreach ($servicios as $servicio) {
         $id = filter_var($servicio['id_servicio'] ?? null, FILTER_VALIDATE_INT);
         $estado = $servicio['estado_actual'] ?? null;
         $error = $servicio['error'] ?? null;

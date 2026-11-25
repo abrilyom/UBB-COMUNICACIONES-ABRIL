@@ -142,38 +142,31 @@ try {
         'red_distinta' => 0,
         'red_sin_dato' => 0,
     ];
-    $ejemplos = [];
+    $ejemplosRed = [];
+    $ejemplosVelocidad = [];
 
     foreach ($grezz as $id => $g) {
         $p = $servicios[$id] ?? null;
 
         if ($p === null) {
             $t['no_existe']++;
-            if (count($ejemplos) < 15) {
-                $ejemplos[] = "Servicio $id: existe en Grezz pero NO en la plataforma.";
-            }
+            $ejemplosRed[] = "Servicio $id: existe en Grezz pero NO en la plataforma.";
             continue;
         }
 
-        // Plan
-        $planG = normalizarTexto($g['plan'] ?? '');
-        $planP = normalizarTexto($p['paquete_referencia'] ?? '');
+        // Velocidad: Grezz usa el perfil técnico ("20M_VLAN41") y la plataforma
+        // el paquete comercial ("HOGAR-BASICO 25 Mbps"); se comparan los Mbps.
+        $velG = preg_match('/(\d+)\s*M/i', (string)($g['plan'] ?? ''), $m) ? (int)$m[1] : null;
+        $velP = preg_match('/(\d+)\s*Mbps/i', (string)($p['paquete_referencia'] ?? ''), $m) ? (int)$m[1] : null;
 
-        if ($planG === '' || $planP === '') {
+        if ($velG === null || $velP === null) {
             $t['plan_sin_dato']++;
-        } elseif ($planG === $planP || str_contains($planG, $planP) || str_contains($planP, $planG)) {
+        } elseif ($velG === $velP) {
             $t['plan_igual']++;
         } else {
             $t['plan_distinto']++;
-            if (count($ejemplos) < 15) {
-                $ejemplos[] = sprintf(
-                    'Servicio %d: plan Grezz "%s" ≠ paquete plataforma "%s" (cliente %s).',
-                    $id,
-                    $g['plan'] ?? '',
-                    $p['paquete_referencia'] ?? '',
-                    $p['id_cliente']
-                );
-            }
+            $clave = "{$velP} Mbps contratados → perfil técnico de {$velG}M";
+            $ejemplosVelocidad[$clave] = ($ejemplosVelocidad[$clave] ?? 0) + 1;
         }
 
         // IP / MAC
@@ -200,16 +193,15 @@ try {
             $t['red_igual']++;
         } else {
             $t['red_distinta']++;
-            if (count($ejemplos) < 15) {
-                $ejemplos[] = sprintf(
-                    'Servicio %d: IP/MAC de Grezz (%s / %s) no coinciden con la plataforma (%s / %s).',
-                    $id,
-                    $ipG ?: '-',
-                    $macG ?: '-',
-                    $ipP ?: '-',
-                    $macP ?: '-'
-                );
-            }
+            $ejemplosRed[] = sprintf(
+                'Servicio %d (cliente %s): Grezz IP %s MAC %s ≠ plataforma IP %s MAC %s.',
+                $id,
+                $p['id_cliente'],
+                $ipG ?: '-',
+                $macG ?: '-',
+                $ipP ?: '-',
+                $macP ?: '-'
+            );
         }
     }
 
@@ -218,36 +210,52 @@ try {
     echo "===== RESULTADO =====\n";
     echo "Servicios de Grezz que no existen en la plataforma: {$t['no_existe']}\n";
     echo "Servicios con el mismo id en ambos lados:          $existentes\n\n";
-    echo "Comparación de plan:\n";
-    echo "  coinciden:     {$t['plan_igual']}\n";
-    echo "  NO coinciden:  {$t['plan_distinto']}\n";
-    echo "  sin dato:      {$t['plan_sin_dato']}\n\n";
-    echo "Comparación de IP / MAC:\n";
+    echo "Comparación de IP / MAC (prueba de identidad del servicio):\n";
     echo "  coinciden:     {$t['red_igual']}\n";
     echo "  NO coinciden:  {$t['red_distinta']}\n";
     echo "  sin dato:      {$t['red_sin_dato']}\n\n";
 
-    if ($ejemplos) {
-        echo "===== EJEMPLOS DE DIFERENCIAS =====\n";
-        foreach ($ejemplos as $e) {
-            echo "- $e\n";
+    if ($ejemplosRed) {
+        echo "Servicios con IP/MAC diferente (no se suspenden automáticamente):\n";
+        foreach ($ejemplosRed as $e) {
+            echo "  - $e\n";
         }
         echo "\n";
     }
 
-    $comparadosPlan = $t['plan_igual'] + $t['plan_distinto'];
-    $porcentaje = $comparadosPlan > 0 ? round($t['plan_igual'] * 100 / $comparadosPlan) : 0;
+    echo "Comparación de velocidad (paquete comercial vs perfil técnico):\n";
+    echo "  coinciden:     {$t['plan_igual']}\n";
+    echo "  NO coinciden:  {$t['plan_distinto']}\n";
+    echo "  sin dato:      {$t['plan_sin_dato']}\n";
 
-    echo "===== CONCLUSIÓN =====\n";
+    if ($ejemplosVelocidad) {
+        arsort($ejemplosVelocidad);
+        foreach ($ejemplosVelocidad as $descripcion => $total) {
+            echo "  - $descripcion: $total servicio(s)\n";
+        }
+    }
 
-    if ($comparadosPlan === 0 && $t['red_igual'] + $t['red_distinta'] === 0) {
-        echo "No hay datos suficientes para comparar. Pide a Grezz que confirme de qué tabla\n";
-        echo "toma su id_servicio.\n";
-    } elseif ($porcentaje >= 90 && $t['red_distinta'] === 0) {
-        echo "Los identificadores parecen ser los MISMOS ($porcentaje% de planes coinciden).\n";
+    echo "\n===== CONCLUSIÓN =====\n";
+
+    $comparadosRed = $t['red_igual'] + $t['red_distinta'];
+    $porcentajeRed = $comparadosRed > 0 ? round($t['red_igual'] * 100 / $comparadosRed, 1) : 0;
+
+    if ($comparadosRed === 0) {
+        echo "No hay IP/MAC para comparar. Pide a Grezz que confirme de qué tabla toma su id_servicio.\n";
+    } elseif ($porcentajeRed >= 95) {
+        echo "Los identificadores SON LOS MISMOS: $porcentajeRed% de los servicios comparados\n";
+        echo "tienen la misma IP/MAC en Grezz y en la plataforma.\n";
+        if ($t['red_distinta'] > 0) {
+            echo "Los {$t['red_distinta']} servicios con IP/MAC diferente se excluyen de la suspensión automática.\n";
+        }
     } else {
-        echo "⚠ Los identificadores parecen ser DIFERENTES (solo $porcentaje% de planes coinciden).\n";
+        echo "⚠ Solo $porcentajeRed% de los servicios coinciden por IP/MAC.\n";
         echo "NO actives la suspensión real hasta acordar con Grezz cómo relacionar los servicios.\n";
+    }
+
+    if ($t['plan_distinto'] > 0) {
+        echo "\nNota para UBB: {$t['plan_distinto']} servicios tienen una velocidad técnica distinta\n";
+        echo "a la del paquete contratado. No afecta los pagos, pero conviene revisarlo.\n";
     }
 
 } catch (Throwable $e) {

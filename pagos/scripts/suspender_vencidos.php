@@ -54,6 +54,7 @@ $contadores = [
     'candidatos' => 0,
     'ya_suspendidos' => 0,
     'no_gestionados' => 0,
+    'red_distinta' => 0,
     'con_abono_sin_conciliar' => 0,
     'solicitadas' => 0,
     'no_registradas' => 0,
@@ -157,7 +158,8 @@ try {
         ));
     }
 
-    $estadosGrezz = mapaEstadosGrezz();
+    $serviciosGrezz = serviciosGrezz();
+    $estadosGrezz = $serviciosGrezz === null ? null : mapaEstadosGrezz($serviciosGrezz);
 
     if ($estadosGrezz === null) {
         // Sin el estado real no se puede saber quién ya está suspendido.
@@ -166,6 +168,23 @@ try {
             'No se envió ninguna suspensión.'
         );
     }
+
+    // Datos de red de Grezz por servicio, e IP/MAC de la plataforma de Jamileth.
+    $redGrezz = [];
+
+    foreach ($serviciosGrezz as $servicioGrezz) {
+        $id = filter_var($servicioGrezz['id_servicio'] ?? null, FILTER_VALIDATE_INT);
+        if ($id) {
+            $redGrezz[(int)$id] = $servicioGrezz;
+        }
+    }
+
+    $plataforma = conectarPlataformaCli();
+    $huellasRed = huellasRedPlataforma(
+        $plataforma,
+        array_map(fn($fila) => (int)$fila['id_servicio'], $candidatos)
+    );
+    $plataforma->close();
 
     // Abonos que aún no se concilian pero mencionan al servicio.
     $stmtAbono = $conexion->prepare("
@@ -216,6 +235,14 @@ try {
             } else {
                 echo "  · Grezz no puede gestionarlo ($estadoActual). Requiere revisión manual.\n\n";
             }
+            continue;
+        }
+
+        // Comprobar que Grezz y la plataforma hablan del mismo equipo.
+        if (!redCoincideConPlataforma($redGrezz[$idServicio] ?? [], $huellasRed[$idServicio] ?? [])) {
+            $contadores['red_distinta']++;
+            echo "  · La IP/MAC de Grezz no coincide con la de la plataforma (o no hay datos). "
+                . "No se corta: requiere revisión manual.\n\n";
             continue;
         }
 
@@ -283,6 +310,7 @@ try {
     echo "Servicios fuera de gracia:          {$contadores['candidatos']}\n";
     echo "Ya suspendidos en Grezz:            {$contadores['ya_suspendidos']}\n";
     echo "No gestionables por Grezz (manual): {$contadores['no_gestionados']}\n";
+    echo "IP/MAC sin coincidencia (manual):   {$contadores['red_distinta']}\n";
     echo "Detenidos por abono sin conciliar:  {$contadores['con_abono_sin_conciliar']}\n";
     echo ($confirmar ? "Suspensiones solicitadas:           " : "Suspensiones que se solicitarían:   ")
         . "{$contadores['solicitadas']}\n";

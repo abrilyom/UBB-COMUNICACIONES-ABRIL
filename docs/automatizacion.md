@@ -91,6 +91,12 @@ La configuración vive en `/etc/ubb-notificaciones.env` (fuera del repositorio).
 
 La API de Grezz (RADIUS) por ahora solo expone los **servicios DHCP con equipo relacionado** (344 en la revisión del 25/11/2026: 302 activos, 9 suspendidos y 33 que no pudo resolver, con un campo `error` como `SIN_RELACION`). Los servicios **PPPoE**, que son la mayoría de fibra, todavía no aparecen.
 
+### Verificación de identidad del servicio
+
+`diagnostico_ids_grezz.php` (solo lectura) confirmó el 25/11/2026 que el `id_servicio` de Grezz es el mismo que el de la plataforma: **309 de 311** servicios comparables tienen la misma IP/MAC en Grezz y en `integracion_winbox`. Aun así, antes de cada suspensión el sistema vuelve a comparar la IP/MAC; si no coinciden o no hay datos, el servicio no se corta y queda para revisión manual.
+
+Hallazgo para UBB: la mayoría de los servicios tiene un perfil técnico de velocidad distinto al paquete contratado (por ejemplo, paquete de 25 Mbps con perfil `20M`). No afecta los pagos, pero conviene revisarlo.
+
 Por eso la suspensión automática **solo actúa sobre servicios que Grezz reporta como `ACTIVO`**. Los demás se listan como "no gestionables" para corte manual. Cuando Grezz exponga PPPoE, se incluirán sin cambiar el código de UBB Pagos.
 
 ## Pendiente
