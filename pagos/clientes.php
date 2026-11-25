@@ -178,7 +178,7 @@ function urlPagina(int $pagina, string $busqueda, string $estado): string {
         }
 
         .clientes-encabezado h2 {
-            color: #432064;
+            color: #470c74;
             margin: 0 0 6px;
         }
 
@@ -196,10 +196,10 @@ function urlPagina(int $pagina, string $busqueda, string $estado): string {
 
         .cliente-indicador {
             background: #fff;
-            border: 1px solid #e9e2f0;
+            border: 1px solid #ebddf5;
             border-radius: 14px;
             padding: 19px;
-            box-shadow: 0 3px 12px rgba(45, 25, 65, .05);
+            box-shadow: 0 3px 12px rgba(49,16,74,.05);
         }
 
         .cliente-indicador span {
@@ -210,7 +210,7 @@ function urlPagina(int $pagina, string $busqueda, string $estado): string {
         }
 
         .cliente-indicador strong {
-            color: #51277b;
+            color: #570f8e;
             font-size: 27px;
         }
 
@@ -219,7 +219,7 @@ function urlPagina(int $pagina, string $busqueda, string $estado): string {
             flex-wrap: wrap;
             gap: 12px;
             background: #fff;
-            border: 1px solid #e9e2f0;
+            border: 1px solid #ebddf5;
             border-radius: 14px;
             padding: 18px;
             margin-bottom: 18px;
@@ -228,7 +228,7 @@ function urlPagina(int $pagina, string $busqueda, string $estado): string {
         .clientes-filtros input,
         .clientes-filtros select {
             min-height: 43px;
-            border: 1px solid #ded5e8;
+            border: 1px solid #e1cfee;
             border-radius: 9px;
             padding: 9px 12px;
             font: inherit;
@@ -247,7 +247,7 @@ function urlPagina(int $pagina, string $busqueda, string $estado): string {
             border: 0;
             border-radius: 9px;
             padding: 11px 18px;
-            background: #642c91;
+            background: #6611a6;
             color: #fff;
             font-weight: 600;
             cursor: pointer;
@@ -258,12 +258,12 @@ function urlPagina(int $pagina, string $busqueda, string $estado): string {
         }
 
         .btn-clientes:hover {
-            background: #4f2076;
+            background: #510c85;
         }
 
         .clientes-tabla-contenedor {
             background: #fff;
-            border: 1px solid #e9e2f0;
+            border: 1px solid #ebddf5;
             border-radius: 14px;
             overflow: hidden;
         }
@@ -281,23 +281,23 @@ function urlPagina(int $pagina, string $busqueda, string $estado): string {
         .clientes-tabla th,
         .clientes-tabla td {
             padding: 14px 16px;
-            border-bottom: 1px solid #eee9f3;
+            border-bottom: 1px solid #efe5f7;
             text-align: left;
             font-size: 13px;
         }
 
         .clientes-tabla th {
-            background: #f5f1f8;
-            color: #49345f;
+            background: #f5effa;
+            color: #4e147a;
             font-weight: 700;
         }
 
         .clientes-tabla tbody tr:hover {
-            background: #faf8fc;
+            background: #faf7fd;
         }
 
         .cliente-nombre {
-            color: #39234e;
+            color: #3c0e60;
             font-weight: 700;
         }
 
@@ -335,11 +335,11 @@ function urlPagina(int $pagina, string $busqueda, string $estado): string {
         .cliente-servicios {
             text-align: center;
             font-weight: 700;
-            color: #51277b;
+            color: #570f8e;
         }
 
         .cliente-accion {
-            color: #642c91;
+            color: #6611a6;
             font-weight: 700;
             text-decoration: none;
         }
@@ -376,7 +376,7 @@ function urlPagina(int $pagina, string $busqueda, string $estado): string {
         }
 
         .clientes-paginacion a {
-            color: #642c91;
+            color: #6611a6;
             font-weight: 700;
             text-decoration: none;
             margin-left: 14px;

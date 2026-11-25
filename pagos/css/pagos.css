@@ -6,8 +6,8 @@
 
 body {
     font-family: Arial, Helvetica, sans-serif;
-    background: #f4f3f8;
-    color: #29233d;
+    background: #f3f1fa;
+    color: #221749;
     min-height: 100vh;
 }
 
@@ -19,18 +19,18 @@ body {
 .encabezado {
     min-height: 82px;
     background: #ffffff;
-    border-bottom: 1px solid #e5e1ee;
+    border-bottom: 1px solid #e3dcf3;
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 55px;
-    box-shadow: 0 2px 10px rgba(50, 30, 80, 0.05);
+    box-shadow: 0 2px 10px rgba(60,20,91,0.05);
     gap: 30px;
 }
 
 .marca h1 {
     font-size: 21px;
-    color: #5b2a86;
+    color: #5f109a;
     letter-spacing: 0.5px;
 }
 
@@ -52,8 +52,8 @@ body {
     display: flex;
     align-items: center;
     gap: 9px;
-    background: #f8f7fa;
-    border: 1px solid #ddd8e5;
+    background: #f8f5fc;
+    border: 1px solid #e0d2ec;
     border-radius: 9px;
     padding: 0 13px;
 }
@@ -69,7 +69,7 @@ body {
     outline: none;
     background: transparent;
     font-size: 13px;
-    color: #29233d;
+    color: #221749;
 }
 
 .buscador input::placeholder {
@@ -93,8 +93,8 @@ body {
 
 .btn-regresar {
     text-decoration: none;
-    color: #5b2a86;
-    border: 1px solid #d8cce6;
+    color: #5f109a;
+    border: 1px solid #dcc6ec;
     padding: 10px 18px;
     border-radius: 8px;
     font-size: 14px;
@@ -104,7 +104,7 @@ body {
 }
 
 .btn-regresar:hover {
-    background: #f3edf8;
+    background: #f4ebfa;
 }
 
 
@@ -132,7 +132,7 @@ body {
 
 .etiqueta-seccion {
     display: inline-block;
-    color: #6c4a88;
+    color: #701daf;
     font-size: 10px;
     font-weight: 800;
     letter-spacing: 1px;
@@ -141,7 +141,7 @@ body {
 
 .encabezado-control h2 {
     font-size: 27px;
-    color: #29233d;
+    color: #221749;
     line-height: 1.25;
 }
 
@@ -195,17 +195,17 @@ body {
 
 .tarjeta {
     background: #ffffff;
-    border: 1px solid #e5e1ee;
+    border: 1px solid #e3dcf3;
     border-radius: 14px;
     padding: 21px;
     min-height: 145px;
-    box-shadow: 0 5px 18px rgba(54, 30, 80, 0.045);
+    box-shadow: 0 5px 18px rgba(60,20,91,0.045);
     transition: 0.2s;
 }
 
 .tarjeta:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(54, 30, 80, 0.08);
+    box-shadow: 0 8px 24px rgba(60,20,91,0.08);
 }
 
 .tarjeta-titulo {
@@ -222,7 +222,7 @@ body {
     display: block;
     margin-top: 15px;
     font-size: 31px;
-    color: #29233d;
+    color: #221749;
 }
 
 .tarjeta small {
@@ -239,10 +239,10 @@ body {
 
 .panel {
     background: #ffffff;
-    border: 1px solid #e5e1ee;
+    border: 1px solid #e3dcf3;
     border-radius: 14px;
     padding: 23px;
-    box-shadow: 0 5px 18px rgba(54, 30, 80, 0.045);
+    box-shadow: 0 5px 18px rgba(60,20,91,0.045);
 }
 
 .panel-encabezado {
@@ -254,7 +254,7 @@ body {
 
 .panel h3 {
     font-size: 18px;
-    color: #29233d;
+    color: #221749;
 }
 
 .panel-titulo {
@@ -268,7 +268,7 @@ body {
     width: 42px;
     height: 42px;
     border-radius: 10px;
-    background: #eee5f7;
+    background: #f0e3f9;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -287,7 +287,7 @@ body {
 }
 
 .filtro {
-    border: 1px solid #e1dce8;
+    border: 1px solid #e4d5ef;
     background: #ffffff;
     border-radius: 8px;
     padding: 9px 14px;
@@ -299,9 +299,9 @@ body {
 
 .filtro:hover,
 .filtro.activo {
-    background: #f3edf8;
-    border-color: #cdb9dc;
-    color: #5b2a86;
+    background: #f4ebfa;
+    border-color: #ceb0e5;
+    color: #5f109a;
 }
 
 .filtro strong {
@@ -326,8 +326,8 @@ table {
 thead th {
     text-align: left;
     padding: 13px 12px;
-    background: #faf9fb;
-    border-bottom: 1px solid #e7e2eb;
+    background: #faf8fc;
+    border-bottom: 1px solid #e8dcf1;
     color: #777184;
     font-size: 11px;
     text-transform: uppercase;
@@ -336,7 +336,7 @@ thead th {
 
 tbody td {
     padding: 14px 12px;
-    border-bottom: 1px solid #eeeaf2;
+    border-bottom: 1px solid #efe6f6;
     color: #4c4657;
     font-size: 13px;
 }
@@ -346,7 +346,7 @@ tbody tr:last-child td {
 }
 
 tbody tr:hover {
-    background: #fcfbfd;
+    background: #fcfafe;
 }
 
 
@@ -407,7 +407,7 @@ tbody tr:hover {
 .ver-clientes button {
     border: none;
     background: transparent;
-    color: #5b2a86;
+    color: #5f109a;
     font-size: 13px;
     font-weight: 700;
     cursor: pointer;
@@ -455,14 +455,14 @@ tbody tr:hover {
 
 .barra-fondo {
     height: 11px;
-    background: #eeeaf2;
+    background: #efe6f6;
     border-radius: 20px;
     overflow: hidden;
 }
 
 .barra-valor {
     height: 100%;
-    background: #6d3897;
+    background: #6f16b3;
     border-radius: 20px;
 }
 
@@ -498,7 +498,7 @@ tbody tr:hover {
     justify-content: space-between;
     align-items: center;
     padding-bottom: 13px;
-    border-bottom: 1px solid #eeeaf2;
+    border-bottom: 1px solid #efe6f6;
 }
 
 .resumen-servicios > div:last-child {
@@ -508,7 +508,7 @@ tbody tr:hover {
 
 .resumen-servicios strong {
     font-size: 18px;
-    color: #29233d;
+    color: #221749;
 }
 
 
@@ -527,7 +527,7 @@ tbody tr:hover {
     justify-content: space-between;
     align-items: center;
     padding-bottom: 12px;
-    border-bottom: 1px solid #eeeaf2;
+    border-bottom: 1px solid #efe6f6;
     color: #5c5666;
     font-size: 13px;
 }
@@ -538,7 +538,7 @@ tbody tr:hover {
 }
 
 .lista-automatizacion strong {
-    color: #29233d;
+    color: #221749;
 }
 
 
@@ -558,19 +558,19 @@ tbody tr:hover {
     align-items: center;
     gap: 13px;
     padding: 13px;
-    background: #faf9fb;
-    border: 1px solid #e9e5ed;
+    background: #faf8fc;
+    border: 1px solid #eae0f2;
     border-radius: 10px;
     text-decoration: none;
-    color: #29233d;
+    color: #221749;
     cursor: pointer;
     text-align: left;
     transition: 0.2s;
 }
 
 .accion:hover {
-    background: #f4eef9;
-    border-color: #d6c4e1;
+    background: #f4ecfb;
+    border-color: #d5bce9;
 }
 
 .accion > span {
@@ -580,8 +580,8 @@ tbody tr:hover {
     align-items: center;
     justify-content: center;
     border-radius: 8px;
-    background: #eee5f7;
-    color: #5b2a86;
+    background: #f0e3f9;
+    color: #5f109a;
     font-size: 18px;
 }
 
@@ -611,9 +611,9 @@ tbody tr:hover {
 
 .botones-historial a {
     text-decoration: none;
-    color: #5b2a86;
+    color: #5f109a;
     background: #ffffff;
-    border: 1px solid #d8cce6;
+    border: 1px solid #dcc6ec;
     border-radius: 8px;
     padding: 10px 15px;
     font-size: 12px;
@@ -621,7 +621,7 @@ tbody tr:hover {
 }
 
 .botones-historial a:hover {
-    background: #f3edf8;
+    background: #f4ebfa;
 }
 
 
@@ -636,8 +636,8 @@ tbody tr:hover {
 
 .etiqueta {
     display: inline-block;
-    background: #eee5f7;
-    color: #5b2a86;
+    background: #f0e3f9;
+    color: #5f109a;
     font-size: 11px;
     font-weight: bold;
     padding: 6px 10px;
@@ -648,7 +648,7 @@ tbody tr:hover {
 
 .titulo-pagina h2 {
     font-size: 30px;
-    color: #29233d;
+    color: #221749;
     margin-bottom: 8px;
 }
 
@@ -680,10 +680,10 @@ tbody tr:hover {
 
 .tarjeta-formulario {
     background: #ffffff;
-    border: 1px solid #e5e1ee;
+    border: 1px solid #e3dcf3;
     border-radius: 16px;
     padding: 32px;
-    box-shadow: 0 8px 25px rgba(54, 30, 80, 0.07);
+    box-shadow: 0 8px 25px rgba(60,20,91,0.07);
 }
 
 .encabezado-formulario {
@@ -692,15 +692,15 @@ tbody tr:hover {
     gap: 16px;
     padding-bottom: 25px;
     margin-bottom: 25px;
-    border-bottom: 1px solid #eeeaf2;
+    border-bottom: 1px solid #efe6f6;
 }
 
 .icono-efectivo {
     width: 50px;
     height: 50px;
     border-radius: 12px;
-    background: #eee5f7;
-    color: #5b2a86;
+    background: #f0e3f9;
+    color: #5f109a;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -740,7 +740,7 @@ tbody tr:hover {
 .campo label {
     font-size: 13px;
     font-weight: 700;
-    color: #443b54;
+    color: #381774;
 }
 
 .campo label span {
@@ -751,19 +751,19 @@ tbody tr:hover {
 .campo input {
     width: 100%;
     height: 46px;
-    border: 1px solid #dcd7e4;
+    border: 1px solid #dfd0eb;
     border-radius: 8px;
     padding: 0 13px;
     font-size: 14px;
-    color: #29233d;
+    color: #221749;
     background: #ffffff;
     outline: none;
     transition: 0.2s;
 }
 
 .campo input:focus {
-    border-color: #7b3fb0;
-    box-shadow: 0 0 0 3px rgba(123, 63, 176, 0.10);
+    border-color: #8018cf;
+    box-shadow: 0 0 0 3px rgba(128,24,207,0.10);
 }
 
 .campo input::placeholder {
@@ -779,7 +779,7 @@ tbody tr:hover {
     left: 14px;
     top: 50%;
     transform: translateY(-50%);
-    color: #5b2a86;
+    color: #5f109a;
     font-weight: bold;
 }
 
@@ -791,8 +791,8 @@ tbody tr:hover {
     display: flex;
     align-items: center;
     gap: 14px;
-    background: #f5f0fa;
-    border: 1px solid #e4d7ef;
+    background: #f6eefc;
+    border: 1px solid #e5d2f4;
     border-radius: 10px;
     padding: 15px;
 }
@@ -802,7 +802,7 @@ tbody tr:hover {
 }
 
 .aviso-efectivo strong {
-    color: #5b2a86;
+    color: #5f109a;
     font-size: 14px;
 }
 
@@ -817,7 +817,7 @@ tbody tr:hover {
     height: 48px;
     border: none;
     border-radius: 9px;
-    background: #5b2a86;
+    background: #5f109a;
     color: #ffffff;
     font-size: 15px;
     font-weight: bold;
@@ -826,7 +826,7 @@ tbody tr:hover {
 }
 
 .btn-registrar:hover {
-    background: #47206c;
+    background: #4b0c7b;
     transform: translateY(-1px);
 }
 
@@ -952,7 +952,7 @@ a.tarjeta:active {
     font-size: 12px;
     font-weight: 700;
     letter-spacing: 1.5px;
-    color: #6f42c1;
+    color: #6019e2;
 }
 
 .panel-titulo {
@@ -986,7 +986,7 @@ a.tarjeta:active {
 
 .filtro:focus {
     outline: none;
-    border-color: #6f42c1;
+    border-color: #6019e2;
 }
 
 .filtros-clientes .buscador {
@@ -1009,7 +1009,7 @@ a.tarjeta:active {
 
 .filtros-clientes .buscador button {
     border: none;
-    background: #6f42c1;
+    background: #6019e2;
     color: #ffffff;
     padding: 12px 16px;
     cursor: pointer;
@@ -1077,7 +1077,7 @@ a.tarjeta:active {
 }
 
 .tabla-contenedor th {
-    background: #f7f5fb;
+    background: #f7f4fc;
     color: #666666;
     font-size: 12px;
     letter-spacing: 0.6px;
@@ -1093,7 +1093,7 @@ a.tarjeta:active {
 }
 
 .tabla-contenedor tbody tr:hover {
-    background: #faf9fd;
+    background: #faf8fe;
 }
 
 
@@ -1120,7 +1120,7 @@ a.tarjeta:active {
     display: inline-block;
     margin-top: 20px;
     text-decoration: none;
-    color: #6f42c1;
+    color: #6019e2;
     font-weight: 600;
 }
 
@@ -1180,7 +1180,7 @@ a.tarjeta:active {
     display: block !important;
     width: 40px !important;
     min-height: 20px !important;
-    background-color: #6c4bb6 !important;
+    background-color: #581ddd !important;
     border-radius: 7px 7px 0 0 !important;
 }
 
@@ -1207,7 +1207,7 @@ a.tarjeta:active {
     height: 180px;
     border-radius: 50%;
     background: conic-gradient(
-        #6c4bb6 0% 65%,
+        #581ddd 0% 65%,
         #f0b429 65% 85%,
         #dc3545 85% 100%
     );
@@ -1235,7 +1235,7 @@ a.tarjeta:active {
 }
 
 .punto-leyenda.pagado {
-    background: #6c4bb6;
+    background: #581ddd;
 }
 
 .punto-leyenda.pendiente {
@@ -1392,7 +1392,7 @@ section.panel-estado-servicios {
 
 .metodo-pago{
     background: #eee8ff;
-    color: #6841b5;
+    color: #5819d5;
 }
 
 .estado-pagado{
@@ -1559,7 +1559,7 @@ section.panel-estado-servicios {
     margin: 0 !important;
     font-size: 19px !important;
     line-height: 1.3 !important;
-    color: #5b2a86 !important;
+    color: #5f109a !important;
 }
 
 .marca p {
@@ -1619,8 +1619,8 @@ section.panel-estado-servicios {
     justify-content: space-between;
     overflow-y: auto;
     color: #fff;
-    background: linear-gradient(180deg, #60258a 0%, #48206f 100%);
-    box-shadow: 4px 0 18px rgba(54, 24, 83, .12);
+    background: linear-gradient(180deg, #5e0e9b 0%, #4d0c7e 100%);
+    box-shadow: 4px 0 18px rgba(59,16,91,.12);
 }
 
 .menu-lateral-ubb nav {
@@ -1649,8 +1649,8 @@ section.panel-estado-servicios {
 }
 
 .menu-lateral-ubb nav a.activo {
-    background: linear-gradient(110deg, #8b4ac0, #a36bd0);
-    box-shadow: 0 4px 12px rgba(30, 10, 48, .15);
+    background: linear-gradient(110deg, #8e1de5, #a446eb);
+    box-shadow: 0 4px 12px rgba(32,6,52,.15);
 }
 
 .menu-lateral-ubb .icono-menu {
@@ -1728,8 +1728,8 @@ body > .contenedor {
 
 /* DASHBOARD UBB - TARJETAS Y GRAFICAS V2 */
 body {
-    background: #f6f4fa !important;
-    color: #29233d;
+    background: #f6f3fc !important;
+    color: #221749;
 }
 
 body > .contenedor {
@@ -1748,14 +1748,14 @@ body > .contenedor {
 .encabezado-control .etiqueta-seccion {
     display: inline-block;
     margin-bottom: 7px;
-    color: #7136a1;
+    color: #7315bc;
     font-size: 12px;
     font-weight: 800;
     letter-spacing: 1.4px;
 }
 
 .encabezado-control h2 {
-    color: #29233d;
+    color: #221749;
     font-size: clamp(21px, 2vw, 29px);
     line-height: 1.3;
     font-weight: 800;
@@ -1779,24 +1779,24 @@ body > .contenedor {
     min-width: 0;
     min-height: 150px;
     padding: 22px 20px !important;
-    border: 1px solid #e8e0f2 !important;
+    border: 1px solid #ebdcf6 !important;
     border-radius: 15px !important;
     background: #fff !important;
-    box-shadow: 0 5px 18px rgba(54, 31, 78, .055) !important;
+    box-shadow: 0 5px 18px rgba(59,20,89,.055) !important;
     transition: transform .18s ease, box-shadow .18s ease;
     cursor: pointer;
 }
 
 .tarjetas .tarjeta:hover {
     transform: translateY(-3px);
-    box-shadow: 0 10px 24px rgba(54, 31, 78, .11) !important;
+    box-shadow: 0 10px 24px rgba(59,20,89,.11) !important;
 }
 
 .tarjeta-titulo {
     display: flex;
     align-items: center;
     gap: 9px;
-    color: #54217d;
+    color: #550d8c;
     font-size: 12px;
     font-weight: 800;
     letter-spacing: .5px;
@@ -1805,7 +1805,7 @@ body > .contenedor {
 .tarjeta .numero {
     display: block;
     margin: 10px 0 5px;
-    color: #30204b;
+    color: #3a1556;
     font-size: clamp(27px, 2.3vw, 34px);
     line-height: 1.15;
     font-weight: 800;
@@ -1823,7 +1823,7 @@ body > .contenedor {
 }
 
 .tarjeta-pagos {
-    border-top: 3px solid #7d3fba !important;
+    border-top: 3px solid #8618d9 !important;
 }
 
 .tarjeta-proximos {
@@ -1837,10 +1837,10 @@ body > .contenedor {
 .panel,
 .graficas-servicios > .panel {
     min-width: 0;
-    border: 1px solid #e8e2f2 !important;
+    border: 1px solid #ecdef6 !important;
     border-radius: 15px !important;
     background: #fff !important;
-    box-shadow: 0 5px 18px rgba(54, 31, 78, .045) !important;
+    box-shadow: 0 5px 18px rgba(59,20,89,.045) !important;
     padding: 22px !important;
 }
 
@@ -1856,7 +1856,7 @@ body > .contenedor {
 
 .panel h3,
 .panel-titulo h3 {
-    color: #4f237b;
+    color: #550e8c;
     font-size: 16px;
     font-weight: 750;
 }
@@ -1892,8 +1892,8 @@ body > .contenedor {
 }
 
 .tabla-contenedor th {
-    background: #f5f0fb;
-    color: #572883;
+    background: #f6effc;
+    color: #5c1096;
     font-size: 12px;
     font-weight: 750;
     white-space: nowrap;
@@ -1904,7 +1904,7 @@ body > .contenedor {
 }
 
 .tabla-contenedor tbody tr:hover {
-    background: #faf7fd;
+    background: #faf6fe;
 }
 
 @media (max-width: 1100px) {
@@ -1983,8 +1983,8 @@ body > .contenedor {
     position: relative;
     isolation: isolate;
     overflow: hidden;
-    background: linear-gradient(110deg, #fff 0%, #fbf8ff 70%, #f4eaff 100%);
-    border-bottom: 1px solid #e8def4;
+    background: linear-gradient(110deg, #fff 0%, #fcf8ff 70%, #f6eaff 100%);
+    border-bottom: 1px solid #ebdbf7;
 }
 
 .encabezado::before,
@@ -2001,15 +2001,15 @@ body > .contenedor {
 .encabezado::before {
     width: 105px;
     right: 3%;
-    background: #ead5fa;
+    background: #ead3fc;
     opacity: .85;
 }
 
 .encabezado::after {
     width: 48px;
     right: 1%;
-    background: #a84bd1;
-    box-shadow: 34px 0 0 #d6a3f0;
+    background: #9728ec;
+    box-shadow: 34px 0 0 #cf9ff4;
 }
 
 .encabezado > * {
@@ -2020,7 +2020,7 @@ body > .contenedor {
 .menu-lateral-ubb {
     isolation: isolate;
     overflow: hidden;
-    background: linear-gradient(180deg, #60258a 0%, #48206f 72%, #351453 100%);
+    background: linear-gradient(180deg, #5e0e9b 0%, #4d0c7e 72%, #390d5a 100%);
 }
 
 .menu-lateral-ubb::before,
@@ -2038,7 +2038,7 @@ body > .contenedor {
     height: 100px;
     right: -180px;
     bottom: 70px;
-    background: #a64bd0;
+    background: #9627eb;
     opacity: .8;
 }
 
@@ -2047,8 +2047,8 @@ body > .contenedor {
     height: 45px;
     right: -195px;
     bottom: 35px;
-    background: #d78af0;
-    box-shadow: 0 48px 0 #7133a0;
+    background: #c076f8;
+    box-shadow: 0 48px 0 #7114b9;
     opacity: .9;
 }
 
@@ -2141,9 +2141,9 @@ body {
 }
 
 .menu-lateral-ubb nav a.activo {
-    background: linear-gradient(110deg, #8b4ac0, #a36bd0);
+    background: linear-gradient(110deg, #8e1de5, #a446eb);
     border-color: rgba(255, 255, 255, .16);
-    box-shadow: 0 4px 12px rgba(30, 10, 48, .18);
+    box-shadow: 0 4px 12px rgba(32,6,52,.18);
     font-weight: 600;
 }
 
@@ -2207,8 +2207,8 @@ body {
 .menu-lateral-ubb {
     width: 258px;
     padding: 25px 14px 18px;
-    background: linear-gradient(180deg, #60258a 0%, #48206f 68%, #351453 100%);
-    box-shadow: 5px 0 22px rgba(41, 20, 61, .18);
+    background: linear-gradient(180deg, #5e0e9b 0%, #4d0c7e 68%, #390d5a 100%);
+    box-shadow: 5px 0 22px rgba(44,13,68,.18);
 }
 .menu-lateral-ubb nav {
     gap: 9px;
@@ -2234,9 +2234,9 @@ body {
 }
 .menu-lateral-ubb nav a.activo {
     color: #fff;
-    background: linear-gradient(110deg, #9251bd, #a96fd0);
+    background: linear-gradient(110deg, #9022e4, #a54aeb);
     border-color: rgba(255,255,255,.22);
-    box-shadow: 0 5px 16px rgba(24,10,39,.2);
+    box-shadow: 0 5px 16px rgba(27,7,43,.2);
     font-weight: 650;
 }
 .menu-lateral-ubb nav a.activo::before {
@@ -2526,9 +2526,9 @@ body {
     gap: 12px;
     padding: 0 15px;
     background: #ffffff;
-    border: 1px solid #ded9e7;
+    border: 1px solid #dcd3ed;
     border-radius: 10px;
-    box-shadow: 0 1px 3px rgba(41, 35, 61, 0.035);
+    box-shadow: 0 1px 3px rgba(34,23,73,0.035);
     transition: border-color .18s ease, box-shadow .18s ease,
                 background-color .18s ease;
 }
@@ -2578,7 +2578,7 @@ body {
     outline: none;
     background: transparent;
     box-shadow: none;
-    color: #30263c;
+    color: #341949;
     font-family: inherit;
     font-size: 13px;
     font-weight: 400;
@@ -2593,12 +2593,12 @@ body {
 
 .encabezado .buscador:focus-within {
     background: #ffffff;
-    border-color: #8b62ad;
-    box-shadow: 0 0 0 3px rgba(91, 42, 134, .09);
+    border-color: #8f2add;
+    box-shadow: 0 0 0 3px rgba(95,16,154,.09);
 }
 
 .encabezado .buscador:hover:not(:focus-within) {
-    border-color: #c9bfd6;
+    border-color: #cdb5e0;
 }
 
 @media (max-width: 700px) {
@@ -2625,11 +2625,11 @@ body {
 
 /* UBB: LUPA EN MORADO CORPORATIVO */
 .encabezado .buscador > span::before {
-    border-color: #5b2a86 !important;
+    border-color: #5f109a !important;
 }
 
 .encabezado .buscador > span::after {
-    background: #5b2a86 !important;
+    background: #5f109a !important;
 }
 /* FIN UBB: LUPA MORADA */
 
@@ -2659,7 +2659,7 @@ body {
 
 .encabezado .marca-texto h1 {
     margin: 0 !important;
-    color: #5b2a86 !important;
+    color: #5f109a !important;
     font-size: 25px !important;
     font-weight: 800 !important;
     line-height: 1.05 !important;
@@ -2668,7 +2668,7 @@ body {
 
 .encabezado .marca-texto .marca-subtitulo {
     margin-top: 2px !important;
-    color: #392444 !important;
+    color: #381751 !important;
     font-size: 15px !important;
     font-weight: 400 !important;
     line-height: 1.15 !important;
@@ -2680,14 +2680,14 @@ body {
     width: 100% !important;
     height: 2px !important;
     margin-top: 6px !important;
-    background: #5b2a86 !important;
+    background: #5f109a !important;
     border-radius: 2px !important;
 }
 
 .encabezado .marca-texto p.marca-modulo {
     margin: 3px 0 0 !important;
     align-self: center !important;
-    color: #5b2a86 !important;
+    color: #5f109a !important;
     font-size: 11px !important;
     font-weight: 700 !important;
     line-height: 1.1 !important;
@@ -2734,7 +2734,7 @@ body {
         bottom: -18px;
         right: -58px;
         width: 38px;
-        background: #ead5fa;
+        background: #ead3fc;
         opacity: .9;
         transform: skewX(-28deg);
         pointer-events: none;
@@ -2751,7 +2751,7 @@ body {
         bottom: -18px;
         right: -48px;
         width: 10px;
-        background: #a84bd1;
+        background: #9728ec;
         opacity: .9;
         transform: skewX(-28deg);
         pointer-events: none;
@@ -2771,7 +2771,7 @@ body {
 /* UBB: solo cambiar a morado la franja junto al logo */
 @media (min-width: 701px) {
     .encabezado .marca-texto::after {
-        background: #a84bd1 !important;
+        background: #9728ec !important;
     }
 }
 
@@ -2785,7 +2785,7 @@ body {
     .encabezado::after {
         width: 58px;
         transform: skewX(-48deg);
-        box-shadow: 42px 0 0 #d6a3f0;
+        box-shadow: 42px 0 0 #cf9ff4;
     }
 }
 /* FIN UBB: tres franjas derechas */
@@ -2812,15 +2812,15 @@ body {
     .encabezado .marca::before {
         left: calc(100% + 35px);
         width: 125px;
-        background: #ead5fa;
+        background: #ead3fc;
         opacity: .85;
     }
 
     .encabezado .marca::after {
         left: calc(100% + 51px);
         width: 58px;
-        background: #a84bd1;
-        box-shadow: 42px 0 0 #d6a3f0;
+        background: #9728ec;
+        box-shadow: 42px 0 0 #cf9ff4;
     }
 
     /* Evitar las franjas antiguas pegadas al texto del logo */
@@ -2832,7 +2832,7 @@ body {
 /* Encabezado del Centro de Control */
 .encabezado-control .titulo-centro-control {
     margin: 0 0 4px;
-    color: #29233d;
+    color: #221749;
     font-size: clamp(24px, 2.2vw, 30px);
     line-height: 1.2;
     font-weight: 800;
@@ -2862,7 +2862,7 @@ body {
     box-sizing: border-box;
     border-radius: 11px;
     color: #ffffff;
-    background: #7136a1;
+    background: #7315bc;
 }
 .encabezado-control .icono-centro-control svg {
     width: 22px;
@@ -2932,17 +2932,17 @@ body {
     min-width: 0;
     min-height: 155px;
     padding: 17px 18px !important;
-    border: 1px solid #e8def5 !important;
+    border: 1px solid #ebdbf8 !important;
     border-radius: 12px !important;
-    background: linear-gradient(125deg, #ffffff 0%, #f8f3fd 100%) !important;
-    box-shadow: 0 3px 12px rgba(76, 35, 120, 0.045) !important;
+    background: linear-gradient(125deg, #ffffff 0%, #f9f2fe 100%) !important;
+    box-shadow: 0 3px 12px rgba(83,14,137,0.045) !important;
     cursor: pointer;
     transition: transform .2s ease, box-shadow .2s ease;
 }
 
 .tarjetas .tarjeta:hover {
     transform: translateY(-2px);
-    box-shadow: 0 7px 20px rgba(91, 42, 134, 0.12) !important;
+    box-shadow: 0 7px 20px rgba(95,16,154,0.12) !important;
 }
 
 .tarjetas .tarjeta-titulo {
@@ -2950,7 +2950,7 @@ body {
     align-items: center;
     gap: 13px !important;
     min-height: 54px;
-    color: #29134f !important;
+    color: #360c56 !important;
     font-size: 12px !important;
     font-weight: 800 !important;
     letter-spacing: .2px !important;
@@ -2966,7 +2966,7 @@ body {
     box-sizing: border-box;
     border-radius: 50%;
     color: #ffffff;
-    background: linear-gradient(145deg, #a34bd0 0%, #7130a6 100%);
+    background: linear-gradient(145deg, #9627eb 0%, #7313bd 100%);
     box-shadow: inset 0 1px 2px rgba(255,255,255,.22);
 }
 
@@ -2986,7 +2986,7 @@ body {
     font-size: 30px !important;
     line-height: 1.1;
     font-weight: 750;
-    color: #29134f !important;
+    color: #360c56 !important;
 }
 
 .tarjetas .tarjeta small {
@@ -2998,7 +2998,7 @@ body {
 
 .tarjetas .tarjeta-activos,
 .tarjetas .tarjeta-pagos {
-    background: linear-gradient(125deg, #ffffff 0%, #f7f0fc 100%) !important;
+    background: linear-gradient(125deg, #ffffff 0%, #f7effd 100%) !important;
 }
 
 .tarjetas .tarjeta-proximos {
@@ -3052,7 +3052,7 @@ body {
     font-size: 15px;
     font-weight: 750;
     white-space: nowrap;
-    color: #7136a1;
+    color: #7315bc;
 }
 
 .tarjetas .metrica-barra {
@@ -3061,7 +3061,7 @@ body {
     margin: 8px 0 0 67px;
     overflow: hidden;
     border-radius: 99px;
-    background: #ece7f1;
+    background: #ede3f5;
 }
 
 .tarjetas .metrica-progreso {
@@ -3073,7 +3073,7 @@ body {
 }
 
 .tarjetas .tarjeta-pagos .metrica-progreso {
-    background: #7136a1;
+    background: #7315bc;
 }
 
 .tarjetas .tarjeta-activos .metrica-progreso {
@@ -3146,11 +3146,11 @@ body {
 }
 
 .tarjetas > .tarjeta-pagos {
-    background: #F8F4FC !important;
-    border-color: #EAE0F4 !important;
+    background: #f9f3fd !important;
+    border-color: #ecddf7 !important;
 }
 .tarjetas > .tarjeta-pagos .icono-tarjeta {
-    background: #7136A1 !important;
+    background: #7315bc !important;
     color: #FFFFFF !important;
 }
 
@@ -3203,8 +3203,8 @@ body {
 
 .tarjetas > .tarjeta .tendencia-neutra {
     color: #62556F;
-    background: #F0ECF4;
-    border-color: #E1D8EA;
+    background: #f1e9f7;
+    border-color: #e3d2f0;
 }
 
 .tarjetas > .tarjeta .tendencia-precaucion {
@@ -3305,10 +3305,10 @@ body {
 }
 .periodo-grafica {
     padding: 7px 10px;
-    border: 1px solid #e8e0f2;
+    border: 1px solid #ebdcf6;
     border-radius: 9px;
-    background: #faf8fd;
-    color: #5b2a86;
+    background: #fbf7fe;
+    color: #5f109a;
     font-size: 11px;
     font-weight: 700;
 }
@@ -3334,7 +3334,7 @@ body {
         to top,
         transparent 0,
         transparent 43px,
-        #eee8f5 44px,
+        #f0e5f8 44px,
         transparent 45px
     );
 }
@@ -3347,7 +3347,7 @@ body {
 }
 .graficas-servicios .grafica-ingresos .valor-barra {
     min-height: 13px;
-    color: #665079;
+    color: #6a1fa4;
     font-size: 9px;
     line-height: 1.2;
     white-space: nowrap;
@@ -3356,8 +3356,8 @@ body {
     flex: 0 0 auto;
     width: min(100%, 28px) !important;
     max-height: 150px;
-    background: linear-gradient(180deg, #b99ae8 0%, #7545b5 58%, #5b2a86 100%) !important;
-    box-shadow: 0 3px 8px rgba(91, 42, 134, .16);
+    background: linear-gradient(180deg, #c794ee 0%, #861bd8 58%, #5f109a 100%) !important;
+    box-shadow: 0 3px 8px rgba(95,16,154,.16);
     border-radius: 6px 6px 0 0;
 }
 .graficas-servicios .grafica-ingresos .etiqueta-fecha {
@@ -3378,7 +3378,7 @@ body {
     width: 9px;
     height: 9px;
     border-radius: 3px;
-    background: #7545b5;
+    background: #861bd8;
 }
 @media (max-width: 600px) {
     .graficas-servicios .grafica-ingresos .eje-grafica {
@@ -3401,15 +3401,15 @@ body {
     gap: 5px;
     min-width: 155px;
     padding: 9px 11px;
-    border: 1px solid #e5d9f1;
+    border: 1px solid #e7d5f5;
     border-radius: 11px;
-    background: #fbf9fe;
+    background: #fcf9fe;
 }
 .graficas-servicios .selector-semana label {
     display: flex;
     align-items: center;
     gap: 7px;
-    color: #5b2a86;
+    color: #5f109a;
     font-size: 11px;
     font-weight: 700;
 }
@@ -3422,7 +3422,7 @@ body {
     border: 0;
     outline: 0;
     background: transparent;
-    color: #4b365f;
+    color: #4f157c;
     font: inherit;
     font-size: 11px;
     cursor: pointer;
@@ -3439,14 +3439,14 @@ body {
     margin: 5px 0 12px;
     padding: 11px 13px;
     border-radius: 10px;
-    background: #f8f4fc;
+    background: #f9f3fd;
 }
 .graficas-servicios .resumen-ingresos-semana span {
     color: #796b88;
     font-size: 11px;
 }
 .graficas-servicios .resumen-ingresos-semana strong {
-    color: #5b2a86;
+    color: #5f109a;
     font-size: 19px;
     font-weight: 800;
 }
@@ -3492,9 +3492,9 @@ body {
     min-height: 112px !important;
     padding: 15px 17px !important;
     gap: 9px !important;
-    border: 1px solid #d9c8ec !important;
+    border: 1px solid #ddc3f1 !important;
     border-radius: 14px !important;
-    background: #fbf8ff !important;
+    background: #fcf8ff !important;
 }
 
 .graficas-servicios > .panel .selector-semana label {
@@ -3699,7 +3699,7 @@ body {
     align-items: center !important;
     justify-content: center !important;
     border-radius: 50% !important;
-    background: #5b2a86 !important;
+    background: #5f109a !important;
     color: #ffffff !important;
 }
 
@@ -3708,7 +3708,7 @@ body {
     padding: 0 !important;
     font-size: 17px !important;
     font-weight: 700 !important;
-    color: #29233d !important;
+    color: #221749 !important;
 }
 
 /* ===== DISEÑO DONA UBB ===== */
@@ -3732,7 +3732,7 @@ body {
     align-items: center !important;
     justify-content: center !important;
     border-radius: 50% !important;
-    box-shadow: 0 5px 16px rgba(41, 35, 61, .10) !important;
+    box-shadow: 0 5px 16px rgba(34,23,73,.10) !important;
 }
 
 .graficas-servicios .dona-ubb-visual::before {
@@ -3741,7 +3741,7 @@ body {
     inset: 17px !important;
     border-radius: 50% !important;
     background: #ffffff !important;
-    box-shadow: inset 0 0 0 1px rgba(41, 35, 61, .06) !important;
+    box-shadow: inset 0 0 0 1px rgba(34,23,73,.06) !important;
 }
 
 .graficas-servicios .dona-ubb-centro {
@@ -3756,7 +3756,7 @@ body {
 }
 
 .graficas-servicios .dona-ubb-centro strong {
-    color: #29233d !important;
+    color: #221749 !important;
     font-size: 25px !important;
     line-height: 1.1 !important;
     font-weight: 800 !important;
@@ -3806,7 +3806,7 @@ body {
 }
 
 .graficas-servicios .detalle-leyenda-ubb strong {
-    color: #29233d !important;
+    color: #221749 !important;
     font-size: 13px !important;
     font-weight: 800 !important;
     text-align: right !important;
@@ -3890,7 +3890,7 @@ body {
     align-items: center !important;
     justify-content: center !important;
     border-radius: 50% !important;
-    background: #5b2a86 !important;
+    background: #5f109a !important;
     color: #ffffff !important;
 }
 
@@ -3902,7 +3902,7 @@ body {
 .graficas-servicios > .panel .titulo-estados-pago h3 {
     margin: 0 !important;
     padding: 0 !important;
-    color: #29233d !important;
+    color: #221749 !important;
     font-size: 17px !important;
     font-weight: 700 !important;
 }
@@ -4004,7 +4004,7 @@ body {
 }
 
 .titulo-pagina h2 {
-    color: #29233d;
+    color: #221749;
     font-size: clamp(25px, 3vw, 32px);
     font-weight: 800;
     letter-spacing: -0.6px;
@@ -4022,9 +4022,9 @@ body {
     margin: 0 auto 30px;
     padding: 34px;
     background: #ffffff;
-    border: 1px solid #e8e1ef;
+    border: 1px solid #eadcf4;
     border-radius: 18px;
-    box-shadow: 0 10px 32px rgba(48, 28, 72, 0.065);
+    box-shadow: 0 10px 32px rgba(54,18,82,0.065);
     transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
@@ -4032,7 +4032,7 @@ body {
     gap: 17px;
     padding-bottom: 24px;
     margin-bottom: 27px;
-    border-bottom: 1px solid #eee9f4;
+    border-bottom: 1px solid #f0e6f7;
 }
 
 .icono-efectivo {
@@ -4040,13 +4040,13 @@ body {
     width: 54px;
     height: 54px;
     border-radius: 15px;
-    background: linear-gradient(145deg, #f2eafa, #e8d9f5);
-    color: #5b2a86;
-    box-shadow: inset 0 0 0 1px rgba(91, 42, 134, 0.06);
+    background: linear-gradient(145deg, #f3e9fb, #e9d6f8);
+    color: #5f109a;
+    box-shadow: inset 0 0 0 1px rgba(95,16,154,0.06);
 }
 
 .encabezado-formulario h3 {
-    color: #29233d;
+    color: #221749;
     font-size: 20px;
     font-weight: 750;
     letter-spacing: -0.25px;
@@ -4078,7 +4078,7 @@ body {
 }
 
 .campo label {
-    color: #393149;
+    color: #2e1363;
     font-size: 13px;
     font-weight: 700;
     line-height: 1.5;
@@ -4095,9 +4095,9 @@ body {
     min-width: 0;
     height: 49px;
     padding: 0 15px;
-    color: #29233d;
+    color: #221749;
     background: #fcfbfe;
-    border: 1px solid #ded7e8;
+    border: 1px solid #e1d1ee;
     border-radius: 10px;
     font-family: inherit;
     font-size: 14px;
@@ -4107,13 +4107,13 @@ body {
 }
 
 .campo input:hover {
-    border-color: #b9a4cd;
+    border-color: #ba7de9;
 }
 
 .campo input:focus {
     background: #ffffff;
-    border-color: #7b3fb0;
-    box-shadow: 0 0 0 4px rgba(123, 63, 176, 0.11);
+    border-color: #8018cf;
+    box-shadow: 0 0 0 4px rgba(128,24,207,0.11);
     outline: none;
 }
 
@@ -4124,7 +4124,7 @@ body {
 
 .input-monto span {
     left: 15px;
-    color: #5b2a86;
+    color: #5f109a;
     font-size: 16px;
 }
 
@@ -4137,8 +4137,8 @@ body {
 .aviso-efectivo {
     gap: 14px;
     padding: 17px 18px;
-    background: #f8f4fc;
-    border: 1px solid #e7d9f2;
+    background: #f9f3fd;
+    border: 1px solid #e8d5f6;
     border-radius: 12px;
 }
 
@@ -4149,13 +4149,13 @@ body {
     height: 42px;
     align-items: center;
     justify-content: center;
-    background: #eee3f8;
+    background: #efe1fa;
     border-radius: 11px;
     font-size: 22px;
 }
 
 .aviso-efectivo strong {
-    color: #512578;
+    color: #540e8a;
     font-size: 13px;
 }
 
@@ -4172,15 +4172,15 @@ body {
     width: 100%;
     min-height: 51px;
     padding: 12px 20px;
-    border: 1px solid #5b2a86;
+    border: 1px solid #5f109a;
     border-radius: 11px;
-    background: #5b2a86;
+    background: #5f109a;
     color: #ffffff;
     font-family: inherit;
     font-size: 14px;
     font-weight: 750;
     letter-spacing: 0.15px;
-    box-shadow: 0 5px 12px rgba(91, 42, 134, 0.17);
+    box-shadow: 0 5px 12px rgba(95,16,154,0.17);
     cursor: pointer;
     transition: background 0.18s ease,
                 box-shadow 0.18s ease,
@@ -4188,20 +4188,20 @@ body {
 }
 
 .btn-registrar:hover {
-    background: #47206c;
-    border-color: #47206c;
-    box-shadow: 0 7px 17px rgba(91, 42, 134, 0.23);
+    background: #4b0c7b;
+    border-color: #4b0c7b;
+    box-shadow: 0 7px 17px rgba(95,16,154,0.23);
     transform: translateY(-1px);
 }
 
 .btn-registrar:focus-visible {
-    outline: 3px solid rgba(123, 63, 176, 0.35);
+    outline: 3px solid rgba(128,24,207,0.35);
     outline-offset: 3px;
 }
 
 .btn-registrar:active {
     transform: translateY(0);
-    box-shadow: 0 2px 6px rgba(91, 42, 134, 0.16);
+    box-shadow: 0 2px 6px rgba(95,16,154,0.16);
 }
 
 .mensaje-exito,
@@ -4276,10 +4276,10 @@ body {
     max-width: 980px;
     margin: 0 auto 36px;
     padding: 30px;
-    border: 1px solid #e8e1ef;
+    border: 1px solid #eadcf4;
     border-radius: 18px;
     background: #fff;
-    box-shadow: 0 12px 32px rgba(48, 29, 69, .065);
+    box-shadow: 0 12px 32px rgba(53,19,79,.065);
 }
 
 .registro-ui .registro-ui__intro {
@@ -4288,7 +4288,7 @@ body {
     gap: 16px;
     padding-bottom: 24px;
     margin-bottom: 28px;
-    border-bottom: 1px solid #eee9f4;
+    border-bottom: 1px solid #f0e6f7;
 }
 
 .registro-ui__icono {
@@ -4298,8 +4298,8 @@ body {
     display: grid;
     place-items: center;
     border-radius: 15px;
-    background: #f0e8f8;
-    color: #5b2a86;
+    background: #f1e6fa;
+    color: #5f109a;
     font-size: 27px;
     font-weight: 800;
 }
@@ -4307,7 +4307,7 @@ body {
 .registro-ui__eyebrow {
     display: block;
     margin-bottom: 4px;
-    color: #79539a;
+    color: #7e20c6;
     font-size: 10px;
     font-weight: 800;
     letter-spacing: 1.1px;
@@ -4315,7 +4315,7 @@ body {
 
 .registro-ui .registro-ui__intro h3 {
     margin: 0 0 5px;
-    color: #29233d;
+    color: #221749;
     font-size: 20px;
     font-weight: 800;
 }
@@ -4374,15 +4374,15 @@ body {
     height: 32px;
     flex: 0 0 32px;
     border-radius: 10px;
-    background: #f2ebf8;
-    color: #5b2a86;
+    background: #f3e9fa;
+    color: #5f109a;
     font-size: 12px;
     font-weight: 800;
 }
 
 .registro-ui__titulo-seccion h4 {
     margin: 1px 0 5px;
-    color: #29233d;
+    color: #221749;
     font-size: 16px;
     font-weight: 800;
 }
@@ -4400,13 +4400,13 @@ body {
     align-items: center;
     gap: 12px;
     padding: 0 14px;
-    border: 1px solid #e5dfec;
+    border: 1px solid #e7d9f2;
     border-radius: 10px;
-    background: #f8f7fa;
+    background: #f8f5fc;
 }
 
 .registro-ui__busqueda > span:first-child {
-    color: #755091;
+    color: #781fbb;
     font-size: 25px;
     line-height: 1;
 }
@@ -4438,9 +4438,9 @@ body {
     align-items: center;
     gap: 12px;
     padding: 15px;
-    border: 1px dashed #dcd2e8;
+    border: 1px dashed #dfccee;
     border-radius: 11px;
-    background: #fcfbfd;
+    background: #fcfafe;
 }
 
 .registro-ui__avatar {
@@ -4450,13 +4450,13 @@ body {
     height: 42px;
     flex: 0 0 42px;
     border-radius: 50%;
-    background: #eee7f5;
-    color: #5b2a86;
+    background: #efe4f8;
+    color: #5f109a;
     font-size: 22px;
 }
 
 .registro-ui__cliente-vacio strong {
-    color: #40354d;
+    color: #45156a;
     font-size: 13px;
 }
 
@@ -4484,7 +4484,7 @@ body {
     align-items: center;
     flex-wrap: wrap;
     gap: 7px;
-    color: #3b3247;
+    color: #401362;
     font-size: 12px;
     font-weight: 700;
 }
@@ -4495,7 +4495,7 @@ body {
     font-weight: 600;
 }
 
-.registro-ui__requerido { color: #8a5da7; }
+.registro-ui__requerido { color: #8a24d9; }
 .registro-ui__opcional { color: #898292; }
 
 .registro-ui .campo input {
@@ -4503,19 +4503,19 @@ body {
     min-width: 0;
     height: 47px;
     padding: 0 13px;
-    border: 1px solid #ddd7e6;
+    border: 1px solid #e0d1ec;
     border-radius: 9px;
     outline: none;
     background: #fff;
-    color: #29233d;
+    color: #221749;
     font: inherit;
     font-size: 13px;
     transition: border-color .18s, box-shadow .18s;
 }
 
 .registro-ui .campo input:focus {
-    border-color: #8a62ad;
-    box-shadow: 0 0 0 3px rgba(91, 42, 134, .10);
+    border-color: #8f2add;
+    box-shadow: 0 0 0 3px rgba(95,16,154,.10);
 }
 
 .registro-ui .campo input::placeholder {
@@ -4531,7 +4531,7 @@ body {
     left: 14px;
     top: 50%;
     transform: translateY(-50%);
-    color: #6a4788;
+    color: #6e1cad;
     font-size: 15px;
     font-weight: 700;
 }
@@ -4545,9 +4545,9 @@ body {
     align-items: center;
     gap: 12px;
     padding: 16px;
-    border: 1px solid #e4dced;
+    border: 1px solid #e6d7f2;
     border-radius: 11px;
-    background: #faf7fc;
+    background: #faf6fd;
 }
 
 .registro-ui__check-falso {
@@ -4557,7 +4557,7 @@ body {
     height: 22px;
     flex: 0 0 22px;
     border-radius: 6px;
-    background: #5b2a86;
+    background: #5f109a;
     color: #fff;
     font-size: 14px;
     font-weight: 800;
@@ -4568,7 +4568,7 @@ body {
 }
 
 .registro-ui__comprobante-texto strong {
-    color: #40354d;
+    color: #45156a;
     font-size: 12px;
 }
 
@@ -4581,7 +4581,7 @@ body {
 
 .registro-ui__automatico {
     margin-left: auto;
-    color: #5b2a86;
+    color: #5f109a;
     font-size: 10px;
     font-weight: 800;
     white-space: nowrap;
@@ -4593,7 +4593,7 @@ body {
     gap: 10px;
     padding: 12px 14px;
     border-radius: 9px;
-    background: #f6f5f8;
+    background: #f5f3fa;
 }
 
 .registro-ui__aviso > span {
@@ -4603,8 +4603,8 @@ body {
     height: 18px;
     flex: 0 0 18px;
     border-radius: 50%;
-    background: #e5d9f0;
-    color: #5b2a86;
+    background: #e7d5f4;
+    color: #5f109a;
     font-size: 12px;
     font-weight: 800;
 }
@@ -4621,7 +4621,7 @@ body {
     justify-content: flex-end;
     gap: 12px;
     padding-top: 21px;
-    border-top: 1px solid #eee9f4;
+    border-top: 1px solid #f0e6f7;
 }
 
 .registro-ui__cancelar,
@@ -4642,26 +4642,26 @@ body {
 }
 
 .registro-ui__cancelar {
-    border: 1px solid #ddd5e7;
+    border: 1px solid #e0cfed;
     background: #fff;
     color: #5d526a;
 }
 
 .registro-ui__cancelar:hover {
-    background: #f8f5fa;
+    background: #f8f4fb;
 }
 
 .registro-ui .registro-ui__confirmar {
     width: auto;
     margin: 0;
-    border: 1px solid #5b2a86;
-    background: #5b2a86;
+    border: 1px solid #5f109a;
+    background: #5f109a;
     color: #fff;
-    box-shadow: 0 4px 10px rgba(91, 42, 134, .16);
+    box-shadow: 0 4px 10px rgba(95,16,154,.16);
 }
 
 .registro-ui .registro-ui__confirmar:hover {
-    background: #48206c;
+    background: #4b0c7b;
     transform: translateY(-1px);
 }
 
@@ -4723,9 +4723,9 @@ body {
 /* UBB REGISTRO - ESTILO TECNOLOGICO B */
 .registro-encabezado-tec {
     color: #fff;
-    background: linear-gradient(112deg, #261634, #43205f 52%, #5b2a86);
+    background: linear-gradient(112deg, #280e3c, #440c6f 52%, #5f109a);
     border-bottom: 0;
-    box-shadow: 0 5px 20px rgba(42,22,59,.17);
+    box-shadow: 0 5px 20px rgba(44,14,67,.17);
 }
 .registro-encabezado-tec h1 {
     color: #fff !important;
@@ -4733,7 +4733,7 @@ body {
     font-weight: 800;
     letter-spacing: .7px;
 }
-.registro-encabezado-tec p { color: #dfd1ec !important; }
+.registro-encabezado-tec p { color: #e1ccf1 !important; }
 .registro-encabezado-tec .btn-regresar {
     color: #fff;
     background: rgba(255,255,255,.08);
@@ -4751,12 +4751,12 @@ body {
     overflow: hidden;
     padding: 27px 30px;
     margin-bottom: 23px;
-    border: 1px solid #5e3979;
+    border: 1px solid #5f1697;
     border-radius: 17px;
     background:
-        radial-gradient(ellipse at 92% 10%, rgba(183,145,223,.25), transparent 36%),
-        linear-gradient(115deg, #302044, #4b2769 66%, #5b2a86);
-    box-shadow: 0 10px 25px rgba(53,31,75,.12);
+        radial-gradient(ellipse at 92% 10%, rgba(187,116,241,.25), transparent 36%),
+        linear-gradient(115deg, #36154f, #4d0f7d 66%, #5f109a);
+    box-shadow: 0 10px 25px rgba(57,20,86,.12);
 }
 .registro-contenedor-tec .titulo-pagina::after {
     content: "";
@@ -4776,7 +4776,7 @@ body {
     z-index: 1;
 }
 .registro-contenedor-tec .titulo-pagina .etiqueta {
-    color: #f2e8ff;
+    color: #f5e8ff;
     background: rgba(255,255,255,.12);
     border: 1px solid rgba(255,255,255,.19);
     letter-spacing: 1.1px;
@@ -4788,33 +4788,33 @@ body {
 }
 .registro-contenedor-tec .titulo-pagina p {
     max-width: 620px;
-    color: #e1d5ec;
+    color: #e3cff2;
     line-height: 1.6;
 }
 .registro-contenedor-tec .registro-ui {
-    border: 1px solid #e5dceb;
-    border-top: 3px solid #8d65b1;
-    box-shadow: 0 14px 36px rgba(48,29,69,.075);
+    border: 1px solid #e5d6f1;
+    border-top: 3px solid #932fdf;
+    box-shadow: 0 14px 36px rgba(53,19,79,.075);
 }
 .registro-contenedor-tec .registro-ui__seccion {
     padding: 19px;
-    border: 1px solid #eee8f4;
+    border: 1px solid #efe5f7;
     border-radius: 13px;
     background: linear-gradient(145deg,#fff,#fdfbfe);
 }
 .registro-contenedor-tec .registro-ui__numero {
-    background: linear-gradient(145deg,#eee4f8,#e4d6f2);
+    background: linear-gradient(145deg,#f0e2fa,#e6d2f6);
 }
 .registro-contenedor-tec .registro-ui__busqueda:focus-within {
-    border-color: #9671b5;
-    box-shadow: 0 0 0 3px rgba(91,42,134,.08);
+    border-color: #993de0;
+    box-shadow: 0 0 0 3px rgba(95,16,154,.08);
 }
 .registro-contenedor-tec .registro-ui__comprobante {
-    border-color: #ded0ec;
-    background: linear-gradient(105deg,#f8f3fc,#fcfaff);
+    border-color: #e0cbf1;
+    background: linear-gradient(105deg,#f8f2fd,#fdfaff);
 }
 .registro-contenedor-tec .registro-ui__confirmar {
-    box-shadow: 0 5px 13px rgba(91,42,134,.22);
+    box-shadow: 0 5px 13px rgba(95,16,154,.22);
 }
 @media(max-width:700px) {
     .registro-encabezado-tec {
@@ -4834,9 +4834,9 @@ body {
     max-height: 280px;
     overflow-y: auto;
     background: #ffffff;
-    border: 1px solid #e8e0f0;
+    border: 1px solid #eadbf5;
     border-radius: 14px;
-    box-shadow: 0 8px 24px rgba(41, 35, 61, 0.08);
+    box-shadow: 0 8px 24px rgba(34,23,73,0.08);
 }
 
 .registro-ui__resultados[hidden] {
@@ -4847,10 +4847,10 @@ body {
     display: block;
     width: 100%;
     padding: 14px 16px;
-    border: 1px solid #eee8f4;
+    border: 1px solid #efe5f7;
     border-radius: 10px;
     background: #ffffff;
-    color: #29233d;
+    color: #221749;
     font-family: inherit;
     font-size: 13px;
     font-weight: 500;
@@ -4863,20 +4863,20 @@ body {
 }
 
 .registro-ui__resultado:hover {
-    background: #f8f4fc;
-    border-color: #b99bd3;
-    box-shadow: 0 4px 12px rgba(91, 42, 134, 0.10);
+    background: #f9f3fd;
+    border-color: #b977ec;
+    box-shadow: 0 4px 12px rgba(95,16,154,0.10);
     transform: translateY(-1px);
 }
 
 .registro-ui__resultado:focus-visible {
-    outline: 3px solid rgba(91, 42, 134, 0.25);
+    outline: 3px solid rgba(95,16,154,0.25);
     outline-offset: 2px;
-    border-color: #5b2a86;
+    border-color: #5f109a;
 }
 
 .registro-ui__resultado:active {
-    background: #f0e7f8;
+    background: #f1e5fa;
     transform: scale(.995);
 }
 
@@ -4909,17 +4909,17 @@ body {
 .tarjetas .tarjeta {
     position: relative;
     overflow: hidden;
-    border: 1px solid rgba(91, 42, 134, .10) !important;
+    border: 1px solid rgba(95,16,154,.10) !important;
     border-radius: 18px !important;
     padding: 22px !important;
     min-height: 164px;
-    box-shadow: 0 5px 20px rgba(41, 35, 61, .055) !important;
+    box-shadow: 0 5px 20px rgba(34,23,73,.055) !important;
     transition: transform .2s ease, box-shadow .2s ease;
 }
 
 .tarjetas .tarjeta:hover {
     transform: translateY(-3px);
-    box-shadow: 0 10px 26px rgba(41, 35, 61, .10) !important;
+    box-shadow: 0 10px 26px rgba(34,23,73,.10) !important;
 }
 
 .tarjetas .tarjeta-activos {
@@ -4928,8 +4928,8 @@ body {
 }
 
 .tarjetas .tarjeta-pagos {
-    background: #f4edfc !important;
-    border-top: 3px solid #7d3fba !important;
+    background: #f6ecfd !important;
+    border-top: 3px solid #8618d9 !important;
 }
 
 .tarjetas .tarjeta-proximos {
@@ -4956,8 +4956,8 @@ body {
 }
 
 #tablaMovimientos thead th {
-    background: #f4effa;
-    color: #4e326b;
+    background: #f5edfc;
+    color: #541385;
     font-weight: 700;
 }
 
@@ -4966,7 +4966,7 @@ body {
 }
 
 #tablaMovimientos tbody tr:hover {
-    background: #faf7fd;
+    background: #faf6fe;
 }
 
 /* Ajustes para pantallas pequeñas */
@@ -5050,14 +5050,14 @@ body {
 
 /* UBB: cambio exclusivo del fondo del panel lateral */
 .menu-lateral-ubb {
-    background-color: #402653 !important;
+    background-color: #410f67 !important;
 }
 /* Fin del cambio de fondo del panel lateral */
 
 
 /* UBB: fondo ciruela uniforme del panel izquierdo */
 .menu-lateral-ubb {
-    background: #402653 !important;
+    background: #410f67 !important;
     background-image: none !important;
 }
 /* Fin del cambio de fondo */
@@ -5065,7 +5065,7 @@ body {
 
 /* UBB: fondo lila suave del panel izquierdo */
 .menu-lateral-ubb {
-    background: #8B6BB1 !important;
+    background: #9535df !important;
     background-image: none !important;
 }
 /* Fin del cambio de fondo lila */
@@ -5073,7 +5073,7 @@ body {
 
 /* UBB: restaurar fondo ciruela del panel izquierdo */
 .menu-lateral-ubb {
-    background: #402653 !important;
+    background: #410f67 !important;
     background-image: none !important;
 }
 /* Fin de restauración */
@@ -5081,7 +5081,7 @@ body {
 
 /* UBB: colores del menu segun la referencia visual */
 .menu-lateral-ubb {
-    background: #402653 !important;
+    background: #410f67 !important;
     background-image: none !important;
     color: #ffffff;
 }
@@ -5092,7 +5092,7 @@ body {
 
 .menu-lateral-ubb nav a.activo {
     color: #ffffff !important;
-    background: linear-gradient(110deg, #9251BD, #A96FD0) !important;
+    background: linear-gradient(110deg, #9022e4, #a54aeb) !important;
     border-color: rgba(255, 255, 255, .22);
 }
 
@@ -5109,23 +5109,23 @@ body {
 
 /* UBB: panel ciruela y franjas discretas segun referencia */
 .menu-lateral-ubb {
-    background: #402653 !important;
+    background: #410f67 !important;
     background-image: none !important;
 }
 
 .menu-lateral-ubb::before {
-    background: #65447A !important;
+    background: #651a9e !important;
     opacity: .28 !important;
 }
 
 .menu-lateral-ubb::after {
-    background: #76558B !important;
-    box-shadow: 0 48px 0 #503461 !important;
+    background: #7721b8 !important;
+    box-shadow: 0 48px 0 #4f147c !important;
     opacity: .32 !important;
 }
 
 .menu-lateral-ubb nav a.activo {
-    background: linear-gradient(110deg, #9251BD, #A96FD0) !important;
+    background: linear-gradient(110deg, #9022e4, #a54aeb) !important;
     color: #ffffff !important;
 }
 /* Fin del ajuste ciruela */
@@ -5266,10 +5266,10 @@ body {
     gap: 22px !important;
     overflow: visible !important;
     background:
-      radial-gradient(ellipse at 18% 0%,rgba(220,190,246,.48),transparent 48%),
-      linear-gradient(105deg,#f7f0ff,#fff 52%,#f8f1ff) !important;
-    border-bottom: 1px solid #e5d5f0 !important;
-    box-shadow: 0 3px 15px rgba(91,42,134,.07) !important;
+      radial-gradient(ellipse at 18% 0%,rgba(222,188,248,.48),transparent 48%),
+      linear-gradient(105deg,#f9f0ff,#fff 52%,#f9f1ff) !important;
+    border-bottom: 1px solid #e5d1f4 !important;
+    box-shadow: 0 3px 15px rgba(95,16,154,.07) !important;
 }
 .ubb-encabezado-ref > .marca {
     display:flex !important;
@@ -5287,14 +5287,14 @@ body {
     border-radius:10px !important;
 }
 .ubb-encabezado-ref .marca-texto h1 {
-    color:#54247d !important;
+    color:#570e8e !important;
     font-size:26px !important;
     font-weight:800 !important;
     line-height:1 !important;
     margin:0 !important;
 }
 .ubb-encabezado-ref .marca-texto .marca-subtitulo {
-    color:#4d3761 !important;
+    color:#51157e !important;
     font-size:13px !important;
     letter-spacing:.3px !important;
     margin-top:3px !important;
@@ -5302,10 +5302,10 @@ body {
 .ubb-encabezado-ref .marca-texto .marca-separador {
     height:2px !important;
     margin-top:5px !important;
-    background:#75409a !important;
+    background:#7519bb !important;
 }
 .ubb-encabezado-ref .marca-texto p.marca-modulo {
-    color:#592b80 !important;
+    color:#5c1195 !important;
     font-size:10px !important;
     letter-spacing:1.7px !important;
     margin-top:3px !important;
@@ -5349,10 +5349,10 @@ body {
     box-sizing:border-box !important;
     padding:0 14px !important;
     gap:10px !important;
-    border:1px solid #e5d8ef !important;
+    border:1px solid #e6d3f4 !important;
     border-radius:13px !important;
     background:#fff !important;
-    box-shadow:0 5px 14px rgba(75,38,100,.08) !important;
+    box-shadow:0 5px 14px rgba(74,15,119,.08) !important;
 }
 .ubb-encabezado-ref .ubb-buscador-ref input#buscarCliente {
     min-width:0 !important;
@@ -5361,10 +5361,10 @@ body {
 .ubb-atajo {
     flex:0 0 auto;
     padding:5px 7px;
-    border:1px solid #e7d9f1;
+    border:1px solid #e7d5f5;
     border-radius:6px;
-    background:#f5edfb;
-    color:#6a4c7f;
+    background:#f5ecfc;
+    color:#6c1da7;
     font-size:10px;
     white-space:nowrap;
 }
@@ -5374,23 +5374,23 @@ body {
 .ubb-icono {
     position:relative;
     display:flex;align-items:center;justify-content:center;
-    width:24px;height:30px;color:#64417d;
+    width:24px;height:30px;color:#65199f;
     font-size:21px;font-weight:500;
 }
 .ubb-icono i {
     position:absolute;right:-5px;top:-2px;
     width:15px;height:15px;border-radius:50%;
     display:flex;align-items:center;justify-content:center;
-    background:#8b3fc0;color:white;font-size:9px;font-style:normal;
+    background:#8918df;color:white;font-size:9px;font-style:normal;
 }
 .ubb-perfil {
     display:flex;align-items:center;gap:8px;
-    flex:0 0 auto;padding-left:14px;border-left:1px solid #e2d6eb;
+    flex:0 0 auto;padding-left:14px;border-left:1px solid #e3d0f1;
 }
 .ubb-avatar {
     position:relative;display:flex;align-items:center;justify-content:center;
-    width:40px;height:40px;border:2px solid #e2d3ef;border-radius:50%;
-    background:linear-gradient(145deg,#8051a1,#512875);
+    width:40px;height:40px;border:2px solid #e4cef4;border-radius:50%;
+    background:linear-gradient(145deg,#811fcb,#541089);
     color:#fff;font-size:16px;font-weight:800;
 }
 .ubb-avatar-activo {
@@ -5398,13 +5398,13 @@ body {
     border:2px solid #fff;border-radius:50%;background:#25b765;
 }
 .ubb-encabezado-ref .administrador {
-    color:#503366 !important;font-size:12px !important;
+    color:#511481 !important;font-size:12px !important;
     font-weight:650 !important;white-space:nowrap !important;
 }
 .ubb-salir-visual {
     display:flex;align-items:center;justify-content:center;
     flex:0 0 40px;width:40px;height:40px;border-radius:11px;
-    background:#f0e3fa;color:#6c3b91;font-size:24px;
+    background:#f0e2fb;color:#6d17af;font-size:24px;
 }
 @media (min-width:701px) and (max-width:1200px) {
     .ubb-encabezado-ref {padding-left:16px !important;padding-right:16px !important;gap:10px !important}
@@ -5448,10 +5448,10 @@ body {
     gap: 24px !important;
     align-items: center !important;
     background:
-        radial-gradient(ellipse at 12% 0%, rgba(220,190,246,.30), transparent 43%),
-        linear-gradient(105deg, #faf7fd 0%, #ffffff 55%, #faf6fd 100%) !important;
-    border-bottom: 1px solid #e8deef !important;
-    box-shadow: 0 3px 12px rgba(65,35,87,.055) !important;
+        radial-gradient(ellipse at 12% 0%, rgba(222,188,248,.30), transparent 43%),
+        linear-gradient(105deg, #faf6fe 0%, #ffffff 55%, #faf5fe 100%) !important;
+    border-bottom: 1px solid #e8d9f4 !important;
+    box-shadow: 0 3px 12px rgba(65,14,105,.055) !important;
 }
 
 .ubb-encabezado-ref > .marca {
@@ -5518,14 +5518,14 @@ body {
     height: 44px !important;
     padding: 0 13px !important;
     gap: 10px !important;
-    border: 1px solid #e6ddeb !important;
+    border: 1px solid #e6d7f1 !important;
     border-radius: 11px !important;
-    box-shadow: 0 2px 7px rgba(75,38,100,.035) !important;
+    box-shadow: 0 2px 7px rgba(74,15,119,.035) !important;
 }
 
 .ubb-encabezado-ref .ubb-buscador-ref:focus-within {
-    border-color: #a77bc2 !important;
-    box-shadow: 0 0 0 3px rgba(117,64,154,.10) !important;
+    border-color: #a44ee5 !important;
+    box-shadow: 0 0 0 3px rgba(117,25,187,.10) !important;
 }
 
 .ubb-encabezado-ref .ubb-buscador-ref input#buscarCliente {
@@ -5540,7 +5540,7 @@ body {
 .ubb-atajo {
     font-size: 9px !important;
     padding: 4px 6px !important;
-    background: #faf7fc !important;
+    background: #faf6fd !important;
 }
 
 .ubb-herramientas {
@@ -5558,14 +5558,14 @@ body {
 }
 
 .ubb-icono:hover {
-    background: #f0e6f7 !important;
-    color: #512875 !important;
+    background: #f0e4f9 !important;
+    color: #541089 !important;
 }
 
 .ubb-perfil {
     gap: 9px !important;
     padding-left: 16px !important;
-    border-left: 1px solid #e8deef !important;
+    border-left: 1px solid #e8d9f4 !important;
 }
 
 .ubb-avatar {
@@ -5583,7 +5583,7 @@ body {
     flex: 0 0 36px !important;
     width: 36px !important;
     height: 36px !important;
-    border: 1px solid #e8deef !important;
+    border: 1px solid #e8d9f4 !important;
     border-radius: 10px !important;
     background: #fff !important;
     font-size: 21px !important;
@@ -5683,11 +5683,11 @@ body {
 
 /* UBB: encabezado continuo, limpio y sin franjas decorativas */
 .ubb-encabezado-ref {
-    background: #fcfaff !important;
+    background: #fdfaff !important;
     background-image: none !important;
     border: 0 !important;
-    border-bottom: 1px solid #e8e0ef !important;
-    box-shadow: 0 2px 8px rgba(65,35,87,.045) !important;
+    border-bottom: 1px solid #e9dbf4 !important;
+    box-shadow: 0 2px 8px rgba(65,14,105,.045) !important;
     isolation: isolate !important;
 }
 
@@ -5724,8 +5724,8 @@ body {
     gap: 22px !important;
     background: #fff !important;
     background-image: none !important;
-    border-bottom: 1px solid #e9e2ef !important;
-    box-shadow: 0 2px 8px rgba(54,30,73,.035) !important;
+    border-bottom: 1px solid #eaddf4 !important;
+    box-shadow: 0 2px 8px rgba(56,20,84,.035) !important;
 }
 
 .ubb-encabezado-ref > .marca {
@@ -5770,9 +5770,9 @@ body {
     min-width: 270px !important;
     height: 46px !important;
     padding: 0 14px !important;
-    border: 1px solid #e9e1ef !important;
+    border: 1px solid #eadcf4 !important;
     border-radius: 12px !important;
-    box-shadow: 0 2px 8px rgba(70,40,90,.035) !important;
+    box-shadow: 0 2px 8px rgba(69,16,111,.035) !important;
 }
 
 .ubb-encabezado-ref .ubb-buscador-ref input#buscarCliente {
@@ -5787,7 +5787,7 @@ body {
     width: 34px !important;
     height: 36px !important;
     border-radius: 9px !important;
-    color: #694583 !important;
+    color: #6a1ba7 !important;
     font-size: 18px !important;
 }
 
@@ -5805,7 +5805,7 @@ body {
 }
 
 .ubb-icono:hover {
-    background: #f6f0fa !important;
+    background: #f6eefc !important;
 }
 
 .ubb-icono i {
@@ -5819,16 +5819,16 @@ body {
 .ubb-perfil {
     gap: 9px !important;
     padding-left: 17px !important;
-    border-left: 1px solid #ece5f1 !important;
+    border-left: 1px solid #ece1f5 !important;
 }
 
 .ubb-avatar {
     width: 38px !important;
     height: 38px !important;
     flex: 0 0 38px !important;
-    border: 2px solid #e9dff0 !important;
-    background: #f5eff9 !important;
-    color: #694083 !important;
+    border: 2px solid #e9daf5 !important;
+    background: #f5edfb !important;
+    color: #6819a4 !important;
 }
 
 .ubb-avatar svg {
@@ -5846,9 +5846,9 @@ body {
     height: 38px !important;
     flex-basis: 38px !important;
     background: #fff !important;
-    border: 1px solid #e9e1ef !important;
+    border: 1px solid #eadcf4 !important;
     border-radius: 10px !important;
-    color: #694583 !important;
+    color: #6a1ba7 !important;
 }
 
 @media (min-width: 1201px) {
@@ -5910,8 +5910,8 @@ body {
     background: #fff !important;
     background-image: none !important;
     border: 0 !important;
-    border-bottom: 1px solid #e8e1ed !important;
-    box-shadow: 0 2px 7px rgba(58,31,76,.035) !important;
+    border-bottom: 1px solid #e9dcf2 !important;
+    box-shadow: 0 2px 7px rgba(58,20,87,.035) !important;
 }
 
 /* Marca UBB: agrupada y alineada */
@@ -5941,7 +5941,7 @@ body {
 
 .ubb-encabezado-ref .marca-texto h1 {
     margin: 0 !important;
-    color: #54247d !important;
+    color: #570e8e !important;
     font-size: 27px !important;
     line-height: 1 !important;
     letter-spacing: -.6px !important;
@@ -5950,7 +5950,7 @@ body {
 
 .ubb-encabezado-ref .marca-texto .marca-subtitulo {
     margin-top: 4px !important;
-    color: #49345a !important;
+    color: #4b1476 !important;
     font-size: 11px !important;
     line-height: 1.15 !important;
     letter-spacing: .45px !important;
@@ -6010,14 +6010,14 @@ body {
     padding: 0 14px !important;
     gap: 11px !important;
     background: #fff !important;
-    border: 1px solid #e8dfef !important;
+    border: 1px solid #e9daf4 !important;
     border-radius: 12px !important;
-    box-shadow: 0 2px 8px rgba(69,39,91,.04) !important;
+    box-shadow: 0 2px 8px rgba(69,15,111,.04) !important;
 }
 
 .ubb-encabezado-ref .ubb-buscador-ref:focus-within {
-    border-color: #a982c1 !important;
-    box-shadow: 0 0 0 3px rgba(117,64,154,.09) !important;
+    border-color: #a654e5 !important;
+    box-shadow: 0 0 0 3px rgba(117,25,187,.09) !important;
 }
 
 .ubb-encabezado-ref .ubb-buscador-ref input#buscarCliente {
@@ -6050,7 +6050,7 @@ body {
     width: 36px !important;
     height: 38px !important;
     border-radius: 9px !important;
-    color: #684181 !important;
+    color: #6719a3 !important;
     font-size: 19px !important;
 }
 
@@ -6066,7 +6066,7 @@ body {
 }
 
 .ubb-icono:hover {
-    background: #f5eff9 !important;
+    background: #f5edfb !important;
 }
 
 .ubb-icono i {
@@ -6081,16 +6081,16 @@ body {
     flex: 0 0 auto !important;
     gap: 9px !important;
     padding-left: 17px !important;
-    border-left: 1px solid #e9e1ef !important;
+    border-left: 1px solid #eadcf4 !important;
 }
 
 .ubb-avatar {
     width: 40px !important;
     height: 40px !important;
     flex: 0 0 40px !important;
-    border: 1px solid #e6d9ef !important;
-    background: #f6f0fa !important;
-    color: #694083 !important;
+    border: 1px solid #e6d4f4 !important;
+    background: #f6eefc !important;
+    color: #6819a4 !important;
 }
 
 .ubb-avatar svg {
@@ -6104,7 +6104,7 @@ body {
 }
 
 .ubb-encabezado-ref .administrador {
-    color: #503366 !important;
+    color: #511481 !important;
     font-size: 12px !important;
     font-weight: 650 !important;
     white-space: nowrap !important;
@@ -6117,9 +6117,9 @@ body {
     flex: 0 0 39px !important;
     width: 39px !important;
     height: 39px !important;
-    color: #684181 !important;
+    color: #6719a3 !important;
     background: #fff !important;
-    border: 1px solid #e8dfef !important;
+    border: 1px solid #e9daf4 !important;
     border-radius: 10px !important;
 }
 
@@ -6242,10 +6242,10 @@ body {
     box-sizing: border-box !important;
     padding: 12px 30px !important;
     gap: 20px !important;
-    background: linear-gradient(105deg, #f5eaff 0%, #fff 42%, #fcf8ff 100%) !important;
+    background: linear-gradient(105deg, #f6eaff 0%, #fff 42%, #fcf8ff 100%) !important;
     border: 0 !important;
-    border-bottom: 1px solid #e6d6f1 !important;
-    box-shadow: 0 3px 14px rgba(91,42,134,.07) !important;
+    border-bottom: 1px solid #e6d2f5 !important;
+    box-shadow: 0 3px 14px rgba(95,16,154,.07) !important;
     overflow: visible !important;
 }
 
@@ -6275,7 +6275,7 @@ body {
 
 .ubb-encabezado-ref .marca-texto h1 {
     margin: 0 !important;
-    color: #54247d !important;
+    color: #570e8e !important;
     font-size: 26px !important;
     line-height: 1 !important;
     font-weight: 800 !important;
@@ -6283,7 +6283,7 @@ body {
 
 .ubb-encabezado-ref .marca-texto .marca-subtitulo {
     margin-top: 3px !important;
-    color: #4d3761 !important;
+    color: #51157e !important;
     font-size: 12px !important;
     font-weight: 600 !important;
     letter-spacing: .2px !important;
@@ -6292,12 +6292,12 @@ body {
 .ubb-encabezado-ref .marca-texto .marca-separador {
     height: 2px !important;
     margin-top: 5px !important;
-    background: #75409a !important;
+    background: #7519bb !important;
 }
 
 .ubb-encabezado-ref .marca-texto p.marca-modulo {
     margin-top: 3px !important;
-    color: #592b80 !important;
+    color: #5c1195 !important;
     font-size: 10px !important;
     letter-spacing: 1.7px !important;
     font-weight: 750 !important;
@@ -6356,9 +6356,9 @@ body {
     padding: 0 14px !important;
     gap: 10px !important;
     background: rgba(255,255,255,.94) !important;
-    border: 1px solid #e7d9f1 !important;
+    border: 1px solid #e7d5f5 !important;
     border-radius: 15px !important;
-    box-shadow: 0 4px 12px rgba(75,38,100,.08) !important;
+    box-shadow: 0 4px 12px rgba(74,15,119,.08) !important;
 }
 
 .ubb-encabezado-ref .ubb-buscador-ref input#buscarCliente {
@@ -6372,10 +6372,10 @@ body {
 .ubb-atajo {
     flex: 0 0 auto !important;
     padding: 5px 7px !important;
-    background: #f5edfb !important;
-    border: 1px solid #e7d9f1 !important;
+    background: #f5ecfc !important;
+    border: 1px solid #e7d5f5 !important;
     border-radius: 6px !important;
-    color: #6a4c7f !important;
+    color: #6c1da7 !important;
     font-size: 10px !important;
     white-space: nowrap !important;
 }
@@ -6395,7 +6395,7 @@ body {
     width: 36px !important;
     height: 38px !important;
     border-radius: 10px !important;
-    color: #64417d !important;
+    color: #65199f !important;
 }
 
 .ubb-icono svg {
@@ -6410,7 +6410,7 @@ body {
 }
 
 .ubb-icono:hover {
-    background: #f0e3fa !important;
+    background: #f0e2fb !important;
 }
 
 .ubb-perfil {
@@ -6419,21 +6419,21 @@ body {
     flex: 0 0 auto !important;
     gap: 9px !important;
     padding-left: 15px !important;
-    border-left: 1px solid #e2d6eb !important;
+    border-left: 1px solid #e3d0f1 !important;
 }
 
 .ubb-avatar {
     width: 40px !important;
     height: 40px !important;
     flex: 0 0 40px !important;
-    border: 2px solid #e2d3ef !important;
+    border: 2px solid #e4cef4 !important;
     border-radius: 50% !important;
-    background: linear-gradient(145deg,#f8f0ff,#eadcf6) !important;
-    color: #694083 !important;
+    background: linear-gradient(145deg,#f9f0ff,#ebd9f9) !important;
+    color: #6819a4 !important;
 }
 
 .ubb-encabezado-ref .administrador {
-    color: #503366 !important;
+    color: #511481 !important;
     font-size: 12px !important;
     font-weight: 650 !important;
     white-space: nowrap !important;
@@ -6446,10 +6446,10 @@ body {
     flex: 0 0 39px !important;
     width: 39px !important;
     height: 39px !important;
-    border: 1px solid #e8d9f2 !important;
+    border: 1px solid #e8d5f6 !important;
     border-radius: 11px !important;
-    background: #f4eafb !important;
-    color: #694083 !important;
+    background: #f4e9fc !important;
+    color: #6819a4 !important;
 }
 
 @media (min-width: 701px) and (max-width: 1350px) {
@@ -6552,19 +6552,19 @@ body {
     background:
         radial-gradient(
             ellipse at 12% 0%,
-            rgba(204, 160, 239, .30) 0%,
-            rgba(232, 211, 249, .13) 38%,
+            rgba(205,156,243,.30) 0%,
+            rgba(233,209,251,.13) 38%,
             transparent 65%
         ),
         linear-gradient(
             105deg,
-            #f0e2fc 0%,
-            #faf6ff 27%,
+            #f1e1fd 0%,
+            #fbf6ff 27%,
             #ffffff 54%,
             #f8efff 100%
         ) !important;
-    border-bottom: 1px solid #dfc8ef !important;
-    box-shadow: 0 3px 15px rgba(91, 42, 134, .09) !important;
+    border-bottom: 1px solid #dfc4f3 !important;
+    box-shadow: 0 3px 15px rgba(95,16,154,.09) !important;
 }
 
 /* UBB: franjas moradas visibles en el encabezado */
@@ -6575,14 +6575,14 @@ header.ubb-encabezado-ref {
     background:
         linear-gradient(
             105deg,
-            #ead5fa 0%,
-            #f3e8fc 23%,
+            #ead3fc 0%,
+            #f3e7fd 23%,
             #ffffff 49%,
             #faf3ff 76%,
-            #eee0fa 100%
+            #efdffc 100%
         ) !important;
-    border-bottom: 1px solid #d9b9ee !important;
-    box-shadow: 0 3px 15px rgba(91,42,134,.12) !important;
+    border-bottom: 1px solid #d8b5f2 !important;
+    box-shadow: 0 3px 15px rgba(95,16,154,.12) !important;
 }
 
 header.ubb-encabezado-ref::before {
@@ -6596,12 +6596,12 @@ header.ubb-encabezado-ref::before {
     pointer-events: none !important;
     background: repeating-linear-gradient(
         125deg,
-        rgba(139, 67, 187, .12) 0px,
-        rgba(139, 67, 187, .12) 2px,
+        rgba(136,26,220,.12) 0px,
+        rgba(136,26,220,.12) 2px,
         transparent 2px,
         transparent 19px,
-        rgba(188, 145, 220, .16) 19px,
-        rgba(188, 145, 220, .16) 36px,
+        rgba(185,114,240,.16) 19px,
+        rgba(185,114,240,.16) 36px,
         transparent 36px,
         transparent 54px
     ) !important;
@@ -6617,7 +6617,7 @@ header.ubb-encabezado-ref::after {
     pointer-events: none !important;
     background: radial-gradient(
         ellipse at 8% 0%,
-        rgba(173, 111, 220, .25),
+        rgba(171,81,240,.25),
         transparent 47%
     ) !important;
 }
@@ -6734,14 +6734,14 @@ header.ubb-encabezado-ref {
     box-sizing: border-box !important;
     background: linear-gradient(
         100deg,
-        #f0ddfb 0%,
-        #faf5ff 28%,
+        #eedcfc 0%,
+        #fbf5ff 28%,
         #ffffff 62%,
-        #fbf7ff 100%
+        #fcf7ff 100%
     ) !important;
     border: 0 !important;
-    border-bottom: 1px solid #e7d8f1 !important;
-    box-shadow: 0 3px 12px rgba(75, 38, 100, .07) !important;
+    border-bottom: 1px solid #e7d4f5 !important;
+    box-shadow: 0 3px 12px rgba(74,15,119,.07) !important;
 }
 
 /* Líneas diagonales suaves al lado derecho */
@@ -6758,8 +6758,8 @@ header.ubb-encabezado-ref::before {
         135deg,
         transparent 0,
         transparent 13px,
-        rgba(174, 119, 213, .12) 13px,
-        rgba(174, 119, 213, .12) 15px
+        rgba(171,85,237,.12) 13px,
+        rgba(171,85,237,.12) 15px
     ) !important;
     opacity: .8 !important;
 }
@@ -6840,17 +6840,17 @@ header.ubb-encabezado-ref .ubb-buscador-ref {
     margin: 0 !important;
     padding: 0 14px !important;
     gap: 10px !important;
-    border: 1px solid #eadcf4 !important;
+    border: 1px solid #ead9f7 !important;
     border-radius: 20px !important;
     background: rgba(255,255,255,.91) !important;
-    box-shadow: 0 4px 14px rgba(76,40,101,.07) !important;
+    box-shadow: 0 4px 14px rgba(75,16,121,.07) !important;
 }
 
 header.ubb-encabezado-ref .ubb-atajo {
     white-space: nowrap !important;
     border-radius: 7px !important;
-    background: #f4eafa !important;
-    color: #64417d !important;
+    background: #f3e9fb !important;
+    color: #65199f !important;
 }
 
 header.ubb-encabezado-ref .ubb-herramientas {
@@ -6860,7 +6860,7 @@ header.ubb-encabezado-ref .ubb-herramientas {
 }
 
 header.ubb-encabezado-ref .ubb-icono {
-    color: #674181 !important;
+    color: #6719a3 !important;
 }
 
 header.ubb-encabezado-ref .ubb-perfil {
@@ -6998,10 +6998,10 @@ header.ubb-encabezado-ref {
     background-image:
         linear-gradient(
             105deg,
-            rgba(236, 216, 250, .94) 0%,
-            rgba(249, 242, 255, .96) 28%,
+            rgba(235,214,252,.94) 0%,
+            rgba(249,242,255,.96) 28%,
             rgba(255, 255, 255, .98) 62%,
-            rgba(250, 243, 255, .96) 100%
+            rgba(250,243,255,.96) 100%
         ) !important;
 }
 
@@ -7016,8 +7016,8 @@ header.ubb-encabezado-ref::before {
         135deg,
         transparent 0,
         transparent 19px,
-        rgba(177, 128, 211, .10) 19px,
-        rgba(177, 128, 211, .10) 21px
+        rgba(174,92,236,.10) 19px,
+        rgba(174,92,236,.10) 21px
     ) !important;
     opacity: .72 !important;
 }
@@ -7212,8 +7212,8 @@ header.ubb-encabezado-ref::before {
             135deg,
             transparent 0,
             transparent 17px,
-            rgba(190, 145, 222, .18) 18px,
-            rgba(190, 145, 222, .18) 24px
+            rgba(186,115,241,.18) 18px,
+            rgba(186,115,241,.18) 24px
         ) !important;
     -webkit-mask-image: linear-gradient(
         90deg, transparent 0%, transparent 54%, #000 72%, #000 100%
@@ -7237,8 +7237,8 @@ header.ubb-encabezado-ref > .barra-superior {
         background-color: #fff !important;
         background-image: linear-gradient(
             100deg,
-            #f5e8fc 0%,
-            #fbf7ff 30%,
+            #f3e7fd 0%,
+            #fcf7ff 30%,
             #fff 62%,
             #fcf7ff 100%
         ) !important;
@@ -7293,8 +7293,8 @@ header.ubb-encabezado-ref > .barra-superior {
             135deg,
             transparent 0,
             transparent 19px,
-            rgba(169,119,207,.10) 20px,
-            rgba(169,119,207,.10) 22px
+            rgba(168,81,235,.10) 20px,
+            rgba(168,81,235,.10) 22px
         ) !important;
         -webkit-mask-image: linear-gradient(
             90deg, transparent 0%, transparent 58%, #000 100%
@@ -7335,8 +7335,8 @@ header.ubb-encabezado-ref > .barra-superior {
             135deg,
             transparent 0,
             transparent 17px,
-            rgba(177, 128, 211, .13) 18px,
-            rgba(177, 128, 211, .13) 20px
+            rgba(174,92,236,.13) 18px,
+            rgba(174,92,236,.13) 20px
         ) !important;
         -webkit-mask-image: none !important;
         mask-image: none !important;
@@ -7350,7 +7350,7 @@ header.ubb-encabezado-ref > .barra-superior {
         background-color: #fff !important;
         background-image: linear-gradient(
             100deg,
-            #f4e8fc 0%,
+            #f3e7fd 0%,
             #faf5fe 24%,
             #fff 55%,
             #fdfaff 100%
@@ -7365,8 +7365,8 @@ header.ubb-encabezado-ref > .barra-superior {
             135deg,
             transparent 0,
             transparent 21px,
-            rgba(177, 128, 211, .075) 22px,
-            rgba(177, 128, 211, .075) 23px
+            rgba(174,92,236,.075) 22px,
+            rgba(174,92,236,.075) 23px
         ) !important;
         opacity: .72 !important;
         -webkit-mask-image: linear-gradient(
@@ -7391,7 +7391,7 @@ header.ubb-encabezado-ref > .barra-superior {
         background-color: #fff !important;
         background-image: linear-gradient(
             100deg,
-            #f4e8fc 0%,
+            #f3e7fd 0%,
             #faf5fe 24%,
             #fff 55%,
             #fdfaff 100%
@@ -7406,8 +7406,8 @@ header.ubb-encabezado-ref > .barra-superior {
             135deg,
             transparent 0,
             transparent 21px,
-            rgba(177, 128, 211, .075) 22px,
-            rgba(177, 128, 211, .075) 23px
+            rgba(174,92,236,.075) 22px,
+            rgba(174,92,236,.075) 23px
         ) !important;
         opacity: .72 !important;
         -webkit-mask-image: linear-gradient(
@@ -7435,12 +7435,12 @@ header.ubb-encabezado-ref > .barra-superior {
         background:
             linear-gradient(
                 105deg,
-                #f1defb 0%,
+                #efddfc 0%,
                 #faf3ff 24%,
                 #ffffff 57%,
                 #fcf8ff 100%
             ) !important;
-        border-bottom: 1px solid #e7d8f1 !important;
+        border-bottom: 1px solid #e7d4f5 !important;
     }
 
     header.ubb-encabezado-ref::before {
@@ -7478,7 +7478,7 @@ header.ubb-encabezado-ref > .barra-superior {
         background:
             radial-gradient(
                 ellipse at 85% 15%,
-                rgba(207,170,235,.20),
+                rgba(207,165,240,.20),
                 transparent 66%
             ) !important;
     }
@@ -7512,44 +7512,44 @@ body {
 .menu-lateral-ubb {
     background: linear-gradient(
         180deg,
-        #f1e4fb 0%,
-        #f7effd 55%,
-        #eee0f8 100%
+        #f1e3fc 0%,
+        #f7eefe 55%,
+        #eedefa 100%
     ) !important;
-    color: #54247d !important;
-    border-right: 1px solid #e3d0f1 !important;
-    box-shadow: 3px 0 14px rgba(91, 42, 134, .06) !important;
+    color: #570e8e !important;
+    border-right: 1px solid #e3ccf5 !important;
+    box-shadow: 3px 0 14px rgba(95,16,154,.06) !important;
 }
 
 /* Suavizar los adornos de fondo del panel */
 .menu-lateral-ubb::before,
 .menu-lateral-ubb::after {
-    background-color: rgba(174, 119, 211, .10) !important;
+    background-color: rgba(170,84,236,.10) !important;
     opacity: .35 !important;
 }
 
 /* Opciones normales */
 .menu-lateral-ubb nav a {
-    color: #583575 !important;
+    color: #5b1590 !important;
     background: transparent !important;
     border-color: transparent !important;
 }
 
 .menu-lateral-ubb nav a .icono-menu {
     background: rgba(255, 255, 255, .72) !important;
-    color: #704096 !important;
-    border: 1px solid #e4d1f2 !important;
+    color: #7219b7 !important;
+    border: 1px solid #e4cdf6 !important;
 }
 
 .menu-lateral-ubb nav a .icono-menu svg {
-    stroke: #704096 !important;
+    stroke: #7219b7 !important;
 }
 
 /* Hover: lila un poco más intenso */
 .menu-lateral-ubb nav a:hover {
-    background: #e6d1f5 !important;
-    color: #4d216f !important;
-    border-color: #d8bceB !important;
+    background: #e6cef8 !important;
+    color: #4d0d7f !important;
+    border-color: #d7b7f0 !important;
 }
 
 .menu-lateral-ubb nav a:hover .icono-menu {
@@ -7560,12 +7560,12 @@ body {
 .menu-lateral-ubb nav a.activo {
     background: linear-gradient(
         110deg,
-        #9251bd 0%,
-        #aa72d0 100%
+        #9022e4 0%,
+        #a74deb 100%
     ) !important;
     color: #fff !important;
-    border-color: #c39add !important;
-    box-shadow: 0 4px 12px rgba(91, 42, 134, .15) !important;
+    border-color: #be7bf0 !important;
+    box-shadow: 0 4px 12px rgba(95,16,154,.15) !important;
 }
 
 .menu-lateral-ubb nav a.activo .icono-menu {
@@ -7580,7 +7580,7 @@ body {
 
 /* Separador del pie; no modificar el emblema */
 .menu-lateral-ubb .menu-pie-ubb {
-    border-top-color: #ddc8ed !important;
+    border-top-color: #dec4f2 !important;
 }
 
 
@@ -7606,20 +7606,20 @@ header.ubb-encabezado-ref {
 .menu-lateral-ubb {
     background: linear-gradient(
         180deg,
-        #e9d4f8 0%,
-        #efdefa 52%,
-        #e5cdf5 100%
+        #e9d2fa 0%,
+        #eeddfc 52%,
+        #e4caf8 100%
     ) !important;
     border-right: 0 !important;
 }
 
 .menu-lateral-ubb nav a {
-    color: #542d75 !important;
+    color: #57118c !important;
 }
 
 .menu-lateral-ubb nav a .icono-menu {
     background: rgba(255, 255, 255, .82) !important;
-    border-color: #d9bbed !important;
+    border-color: #d8b6f2 !important;
 }
 
 
@@ -7627,9 +7627,9 @@ header.ubb-encabezado-ref {
 .menu-lateral-ubb {
     background: linear-gradient(
         90deg,
-        #e7cff7 0%,
-        #eddcf9 72%,
-        #f4eff8 100%
+        #e6cdf9 0%,
+        #eddafb 72%,
+        #f4edfa 100%
     ) !important;
     border-right: 0 !important;
     box-shadow: none !important;
@@ -7638,17 +7638,17 @@ header.ubb-encabezado-ref {
 /* Elimina la línea del borde del contenido principal */
 .contenedor {
     border-left: 0 !important;
-    background-color: #f4f3f8;
+    background-color: #f3f1fa;
 }
 
 /* Conserva el texto legible sobre el fondo lila */
 .menu-lateral-ubb nav a {
-    color: #542d75 !important;
+    color: #57118c !important;
 }
 
 .menu-lateral-ubb nav a .icono-menu {
     background: rgba(255, 255, 255, .82) !important;
-    border-color: #d9bbed !important;
+    border-color: #d8b6f2 !important;
 }
 
 
@@ -7670,7 +7670,7 @@ header.ubb-encabezado-ref {
     border-bottom: 0 !important;
     box-shadow: none !important;
     margin-bottom: 0 !important;
-    background-color: #f5e9fc !important;
+    background-color: #f4e8fd !important;
 }
 
 .menu-lateral-ubb {
@@ -7680,9 +7680,9 @@ header.ubb-encabezado-ref {
     margin-top: 0 !important;
     background: linear-gradient(
         180deg,
-        #f5e9fc 0%,
-        #efdefa 55%,
-        #e8d2f6 100%
+        #f4e8fd 0%,
+        #eeddfc 55%,
+        #e7cff9 100%
     ) !important;
 }
 
@@ -7698,9 +7698,9 @@ header.ubb-encabezado-ref {
     margin: 0 auto 32px !important;
     padding: 30px !important;
     background: #fff !important;
-    border: 1px solid #e9e1f0 !important;
+    border: 1px solid #eaddf4 !important;
     border-radius: 20px !important;
-    box-shadow: 0 12px 34px rgba(67, 39, 88, .07) !important;
+    box-shadow: 0 12px 34px rgba(68,15,108,.07) !important;
 }
 
 .registro-ui .registro-ui__intro {
@@ -7709,7 +7709,7 @@ header.ubb-encabezado-ref {
     gap: 16px !important;
     padding: 0 0 24px !important;
     margin-bottom: 26px !important;
-    border-bottom: 1px solid #eee7f3 !important;
+    border-bottom: 1px solid #eee3f7 !important;
 }
 
 .registro-ui .registro-ui__icono {
@@ -7719,15 +7719,15 @@ header.ubb-encabezado-ref {
     height: 54px !important;
     flex: 0 0 54px !important;
     border-radius: 16px !important;
-    background: linear-gradient(145deg, #f0e3fb, #e5d1f5) !important;
-    color: #5b2a86 !important;
+    background: linear-gradient(145deg, #f1e2fc, #e6cef8) !important;
+    color: #5f109a !important;
     font-size: 27px !important;
     font-weight: 800 !important;
 }
 
 .registro-ui .registro-ui__intro h3 {
     margin: 4px 0 6px !important;
-    color: #30223d !important;
+    color: #331649 !important;
     font-size: 24px !important;
     font-weight: 800 !important;
     letter-spacing: -.45px !important;
@@ -7741,7 +7741,7 @@ header.ubb-encabezado-ref {
 }
 
 .registro-ui .registro-ui__eyebrow {
-    color: #8052a0 !important;
+    color: #8120cb !important;
     font-size: 10px !important;
     font-weight: 800 !important;
     letter-spacing: 1.4px !important;
@@ -7762,7 +7762,7 @@ header.ubb-encabezado-ref {
 .registro-ui .registro-ui__seccion {
     gap: 18px !important;
     padding: 22px !important;
-    border: 1px solid #eee7f4 !important;
+    border: 1px solid #efe4f7 !important;
     border-radius: 15px !important;
     background: linear-gradient(145deg, #fff 0%, #fdfbff 100%) !important;
 }
@@ -7777,10 +7777,10 @@ header.ubb-encabezado-ref {
     width: 38px !important;
     height: 38px !important;
     flex-basis: 38px !important;
-    border: 1px solid #e6d6f2 !important;
+    border: 1px solid #e6d2f6 !important;
     border-radius: 12px !important;
-    background: #f3eafa !important;
-    color: #63338a !important;
+    background: #f3e9fb !important;
+    color: #6514a4 !important;
     font-size: 13px !important;
 }
 
@@ -7795,36 +7795,36 @@ header.ubb-encabezado-ref {
 
 .registro-ui .registro-ui__busqueda {
     min-height: 54px !important;
-    border: 1px solid #dcd0e9 !important;
+    border: 1px solid #dfcbee !important;
     border-radius: 13px !important;
     background: #fff !important;
-    box-shadow: 0 3px 10px rgba(80, 46, 105, .035) !important;
+    box-shadow: 0 3px 10px rgba(81,18,129,.035) !important;
     transition: border-color .18s, box-shadow .18s !important;
 }
 
 .registro-ui .registro-ui__busqueda:focus-within {
-    border-color: #9565b5 !important;
-    box-shadow: 0 0 0 4px rgba(125, 74, 160, .10) !important;
+    border-color: #9431e0 !important;
+    box-shadow: 0 0 0 4px rgba(125,29,198,.10) !important;
 }
 
 .registro-ui .registro-ui__busqueda input {
-    color: #342642 !important;
+    color: #38194f !important;
     font-size: 13px !important;
 }
 
 .registro-ui .registro-ui__cliente-vacio {
     padding: 17px !important;
-    border: 1px dashed #d8c8e6 !important;
+    border: 1px dashed #dac2ec !important;
     border-radius: 13px !important;
-    background: #faf7fd !important;
+    background: #faf6fe !important;
 }
 
 .registro-ui .registro-ui__avatar {
     width: 46px !important;
     height: 46px !important;
     flex-basis: 46px !important;
-    background: #eee2f7 !important;
-    color: #66388a !important;
+    background: #eee0f9 !important;
+    color: #6816a6 !important;
 }
 
 .registro-ui .registro-ui__grid {
@@ -7838,42 +7838,42 @@ header.ubb-encabezado-ref {
 
 .registro-ui .campo input {
     height: 49px !important;
-    border-color: #e0d8e8 !important;
+    border-color: #e2d2ee !important;
     border-radius: 11px !important;
     background-color: #fff !important;
     font-size: 13px !important;
 }
 
 .registro-ui .campo input:focus {
-    border-color: #9565b5 !important;
-    box-shadow: 0 0 0 4px rgba(125, 74, 160, .09) !important;
+    border-color: #9431e0 !important;
+    box-shadow: 0 0 0 4px rgba(125,29,198,.09) !important;
 }
 
 .registro-ui .registro-ui__comprobante {
     padding: 18px !important;
-    border-color: #e2d4ef !important;
+    border-color: #e4cff4 !important;
     border-radius: 13px !important;
-    background: linear-gradient(105deg, #f8f2fc, #fff 85%) !important;
+    background: linear-gradient(105deg, #f8f1fd, #fff 85%) !important;
 }
 
 .registro-ui .registro-ui__automatico {
     padding: 7px 10px !important;
     border-radius: 20px !important;
-    background: #eee3f7 !important;
-    color: #623487 !important;
+    background: #efe1f9 !important;
+    color: #6414a1 !important;
 }
 
 .registro-ui .registro-ui__aviso {
     padding: 14px 16px !important;
-    border: 1px solid #ece5f1 !important;
+    border: 1px solid #ece1f5 !important;
     border-radius: 12px !important;
-    background: #faf9fc !important;
+    background: #faf8fd !important;
 }
 
 .registro-ui .registro-ui__acciones {
     align-items: center !important;
     padding-top: 22px !important;
-    border-top-color: #eee7f3 !important;
+    border-top-color: #eee3f7 !important;
 }
 
 .registro-ui .registro-ui__cancelar,
@@ -7884,14 +7884,14 @@ header.ubb-encabezado-ref {
 
 .registro-ui .registro-ui__confirmar {
     padding: 0 24px !important;
-    background: linear-gradient(110deg, #65358c, #7946a0) !important;
-    border-color: #65358c !important;
-    box-shadow: 0 6px 15px rgba(91, 42, 134, .19) !important;
+    background: linear-gradient(110deg, #6715a7, #7b1bc4) !important;
+    border-color: #6715a7 !important;
+    box-shadow: 0 6px 15px rgba(95,16,154,.19) !important;
 }
 
 .registro-ui .registro-ui__confirmar:hover {
-    background: linear-gradient(110deg, #512674, #69368f) !important;
-    box-shadow: 0 8px 18px rgba(91, 42, 134, .23) !important;
+    background: linear-gradient(110deg, #530f87, #6915aa) !important;
+    box-shadow: 0 8px 18px rgba(95,16,154,.23) !important;
 }
 
 @media (max-width: 700px) {
@@ -7930,9 +7930,9 @@ header.ubb-encabezado-ref {
     margin: 24px auto 36px !important;
     padding: 30px !important;
     background: #ffffff !important;
-    border: 1px solid #e7dcef !important;
+    border: 1px solid #e7d7f4 !important;
     border-radius: 20px !important;
-    box-shadow: 0 14px 38px rgba(66, 35, 91, .09) !important;
+    box-shadow: 0 14px 38px rgba(67,14,109,.09) !important;
 }
 
 .tarjeta-formulario.registro-ui .registro-ui__form {
@@ -7948,7 +7948,7 @@ header.ubb-encabezado-ref {
     height: 100% !important;
     box-sizing: border-box !important;
     padding: 23px !important;
-    border: 1px solid #e9dff1 !important;
+    border: 1px solid #eadbf5 !important;
     border-radius: 16px !important;
     background: #fdfbff !important;
 }
@@ -7962,7 +7962,7 @@ header.ubb-encabezado-ref {
 
 .tarjeta-formulario.registro-ui .registro-ui__titulo-seccion h4 {
     margin: 0 0 5px !important;
-    color: #34213f !important;
+    color: #34154b !important;
     font-size: 16px !important;
     font-weight: 800 !important;
 }
@@ -7981,8 +7981,8 @@ header.ubb-encabezado-ref {
     width: 40px !important;
     height: 40px !important;
     border-radius: 12px !important;
-    background: #eee2f7 !important;
-    color: #5b2a86 !important;
+    background: #eee0f9 !important;
+    color: #5f109a !important;
     font-weight: 800 !important;
 }
 
@@ -7994,7 +7994,7 @@ header.ubb-encabezado-ref {
     height: auto !important;
     box-sizing: border-box !important;
     padding: 10px 13px !important;
-    border: 1px solid #d9c8e8 !important;
+    border: 1px solid #dbc2ee !important;
     border-radius: 12px !important;
     background: #ffffff !important;
 }
@@ -8021,9 +8021,9 @@ header.ubb-encabezado-ref {
     gap: 13px !important;
     margin-top: 15px !important;
     padding: 15px !important;
-    border: 1px dashed #d9c7e9 !important;
+    border: 1px dashed #dbc2ef !important;
     border-radius: 13px !important;
-    background: #f8f2fc !important;
+    background: #f8f1fd !important;
 }
 
 .tarjeta-formulario.registro-ui .registro-ui__grid {
@@ -8040,7 +8040,7 @@ header.ubb-encabezado-ref {
 .tarjeta-formulario.registro-ui .campo label {
     display: block !important;
     margin-bottom: 8px !important;
-    color: #483454 !important;
+    color: #481470 !important;
     font-size: 12px !important;
     font-weight: 750 !important;
 }
@@ -8052,17 +8052,17 @@ header.ubb-encabezado-ref {
     height: 48px !important;
     box-sizing: border-box !important;
     padding: 0 13px !important;
-    border: 1px solid #ded4e7 !important;
+    border: 1px solid #e0ceed !important;
     border-radius: 10px !important;
     background: #ffffff !important;
-    color: #342642 !important;
+    color: #38194f !important;
     font-size: 13px !important;
 }
 
 .tarjeta-formulario.registro-ui .campo input:focus {
-    border-color: #8751aa !important;
+    border-color: #861fd4 !important;
     outline: 0 !important;
-    box-shadow: 0 0 0 3px rgba(91, 42, 134, .10) !important;
+    box-shadow: 0 0 0 3px rgba(95,16,154,.10) !important;
 }
 
 .tarjeta-formulario.registro-ui .registro-ui__comprobante,
@@ -8076,17 +8076,17 @@ header.ubb-encabezado-ref {
 .tarjeta-formulario.registro-ui .registro-ui__comprobante {
     margin: 0 !important;
     padding: 18px 20px !important;
-    border: 1px solid #e5d8f0 !important;
+    border: 1px solid #e6d3f5 !important;
     border-radius: 13px !important;
-    background: linear-gradient(110deg, #f7f0fc, #ffffff) !important;
+    background: linear-gradient(110deg, #f7effd, #ffffff) !important;
 }
 
 .tarjeta-formulario.registro-ui .registro-ui__aviso {
     margin: 0 !important;
     padding: 14px 17px !important;
-    border: 1px solid #e9e1ef !important;
+    border: 1px solid #eadcf4 !important;
     border-radius: 12px !important;
-    background: #faf8fc !important;
+    background: #faf7fd !important;
 }
 
 .tarjeta-formulario.registro-ui .registro-ui__acciones {
@@ -8097,7 +8097,7 @@ header.ubb-encabezado-ref {
     gap: 12px !important;
     margin: 0 !important;
     padding-top: 20px !important;
-    border-top: 1px solid #eee6f3 !important;
+    border-top: 1px solid #eee2f7 !important;
 }
 
 .tarjeta-formulario.registro-ui .registro-ui__cancelar,
@@ -8113,13 +8113,13 @@ header.ubb-encabezado-ref {
 }
 
 .tarjeta-formulario.registro-ui .registro-ui__confirmar {
-    background: #5b2a86 !important;
-    border-color: #5b2a86 !important;
-    box-shadow: 0 5px 13px rgba(91, 42, 134, .18) !important;
+    background: #5f109a !important;
+    border-color: #5f109a !important;
+    box-shadow: 0 5px 13px rgba(95,16,154,.18) !important;
 }
 
 .tarjeta-formulario.registro-ui .registro-ui__confirmar:hover {
-    background: #482069 !important;
+    background: #4a0c78 !important;
 }
 
 @media (max-width: 900px) {
@@ -8204,10 +8204,10 @@ header.ubb-encabezado-ref {
     overflow-y: auto !important;
     margin-top: 8px !important;
     padding: 7px !important;
-    border: 1px solid #e9dff1 !important;
+    border: 1px solid #eadbf5 !important;
     border-radius: 13px !important;
     background: #fff !important;
-    box-shadow: 0 9px 24px rgba(64,35,83,.09) !important;
+    box-shadow: 0 9px 24px rgba(63,14,101,.09) !important;
 }
 
 .registro-ui__resultado {
@@ -8225,8 +8225,8 @@ header.ubb-encabezado-ref {
 
 .registro-ui__resultado:hover,
 .registro-ui__resultado:focus-visible {
-    border-color: #e4d2f2 !important;
-    background: #f7f0fc !important;
+    border-color: #e5cef6 !important;
+    background: #f7effd !important;
     outline: none !important;
 }
 
@@ -8238,8 +8238,8 @@ header.ubb-encabezado-ref {
     width: 43px !important;
     height: 43px !important;
     border-radius: 50% !important;
-    background: #eee1f8 !important;
-    color: #63348b !important;
+    background: #eedffa !important;
+    color: #6614a5 !important;
     font-size: 20px !important;
 }
 
@@ -8252,7 +8252,7 @@ header.ubb-encabezado-ref {
 }
 
 .registro-ui__resultado-nombre {
-    color: #382345 !important;
+    color: #381751 !important;
     font-size: 13px !important;
     font-weight: 800 !important;
 }
@@ -8265,16 +8265,16 @@ header.ubb-encabezado-ref {
 }
 
 .registro-ui__resultado-flecha {
-    color: #8752a8 !important;
+    color: #8520d3 !important;
     font-size: 25px !important;
 }
 
 .registro-ui__cliente-seleccionado {
     margin-top: 15px !important;
     padding: 15px !important;
-    border: 1px solid #dfc9ef !important;
+    border: 1px solid #dfc5f3 !important;
     border-radius: 14px !important;
-    background: linear-gradient(115deg,#f8f1fc,#fff 90%) !important;
+    background: linear-gradient(115deg,#f7f0fd,#fff 90%) !important;
 }
 
 .registro-ui__seleccionado-cabecera {
@@ -8289,7 +8289,7 @@ header.ubb-encabezado-ref {
     display: flex !important;
     align-items: center !important;
     gap: 9px !important;
-    color: #65358c !important;
+    color: #6715a7 !important;
     font-size: 12px !important;
     font-weight: 800 !important;
 }
@@ -8300,23 +8300,23 @@ header.ubb-encabezado-ref {
     width: 25px !important;
     height: 25px !important;
     border-radius: 50% !important;
-    background: #67358e !important;
+    background: #6815a9 !important;
     color: white !important;
 }
 
 .registro-ui__cambiar {
     padding: 7px 12px !important;
-    border: 1px solid #dec9ed !important;
+    border: 1px solid #dec5f2 !important;
     border-radius: 9px !important;
     background: white !important;
-    color: #63348b !important;
+    color: #6614a5 !important;
     font-size: 11px !important;
     font-weight: 750 !important;
     cursor: pointer !important;
 }
 
 .registro-ui__cambiar:hover {
-    background: #eee2f7 !important;
+    background: #eee0f9 !important;
 }
 
 .registro-ui__seleccionado-datos {
@@ -8339,7 +8339,7 @@ header.ubb-encabezado-ref {
 
 .registro-ui__seleccionado-persona strong,
 .registro-ui__seleccionado-servicio strong {
-    color: #3c2949 !important;
+    color: #3d105f !important;
     font-size: 12px !important;
 }
 
@@ -8357,10 +8357,10 @@ header.ubb-encabezado-ref {
 .tarjeta-formulario.registro-ui .registro-ui__intro-redisenado {
     align-items:center!important; justify-content:space-between!important;
     gap:18px!important; padding-bottom:20px!important;
-    border-bottom:1px solid #eee5f4!important;
+    border-bottom:1px solid #eee2f7!important;
 }
 .tarjeta-formulario.registro-ui .registro-ui__intro-redisenado h3 {
-    margin:3px 0 5px!important; color:#24152f!important;
+    margin:3px 0 5px!important; color:#250e36!important;
     font-size:clamp(24px,3vw,32px)!important; font-weight:850!important;
 }
 .tarjeta-formulario.registro-ui .registro-ui__pasos {
@@ -8376,15 +8376,15 @@ header.ubb-encabezado-ref {
 .tarjeta-formulario.registro-ui .registro-ui__paso span {
     display:grid!important; place-items:center!important;
     width:36px!important; height:36px!important;
-    border:1px solid #e5d9ed!important; border-radius:50%!important;
-    background:#fff!important; color:#76518d!important; font-weight:800!important;
+    border:1px solid #e5d4f2!important; border-radius:50%!important;
+    background:#fff!important; color:#761fb8!important; font-weight:800!important;
 }
 .tarjeta-formulario.registro-ui .registro-ui__paso-activo span {
-    border-color:#642b91!important; background:#642b91!important;
+    border-color:#6511a6!important; background:#6511a6!important;
     color:#fff!important; box-shadow:0 5px 13px #642b9138!important;
 }
 .tarjeta-formulario.registro-ui .registro-ui__pasos > i {
-    height:1px!important; flex:1 1 30px!important; background:#e4d8ec!important;
+    height:1px!important; flex:1 1 30px!important; background:#e4d2f2!important;
 }
 .tarjeta-formulario.registro-ui .registro-ui__metodos {
     grid-column:1/-1!important; display:grid!important;
@@ -8394,23 +8394,23 @@ header.ubb-encabezado-ref {
 }
 .tarjeta-formulario.registro-ui .registro-ui__metodos legend {
     width:100%!important; margin-bottom:9px!important;
-    color:#34213f!important; font-size:12px!important;
+    color:#34154b!important; font-size:12px!important;
     font-weight:850!important; text-transform:uppercase!important;
 }
 .tarjeta-formulario.registro-ui .registro-ui__metodo-opcion {
     position:relative!important; display:flex!important;
     align-items:center!important; justify-content:center!important;
     gap:9px!important; min-height:49px!important; padding:10px!important;
-    border:1px solid #e3d9eb!important; border-radius:12px!important;
-    background:#fff!important; color:#30213a!important;
+    border:1px solid #e4d3f1!important; border-radius:12px!important;
+    background:#fff!important; color:#311546!important;
     font-size:13px!important; font-weight:750!important; cursor:pointer!important;
 }
 .tarjeta-formulario.registro-ui .registro-ui__metodo-opcion input {
     position:absolute!important; opacity:0!important;
 }
 .tarjeta-formulario.registro-ui .registro-ui__metodo-opcion:has(input:checked) {
-    border-color:#642b91!important;
-    background:linear-gradient(110deg,#5e2389,#853fba)!important;
+    border-color:#6511a6!important;
+    background:linear-gradient(110deg,#5d0e99,#8618d9)!important;
     color:#fff!important; box-shadow:0 7px 17px #5c238438!important;
 }
 .tarjeta-formulario.registro-ui .registro-ui__metodo-opcion:focus-within {
@@ -8444,10 +8444,10 @@ header.ubb-encabezado-ref {
     width: 100% !important;
     min-height: 82px !important;
     padding: 12px 14px !important;
-    border: 1px solid #e5d9ed !important;
+    border: 1px solid #e5d4f2 !important;
     border-radius: 11px !important;
     background: #fff !important;
-    color: #34213f !important;
+    color: #34154b !important;
     font: inherit !important;
     resize: vertical !important;
     box-sizing: border-box !important;
@@ -8456,14 +8456,14 @@ header.ubb-encabezado-ref {
 .tarjeta-formulario.registro-ui .registro-ui__automatizaciones {
     margin-top: 5px !important;
     padding: 15px !important;
-    border: 1px solid #e6d8f1 !important;
+    border: 1px solid #e7d4f5 !important;
     border-radius: 14px !important;
-    background: linear-gradient(120deg,#faf5ff,#fff) !important;
+    background: linear-gradient(120deg,#fbf5ff,#fff) !important;
 }
 
 .registro-ui__automatizaciones h4 {
     margin: 0 0 13px !important;
-    color: #44215d !important;
+    color: #440d6d !important;
     font-size: 13px !important;
     font-weight: 850 !important;
     text-transform: uppercase !important;
@@ -8477,7 +8477,7 @@ header.ubb-encabezado-ref {
 }
 
 .registro-ui__automatizacion + .registro-ui__automatizacion {
-    border-top: 1px solid #eee5f4 !important;
+    border-top: 1px solid #eee2f7 !important;
 }
 
 .registro-ui__auto-icono {
@@ -8487,8 +8487,8 @@ header.ubb-encabezado-ref {
     width: 38px !important;
     height: 38px !important;
     border-radius: 11px !important;
-    background: #eee1f8 !important;
-    color: #67358e !important;
+    background: #eedffa !important;
+    color: #6815a9 !important;
     font-size: 20px !important;
 }
 
@@ -8498,7 +8498,7 @@ header.ubb-encabezado-ref {
 }
 
 .registro-ui__automatizacion strong {
-    color: #392347 !important;
+    color: #391753 !important;
     font-size: 12px !important;
 }
 
@@ -8548,8 +8548,8 @@ header.ubb-encabezado-ref {
     margin-top: 4px !important;
     padding: 4px 9px !important;
     border-radius: 20px !important;
-    background: #eee5f6 !important;
-    color: #63348b !important;
+    background: #efe2f9 !important;
+    color: #6614a5 !important;
     font-size: 10px !important;
     font-weight: 800 !important;
 }
@@ -8701,7 +8701,7 @@ header.ubb-encabezado-ref {
     align-items: center !important;
     justify-content: center !important;
     padding: 20px !important;
-    background: rgba(35, 20, 45, .58) !important;
+    background: rgba(35,13,52,.58) !important;
     backdrop-filter: blur(5px) !important;
 }
 
@@ -8713,10 +8713,10 @@ header.ubb-encabezado-ref {
     width: min(100%, 650px) !important;
     max-height: 90vh !important;
     overflow-y: auto !important;
-    border: 1px solid #e9dcef !important;
+    border: 1px solid #e7d7f4 !important;
     border-radius: 20px !important;
     background: #fff !important;
-    box-shadow: 0 24px 80px rgba(25, 10, 40, .25) !important;
+    box-shadow: 0 24px 80px rgba(27,6,44,.25) !important;
 }
 
 .confirmacion-pago-cabecera {
@@ -8724,7 +8724,7 @@ header.ubb-encabezado-ref {
     align-items: center !important;
     gap: 14px !important;
     padding: 23px 25px !important;
-    border-bottom: 1px solid #eee6f3 !important;
+    border-bottom: 1px solid #eee2f7 !important;
 }
 
 .confirmacion-pago-icono {
@@ -8734,8 +8734,8 @@ header.ubb-encabezado-ref {
     width: 48px !important;
     height: 48px !important;
     border-radius: 15px !important;
-    background: #eee2f7 !important;
-    color: #65358c !important;
+    background: #eee0f9 !important;
+    color: #6715a7 !important;
     font-size: 23px !important;
     font-weight: 900 !important;
 }
@@ -8746,7 +8746,7 @@ header.ubb-encabezado-ref {
 }
 
 .confirmacion-pago-etiqueta {
-    color: #8052a0 !important;
+    color: #8120cb !important;
     font-size: 10px !important;
     font-weight: 850 !important;
     letter-spacing: 1px !important;
@@ -8754,7 +8754,7 @@ header.ubb-encabezado-ref {
 
 .confirmacion-pago-cabecera h2 {
     margin: 4px 0 !important;
-    color: #33203f !important;
+    color: #33154a !important;
     font-size: 23px !important;
 }
 
@@ -8789,7 +8789,7 @@ header.ubb-encabezado-ref {
     gap: 5px !important;
     min-width: 0 !important;
     padding: 12px 0 !important;
-    border-bottom: 1px solid #f0eaf4 !important;
+    border-bottom: 1px solid #f0e7f7 !important;
 }
 
 .confirmacion-pago-campo {
@@ -8798,14 +8798,14 @@ header.ubb-encabezado-ref {
 }
 
 .confirmacion-pago-valor {
-    color: #3b2848 !important;
+    color: #3c1a56 !important;
     font-size: 13px !important;
     overflow-wrap: anywhere !important;
 }
 
 .confirmacion-pago-fila:nth-child(4) .confirmacion-pago-valor,
 .confirmacion-pago-fila:nth-child(5) .confirmacion-pago-valor {
-    color: #63348b !important;
+    color: #6614a5 !important;
     font-weight: 850 !important;
 }
 
@@ -8813,8 +8813,8 @@ header.ubb-encabezado-ref {
     margin-top: 18px !important;
     padding: 12px 14px !important;
     border-radius: 10px !important;
-    background: #f7f1fb !important;
-    color: #705b7c !important;
+    background: #f7f0fc !important;
+    color: #7123ad !important;
     font-size: 11px !important;
     line-height: 1.5 !important;
 }
@@ -8824,7 +8824,7 @@ header.ubb-encabezado-ref {
     justify-content: flex-end !important;
     gap: 10px !important;
     padding: 17px 25px 22px !important;
-    border-top: 1px solid #eee6f3 !important;
+    border-top: 1px solid #eee2f7 !important;
 }
 
 .confirmacion-pago-acciones button {
@@ -8837,14 +8837,14 @@ header.ubb-encabezado-ref {
 }
 
 .confirmacion-pago-editar {
-    border: 1px solid #dfd1e9 !important;
+    border: 1px solid #dfcbef !important;
     background: white !important;
-    color: #633c7e !important;
+    color: #63179d !important;
 }
 
 .confirmacion-pago-aceptar {
-    border: 1px solid #63308b !important;
-    background: #63308b !important;
+    border: 1px solid #6413a3 !important;
+    background: #6413a3 !important;
     color: white !important;
 }
 
@@ -8910,20 +8910,20 @@ body.confirmacion-pago-abierta {
     gap: 8px !important;
     padding: 21px !important;
     margin-bottom: 23px !important;
-    border: 1px solid #e7d6f3 !important;
+    border: 1px solid #e7d2f7 !important;
     border-radius: 16px !important;
-    background: linear-gradient(135deg,#f4eafb,#fbf8fe) !important;
+    background: linear-gradient(135deg,#f4e9fc,#fbf8fe) !important;
 }
 
 .confirmacion-pago-monto > span {
-    color: #76548b !important;
+    color: #7621b8 !important;
     font-size: 10px !important;
     font-weight: 850 !important;
     letter-spacing: 1.1px !important;
 }
 
 .confirmacion-pago-monto > strong {
-    color: #542477 !important;
+    color: #530e88 !important;
     font-size: 34px !important;
     font-weight: 850 !important;
     letter-spacing: -1px !important;
@@ -8935,10 +8935,10 @@ body.confirmacion-pago-abierta {
     align-items: center !important;
     gap: 7px !important;
     padding: 6px 12px !important;
-    border: 1px solid #e5d5ef !important;
+    border: 1px solid #e4d0f4 !important;
     border-radius: 30px !important;
     background: #fff !important;
-    color: #684486 !important;
+    color: #6c1aaa !important;
     font-size: 11px !important;
     font-weight: 750 !important;
 }
@@ -8956,7 +8956,7 @@ body.confirmacion-pago-abierta {
     align-items: center !important;
     gap: 10px !important;
     margin: 0 0 9px !important;
-    color: #392746 !important;
+    color: #3a1954 !important;
     font-size: 13px !important;
     font-weight: 850 !important;
 }
@@ -8967,8 +8967,8 @@ body.confirmacion-pago-abierta {
     width: 27px !important;
     height: 27px !important;
     border-radius: 8px !important;
-    background: #eee3f6 !important;
-    color: #66378a !important;
+    background: #eee0f9 !important;
+    color: #6715a6 !important;
     font-size: 10px !important;
 }
 
@@ -8977,7 +8977,7 @@ body.confirmacion-pago-abierta {
     grid-template-columns: repeat(2,minmax(0,1fr)) !important;
     column-gap: 22px !important;
     padding: 4px 15px !important;
-    border: 1px solid #eee7f2 !important;
+    border: 1px solid #eee3f6 !important;
     border-radius: 13px !important;
     background: #fff !important;
 }
@@ -8985,7 +8985,7 @@ body.confirmacion-pago-abierta {
 .confirmacion-pago-fila {
     gap: 5px !important;
     padding: 11px 0 !important;
-    border-bottom: 1px solid #f0ebf3 !important;
+    border-bottom: 1px solid #f0e7f7 !important;
 }
 
 .confirmacion-pago-fila span {
@@ -8994,20 +8994,20 @@ body.confirmacion-pago-abierta {
 }
 
 .confirmacion-pago-fila strong {
-    color: #3e2b4a !important;
+    color: #3e1161 !important;
     font-size: 12px !important;
     font-weight: 750 !important;
 }
 
 .confirmacion-pago-observaciones {
     padding: 13px 15px !important;
-    border: 1px solid #eee7f2 !important;
+    border: 1px solid #eee3f6 !important;
     border-radius: 12px !important;
-    background: #fcfaff !important;
+    background: #fdfaff !important;
 }
 
 .confirmacion-pago-observaciones > span {
-    color: #805c98 !important;
+    color: #8124c9 !important;
     font-size: 10px !important;
     font-weight: 850 !important;
     letter-spacing: .7px !important;
@@ -9015,7 +9015,7 @@ body.confirmacion-pago-abierta {
 
 .confirmacion-pago-observaciones p {
     margin: 7px 0 0 !important;
-    color: #594967 !important;
+    color: #5d1c8e !important;
     font-size: 12px !important;
     line-height: 1.55 !important;
     overflow-wrap: anywhere !important;
@@ -9029,7 +9029,7 @@ body.confirmacion-pago-abierta {
 }
 
 .confirmacion-pago-nota > span {
-    color: #70428e !important;
+    color: #6f1ab0 !important;
     font-weight: 900 !important;
 }
 
@@ -9085,8 +9085,8 @@ body.confirmacion-pago-abierta {
     justify-content: center;
     font-size: 27px;
     line-height: 1;
-    background: #f0e3fa;
-    color: #67328d;
+    background: #f0e2fb;
+    color: #6613a6;
 }
 
 /* El encabezado aprovecha el espacio restante */
@@ -9103,7 +9103,7 @@ body.confirmacion-pago-abierta {
 /* Desplazamiento más discreto */
 .confirmacion-pago-modal {
     scrollbar-width: thin;
-    scrollbar-color: #c9b4d8 transparent;
+    scrollbar-color: #caaae2 transparent;
 }
 
 .confirmacion-pago-modal::-webkit-scrollbar {
@@ -9115,12 +9115,12 @@ body.confirmacion-pago-abierta {
 }
 
 .confirmacion-pago-modal::-webkit-scrollbar-thumb {
-    background: #c9b4d8;
+    background: #caaae2;
     border-radius: 10px;
 }
 
 .confirmacion-pago-modal::-webkit-scrollbar-thumb:hover {
-    background: #9874b1;
+    background: #993edf;
 }
 
 /* Ajustes para pantallas pequeñas */
@@ -9161,8 +9161,8 @@ body.confirmacion-pago-abierta {
     align-items: center !important;
     justify-content: center !important;
     padding: 0 !important;
-    background: #eee2f7 !important;
-    color: #65358c !important;
+    background: #eee0f9 !important;
+    color: #6715a7 !important;
     font-size: 27px !important;
     line-height: 1 !important;
 }
@@ -9197,20 +9197,20 @@ body.confirmacion-pago-abierta {
     flex-wrap: wrap !important;
     gap: 11px !important;
     padding: 13px 16px !important;
-    border: 1px solid #e4d8ed !important;
+    border: 1px solid #e5d3f2 !important;
     border-radius: 14px !important;
     background: #fff !important;
     transition: border-color .2s ease, box-shadow .2s ease !important;
 }
 
 .tarjeta-formulario.registro-ui .registro-ui__busqueda:focus-within {
-    border-color: #8050a2 !important;
-    box-shadow: 0 0 0 4px rgba(128,80,162,.10) !important;
+    border-color: #811fcc !important;
+    box-shadow: 0 0 0 4px rgba(129,31,204,.10) !important;
 }
 
 .tarjeta-formulario.registro-ui .registro-ui__busqueda > span:first-child {
     flex: 0 0 25px !important;
-    color: #75449a !important;
+    color: #771abd !important;
     font-size: 25px !important;
     text-align: center !important;
 }
@@ -9224,7 +9224,7 @@ body.confirmacion-pago-abierta {
     outline: none !important;
     background: transparent !important;
     box-shadow: none !important;
-    color: #382345 !important;
+    color: #381751 !important;
     font-size: 13px !important;
 }
 
@@ -9243,22 +9243,22 @@ body.confirmacion-pago-abierta {
 .tarjeta-formulario.registro-ui .registro-ui__resultados {
     gap: 7px !important;
     padding: 9px !important;
-    border-color: #e8dcef !important;
+    border-color: #e7d7f4 !important;
     border-radius: 15px !important;
-    box-shadow: 0 8px 22px rgba(64,35,83,.07) !important;
+    box-shadow: 0 8px 22px rgba(63,14,101,.07) !important;
 }
 
 .tarjeta-formulario.registro-ui .registro-ui__resultado {
     padding: 12px 13px !important;
-    border: 1px solid #f0eaf4 !important;
+    border: 1px solid #f0e7f7 !important;
     border-radius: 12px !important;
     transition: background .18s ease, border-color .18s ease,
                 transform .18s ease !important;
 }
 
 .tarjeta-formulario.registro-ui .registro-ui__resultado:hover {
-    border-color: #d9c3e9 !important;
-    background: #faf6fd !important;
+    border-color: #d9bdee !important;
+    background: #faf5fe !important;
     transform: translateY(-1px) !important;
 }
 
@@ -9269,15 +9269,15 @@ body.confirmacion-pago-abierta {
     gap: 14px !important;
     margin-top: 14px !important;
     padding: 17px !important;
-    border: 1px dashed #d8c6e6 !important;
+    border: 1px dashed #d9c0ec !important;
     border-radius: 15px !important;
-    background: linear-gradient(110deg,#faf6fd,#fff) !important;
+    background: linear-gradient(110deg,#faf5fe,#fff) !important;
 }
 
 .tarjeta-formulario.registro-ui .registro-ui__cliente-vacio strong {
     display: block !important;
     margin-bottom: 4px !important;
-    color: #493256 !important;
+    color: #481371 !important;
     font-size: 13px !important;
     font-weight: 800 !important;
 }
@@ -9293,16 +9293,16 @@ body.confirmacion-pago-abierta {
 .tarjeta-formulario.registro-ui .registro-ui__cliente-seleccionado {
     margin-top: 15px !important;
     padding: 17px !important;
-    border: 1px solid #dfcceb !important;
+    border: 1px solid #dec7f0 !important;
     border-radius: 16px !important;
-    background: linear-gradient(135deg,#f8f2fc 0%,#fff 75%) !important;
-    box-shadow: 0 7px 20px rgba(75,39,96,.055) !important;
+    background: linear-gradient(135deg,#f8f1fd 0%,#fff 75%) !important;
+    box-shadow: 0 7px 20px rgba(72,15,116,.055) !important;
 }
 
 .tarjeta-formulario.registro-ui .registro-ui__seleccionado-cabecera {
     padding-bottom: 12px !important;
     margin-bottom: 14px !important;
-    border-bottom: 1px solid #eadff0 !important;
+    border-bottom: 1px solid #e9daf5 !important;
 }
 
 .tarjeta-formulario.registro-ui .registro-ui__seleccionado-titulo {
@@ -9313,7 +9313,7 @@ body.confirmacion-pago-abierta {
 .tarjeta-formulario.registro-ui .registro-ui__seleccionado-check {
     width: 27px !important;
     height: 27px !important;
-    box-shadow: 0 3px 8px rgba(103,53,142,.18) !important;
+    box-shadow: 0 3px 8px rgba(104,21,169,.18) !important;
 }
 
 .tarjeta-formulario.registro-ui .registro-ui__cambiar {
@@ -9335,8 +9335,8 @@ body.confirmacion-pago-abierta {
     height: 50px !important;
     flex-basis: 50px !important;
     font-size: 22px !important;
-    background: #eadcf5 !important;
-    box-shadow: inset 0 0 0 1px #ddc9ec !important;
+    background: #ebd9f8 !important;
+    box-shadow: inset 0 0 0 1px #ddc4f1 !important;
 }
 
 .tarjeta-formulario.registro-ui .registro-ui__seleccionado-persona,
@@ -9346,14 +9346,14 @@ body.confirmacion-pago-abierta {
 }
 
 .tarjeta-formulario.registro-ui .registro-ui__seleccionado-persona strong {
-    color: #40264f !important;
+    color: #3e0f63 !important;
     font-size: 14px !important;
     line-height: 1.4 !important;
     overflow-wrap: anywhere !important;
 }
 
 .tarjeta-formulario.registro-ui .registro-ui__seleccionado-servicio > strong {
-    color: #633b7d !important;
+    color: #62179c !important;
     font-size: 12px !important;
 }
 
@@ -9364,8 +9364,8 @@ body.confirmacion-pago-abierta {
     width: fit-content !important;
     padding: 5px 9px !important;
     border-radius: 20px !important;
-    background: #eee5f5 !important;
-    color: #65358c !important;
+    background: #eee2f8 !important;
+    color: #6715a7 !important;
     font-size: 10px !important;
     font-weight: 800 !important;
 }
@@ -9378,7 +9378,7 @@ body.confirmacion-pago-abierta {
 
 .tarjeta-formulario.registro-ui .registro-ui__ids-editables .campo {
     padding: 13px !important;
-    border: 1px solid #eee5f3 !important;
+    border: 1px solid #ede1f7 !important;
     border-radius: 13px !important;
     background: #fcfafe !important;
 }
@@ -9389,7 +9389,7 @@ body.confirmacion-pago-abierta {
     flex-wrap: wrap !important;
     gap: 6px !important;
     margin-bottom: 8px !important;
-    color: #493256 !important;
+    color: #481371 !important;
     font-size: 12px !important;
     font-weight: 800 !important;
 }
@@ -9397,17 +9397,17 @@ body.confirmacion-pago-abierta {
 .tarjeta-formulario.registro-ui .registro-ui__ids-editables input {
     min-height: 43px !important;
     padding: 10px 12px !important;
-    border: 1px solid #e5d9ed !important;
+    border: 1px solid #e5d4f2 !important;
     border-radius: 10px !important;
     background: #fff !important;
-    color: #382345 !important;
+    color: #381751 !important;
     font-size: 13px !important;
 }
 
 .tarjeta-formulario.registro-ui .registro-ui__ids-editables input:focus {
-    border-color: #8050a2 !important;
+    border-color: #811fcc !important;
     outline: none !important;
-    box-shadow: 0 0 0 3px rgba(128,80,162,.10) !important;
+    box-shadow: 0 0 0 3px rgba(129,31,204,.10) !important;
 }
 
 /* Adaptacion movil */
@@ -9477,9 +9477,9 @@ body.confirmacion-pago-abierta {
     min-height: 94px !important;
     padding: 19px !important;
     gap: 15px !important;
-    border: 1px dashed #d8c6e6 !important;
+    border: 1px dashed #d9c0ec !important;
     border-radius: 16px !important;
-    background: linear-gradient(115deg,#f8f2fc,#fff 85%) !important;
+    background: linear-gradient(115deg,#f8f1fd,#fff 85%) !important;
     transition: border-color .2s ease, background .2s ease !important;
 }
 
@@ -9489,8 +9489,8 @@ body.confirmacion-pago-abierta {
     height: 50px !important;
     flex: 0 0 50px !important;
     border-radius: 15px !important;
-    background: #eee2f7 !important;
-    color: #67358e !important;
+    background: #eee0f9 !important;
+    color: #6815a9 !important;
     font-size: 23px !important;
 }
 
@@ -9498,7 +9498,7 @@ body.confirmacion-pago-abierta {
 .tarjeta-formulario.registro-ui .registro-ui__cliente-vacio strong {
     font-size: 13px !important;
     font-weight: 800 !important;
-    color: #493256 !important;
+    color: #481371 !important;
 }
 
 .tarjeta-formulario.registro-ui .registro-ui__cliente-vacio p {
@@ -9548,15 +9548,15 @@ body.confirmacion-pago-abierta {
 .tarjeta-formulario.registro-ui .registro-ui__ids-editables .campo {
     min-width: 0 !important;
     padding: 15px !important;
-    border: 1px solid #e8dcef !important;
+    border: 1px solid #e7d7f4 !important;
     border-radius: 15px !important;
-    background: linear-gradient(145deg, #faf6fd, #ffffff) !important;
+    background: linear-gradient(145deg, #faf5fe, #ffffff) !important;
     transition: border-color .2s ease, box-shadow .2s ease !important;
 }
 
 .tarjeta-formulario.registro-ui .registro-ui__ids-editables .campo:focus-within {
-    border-color: #a77bc2 !important;
-    box-shadow: 0 0 0 3px rgba(128, 80, 162, .08) !important;
+    border-color: #a44ee5 !important;
+    box-shadow: 0 0 0 3px rgba(129,31,204,.08) !important;
 }
 
 /* Etiquetas */
@@ -9566,7 +9566,7 @@ body.confirmacion-pago-abierta {
     flex-wrap: wrap !important;
     gap: 6px !important;
     margin-bottom: 10px !important;
-    color: #493256 !important;
+    color: #481371 !important;
     font-size: 12px !important;
     font-weight: 800 !important;
 }
@@ -9576,8 +9576,8 @@ body.confirmacion-pago-abierta {
 .registro-ui__requerido {
     padding: 4px 7px !important;
     border-radius: 20px !important;
-    background: #f4e8fa !important;
-    color: #713b91 !important;
+    background: #f2e6fc !important;
+    color: #6d17af !important;
     font-size: 9px !important;
     font-weight: 800 !important;
 }
@@ -9586,7 +9586,7 @@ body.confirmacion-pago-abierta {
 .registro-ui__opcional {
     padding: 4px 7px !important;
     border-radius: 20px !important;
-    background: #f0edf3 !important;
+    background: #f1e9f7 !important;
     color: #75677f !important;
     font-size: 9px !important;
     font-weight: 800 !important;
@@ -9598,10 +9598,10 @@ body.confirmacion-pago-abierta {
     min-height: 46px !important;
     box-sizing: border-box !important;
     padding: 11px 13px !important;
-    border: 1px solid #e5d9ed !important;
+    border: 1px solid #e5d4f2 !important;
     border-radius: 11px !important;
     background: #ffffff !important;
-    color: #382345 !important;
+    color: #381751 !important;
     font-size: 13px !important;
     font-weight: 650 !important;
     transition: border-color .2s ease, box-shadow .2s ease !important;
@@ -9614,9 +9614,9 @@ body.confirmacion-pago-abierta {
 }
 
 .tarjeta-formulario.registro-ui .registro-ui__ids-editables input:focus {
-    border-color: #8050a2 !important;
+    border-color: #811fcc !important;
     outline: none !important;
-    box-shadow: 0 0 0 3px rgba(128, 80, 162, .10) !important;
+    box-shadow: 0 0 0 3px rgba(129,31,204,.10) !important;
 }
 
 /* Adaptación móvil */
@@ -9642,7 +9642,7 @@ body.confirmacion-pago-abierta {
     flex-wrap: wrap !important;
     gap: 7px !important;
     margin-bottom: 10px !important;
-    color: #382345 !important;
+    color: #381751 !important;
     font-size: 12px !important;
     font-weight: 800 !important;
 }
@@ -9662,34 +9662,34 @@ body.confirmacion-pago-abierta {
 
 .tarjeta-formulario.registro-ui
 .registro-ui__seccion .registro-ui__requerido {
-    background: #f2e8fa !important;
-    color: #69378e !important;
+    background: #f2e6fc !important;
+    color: #6915aa !important;
 }
 
 .tarjeta-formulario.registro-ui
 .registro-ui__seccion .registro-ui__opcional {
-    background: #f1eff4 !important;
+    background: #f2ecf7 !important;
     color: #756b7e !important;
 }
 
 /* Monto recibido: campo principal */
 .tarjeta-formulario.registro-ui .registro-ui__monto {
     min-height: 58px !important;
-    border: 1px solid #d9c4e9 !important;
+    border: 1px solid #dabfee !important;
     border-radius: 13px !important;
-    background: linear-gradient(120deg,#faf5ff,#ffffff) !important;
+    background: linear-gradient(120deg,#fbf5ff,#ffffff) !important;
     overflow: hidden !important;
     transition: border-color .2s ease, box-shadow .2s ease !important;
 }
 
 .tarjeta-formulario.registro-ui .registro-ui__monto:focus-within {
-    border-color: #75409b !important;
-    box-shadow: 0 0 0 4px rgba(117,64,155,.11) !important;
+    border-color: #7519bc !important;
+    box-shadow: 0 0 0 4px rgba(117,25,188,.11) !important;
 }
 
 .tarjeta-formulario.registro-ui .registro-ui__monto > span {
     left: 17px !important;
-    color: #704092 !important;
+    color: #7019b3 !important;
     font-size: 20px !important;
     font-weight: 800 !important;
 }
@@ -9700,7 +9700,7 @@ body.confirmacion-pago-abierta {
     border: 0 !important;
     border-radius: 13px !important;
     background: transparent !important;
-    color: #352044 !important;
+    color: #36154f !important;
     font-size: 20px !important;
     font-weight: 850 !important;
     box-shadow: none !important;
@@ -9714,10 +9714,10 @@ body.confirmacion-pago-abierta {
     min-height: 52px !important;
     width: 100% !important;
     padding: 12px 14px !important;
-    border: 1px solid #e3d7ed !important;
+    border: 1px solid #e4d2f2 !important;
     border-radius: 12px !important;
     background: #ffffff !important;
-    color: #382345 !important;
+    color: #381751 !important;
     font-size: 13px !important;
     box-sizing: border-box !important;
     transition: border-color .2s ease, box-shadow .2s ease !important;
@@ -9727,9 +9727,9 @@ body.confirmacion-pago-abierta {
 .registro-ui__seccion #fecha:focus,
 .tarjeta-formulario.registro-ui
 .registro-ui__seccion #referencia:focus {
-    border-color: #8050a2 !important;
+    border-color: #811fcc !important;
     outline: none !important;
-    box-shadow: 0 0 0 4px rgba(128,80,162,.09) !important;
+    box-shadow: 0 0 0 4px rgba(129,31,204,.09) !important;
 }
 
 /* Referencia */
@@ -9748,10 +9748,10 @@ body.confirmacion-pago-abierta {
 .registro-ui__campo-observaciones textarea {
     min-height: 112px !important;
     padding: 15px 16px !important;
-    border: 1px solid #e3d7ed !important;
+    border: 1px solid #e4d2f2 !important;
     border-radius: 12px !important;
     background: #ffffff !important;
-    color: #382345 !important;
+    color: #381751 !important;
     font-size: 13px !important;
     line-height: 1.6 !important;
     box-sizing: border-box !important;
@@ -9760,9 +9760,9 @@ body.confirmacion-pago-abierta {
 
 .tarjeta-formulario.registro-ui
 .registro-ui__campo-observaciones textarea:focus {
-    border-color: #8050a2 !important;
+    border-color: #811fcc !important;
     outline: none !important;
-    box-shadow: 0 0 0 4px rgba(128,80,162,.09) !important;
+    box-shadow: 0 0 0 4px rgba(129,31,204,.09) !important;
 }
 
 .tarjeta-formulario.registro-ui
@@ -9790,18 +9790,18 @@ body.confirmacion-pago-abierta {
 
 /* UBB - Estados dinámicos del indicador de progreso */
 .tarjeta-formulario.registro-ui .registro-ui__paso-completado {
-    color: #4f2670 !important;
+    color: #500f83 !important;
 }
 
 .tarjeta-formulario.registro-ui .registro-ui__paso-completado span {
-    border-color: #6b3592 !important;
-    background: #6b3592 !important;
+    border-color: #6b15ac !important;
+    background: #6b15ac !important;
     color: #fff !important;
     box-shadow: 0 5px 13px #642b9128 !important;
 }
 
 .tarjeta-formulario.registro-ui .registro-ui__pasos > i.registro-ui__conector-completado {
-    background: #75439a !important;
+    background: #761abc !important;
     height: 2px !important;
 }
 
@@ -9814,7 +9814,7 @@ body.confirmacion-pago-abierta {
 .tarjeta-formulario.registro-ui .registro-ui__referencia-ayuda {
     display: block;
     margin-top: 7px;
-    color: #806b91;
+    color: #852acb;
     font-size: 11px;
     line-height: 1.5;
 }
@@ -9825,10 +9825,10 @@ body.confirmacion-pago-abierta {
     box-sizing: border-box;
     margin: 0 0 22px;
     padding: 23px;
-    border: 1px solid #e4d6ed;
+    border: 1px solid #e4d1f2;
     border-radius: 17px;
     background: linear-gradient(145deg, #ffffff, #fbf7fe);
-    box-shadow: 0 9px 28px rgba(64, 35, 83, .08);
+    box-shadow: 0 9px 28px rgba(63,14,101,.08);
 }
 
 .ubb-resultado-cabecera {
@@ -9851,7 +9851,7 @@ body.confirmacion-pago-abierta {
 }
 
 .ubb-resultado-etiqueta {
-    color: #6b4387;
+    color: #6c1aaa;
     font-size: 10px;
     font-weight: 850;
     letter-spacing: 1px;
@@ -9859,7 +9859,7 @@ body.confirmacion-pago-abierta {
 
 .ubb-resultado-cabecera h2 {
     margin: 3px 0;
-    color: #30203d;
+    color: #321548;
     font-size: 21px;
 }
 
@@ -9876,9 +9876,9 @@ body.confirmacion-pago-abierta {
     gap: 12px;
     margin-top: 20px;
     padding: 14px 16px;
-    border: 1px dashed #cdb7df;
+    border: 1px dashed #cfafe7;
     border-radius: 12px;
-    background: #f7f0fc;
+    background: #f7effd;
 }
 
 .ubb-resultado-folio span,
@@ -9889,7 +9889,7 @@ body.confirmacion-pago-abierta {
 }
 
 .ubb-resultado-folio strong {
-    color: #63328a;
+    color: #6513a3;
     font-size: 19px;
     letter-spacing: .5px;
 }
@@ -9906,13 +9906,13 @@ body.confirmacion-pago-abierta {
     flex-direction: column;
     gap: 6px;
     padding: 13px;
-    border: 1px solid #eee7f3;
+    border: 1px solid #eee3f7;
     border-radius: 11px;
     background: #fff;
 }
 
 .ubb-resultado-datos strong {
-    color: #352443;
+    color: #371750;
     font-size: 14px;
 }
 
@@ -9922,7 +9922,7 @@ body.confirmacion-pago-abierta {
     gap: 12px;
     margin-top: 16px;
     padding: 13px;
-    border: 1px solid #e7ddef;
+    border: 1px solid #e8d8f4;
     border-radius: 12px;
     background: #fff;
 }
@@ -9953,7 +9953,7 @@ body.confirmacion-pago-abierta {
 }
 
 .ubb-comprobante-info strong {
-    color: #382745;
+    color: #3a1953;
     font-size: 13px;
 }
 
@@ -9963,7 +9963,7 @@ body.confirmacion-pago-abierta {
 }
 
 .ubb-resultado-comprobante a {
-    color: #68368d;
+    color: #6815a8;
     font-size: 12px;
     font-weight: 800;
     text-decoration: none;
@@ -9985,7 +9985,7 @@ body.confirmacion-pago-abierta {
     gap: 10px;
     padding: 11px 17px;
     border-radius: 10px;
-    background: #67358d;
+    background: #6815a8;
     color: #fff !important;
     font-size: 12px;
     font-weight: 800;
@@ -9993,7 +9993,7 @@ body.confirmacion-pago-abierta {
 }
 
 .ubb-resultado-nuevo:hover {
-    background: #51266f;
+    background: #500f82;
 }
 
 @media(max-width:650px) {
@@ -10035,9 +10035,9 @@ body.confirmacion-pago-abierta {
     gap: 6px !important;
     min-width: 0 !important;
     padding: 12px 14px !important;
-    border: 1px solid #e8e0f2 !important;
+    border: 1px solid #ebdcf6 !important;
     border-radius: 11px !important;
-    background: #f8f4fc !important;
+    background: #f9f3fd !important;
 }
 
 .graficas-servicios .resumen-fuente-ubb {
@@ -10058,7 +10058,7 @@ body.confirmacion-pago-abierta {
 .graficas-servicios .resumen-fuente strong {
     font-size: 19px !important;
     line-height: 1.2 !important;
-    color: #5b2a86 !important;
+    color: #5f109a !important;
     overflow-wrap: anywhere !important;
 }
 
@@ -10100,11 +10100,11 @@ body.confirmacion-pago-abierta {
 .graficas-servicios .grafica-ingresos .barra-uisp {
     background: linear-gradient(
         180deg,
-        #b99ae8 0%,
-        #7545b5 58%,
-        #5b2a86 100%
+        #c794ee 0%,
+        #861bd8 58%,
+        #5f109a 100%
     ) !important;
-    box-shadow: 0 3px 8px rgba(91, 42, 134, .16) !important;
+    box-shadow: 0 3px 8px rgba(95,16,154,.16) !important;
 }
 
 .graficas-servicios .grafica-ingresos .barra-ubb {
@@ -10127,7 +10127,7 @@ body.confirmacion-pago-abierta {
 }
 
 .graficas-servicios .leyenda-ingresos-doble .leyenda-uisp {
-    background: #7545b5 !important;
+    background: #861bd8 !important;
 }
 
 .graficas-servicios .leyenda-ingresos-doble .leyenda-ubb {
@@ -10316,16 +10316,16 @@ body.confirmacion-pago-abierta {
 #contenedorObligaciones {
     margin: 16px 0 !important;
     padding: 15px !important;
-    border: 1px solid #e8dcef !important;
+    border: 1px solid #e7d7f4 !important;
     border-radius: 13px !important;
-    background: linear-gradient(145deg, #faf6fd, #ffffff) !important;
+    background: linear-gradient(145deg, #faf5fe, #ffffff) !important;
     box-sizing: border-box !important;
 }
 
 #contenedorObligaciones label {
     display: block !important;
     margin-bottom: 9px !important;
-    color: #493256 !important;
+    color: #481371 !important;
     font-size: 12px !important;
     font-weight: 800 !important;
 }
@@ -10335,10 +10335,10 @@ body.confirmacion-pago-abierta {
     width: 100% !important;
     min-height: 42px !important;
     padding: 9px 38px 9px 12px !important;
-    border: 1px solid #dfcce9 !important;
+    border: 1px solid #ddc7ef !important;
     border-radius: 10px !important;
     background-color: #ffffff !important;
-    color: #382345 !important;
+    color: #381751 !important;
     font-family: inherit !important;
     font-size: 12px !important;
     font-weight: 600 !important;
@@ -10347,9 +10347,9 @@ body.confirmacion-pago-abierta {
 }
 
 #contenedorObligaciones select:focus {
-    border-color: #8050a2 !important;
+    border-color: #811fcc !important;
     outline: none !important;
-    box-shadow: 0 0 0 3px rgba(128, 80, 162, .10) !important;
+    box-shadow: 0 0 0 3px rgba(129,31,204,.10) !important;
 }
 
 #estadoObligaciones {
@@ -10366,8 +10366,8 @@ body.confirmacion-pago-abierta {
 
 /* Superficies principales */
 .tarjeta-formulario.registro-ui .registro-ui__seccion {
-    background: linear-gradient(145deg, #FBF7FF, #F8F0FC) !important;
-    border-color: #E8D9F1 !important;
+    background: linear-gradient(145deg, #fcf7ff, #f7effd) !important;
+    border-color: #e7d5f5 !important;
 }
 
 /* Tarjetas de identificación */
@@ -10375,27 +10375,27 @@ body.confirmacion-pago-abierta {
 .tarjeta-formulario.registro-ui .registro-ui__cliente-vacio,
 .tarjeta-formulario.registro-ui .registro-ui__ids-editables .campo,
 .tarjeta-formulario.registro-ui #contenedorObligaciones {
-    background: linear-gradient(145deg, #F8F0FC, #FDFBFF) !important;
-    border-color: #E4D1F0 !important;
+    background: linear-gradient(145deg, #f7effd, #fdfbff) !important;
+    border-color: #e3ccf5 !important;
 }
 
 /* Buscador */
 .tarjeta-formulario.registro-ui .registro-ui__busqueda {
-    background: #F7EFFC !important;
-    border-color: #E5D5EF !important;
+    background: #f6eefd !important;
+    border-color: #e4d0f4 !important;
 }
 
 /* Automatizaciones */
 .tarjeta-formulario.registro-ui .registro-ui__automatizaciones {
-    background: linear-gradient(135deg, #F1E5FA, #FAF5FE) !important;
-    border-color: #DDC7ED !important;
+    background: linear-gradient(135deg, #f1e3fc, #faf5fe) !important;
+    border-color: #ddc3f2 !important;
 }
 
 /* Campos de captura: blanco cálido para conservar legibilidad */
 .tarjeta-formulario.registro-ui input:not([type="radio"]),
 .tarjeta-formulario.registro-ui select,
 .tarjeta-formulario.registro-ui textarea {
-    background-color: #FFFDFF !important;
+    background-color: #fffdff !important;
 }
 
 /* FIN UBB - PALETA LAVANDA DEL FORMULARIO */
@@ -10424,7 +10424,7 @@ body.confirmacion-pago-abierta {
 
 .auto-titulo h3 {
     margin: 0;
-    color: #29233d;
+    color: #221749;
 }
 
 .auto-titulo p {
@@ -10434,8 +10434,8 @@ body.confirmacion-pago-abierta {
 }
 
 .auto-regla {
-    background: #eee2f7;
-    color: #5b2a86;
+    background: #eee0f9;
+    color: #5f109a;
     border-radius: 999px;
     padding: 6px 12px;
     font-size: 12px;
@@ -10455,17 +10455,17 @@ body.confirmacion-pago-abierta {
     flex-direction: column;
     gap: 8px;
     padding: 18px 16px 14px;
-    border: 1px solid #e5e1ee;
+    border: 1px solid #e3dcf3;
     border-radius: 12px;
-    background: #fbf9fd;
-    color: #29233d;
+    background: #fbf8fe;
+    color: #221749;
     text-decoration: none;
     transition: 0.2s;
 }
 
 .auto-paso:hover {
-    border-color: #8050a2;
-    box-shadow: 0 6px 18px rgba(91, 42, 134, 0.12);
+    border-color: #811fcc;
+    box-shadow: 0 6px 18px rgba(95,16,154,0.12);
     transform: translateY(-1px);
 }
 
@@ -10476,7 +10476,7 @@ body.confirmacion-pago-abierta {
     right: -12px;
     top: 50%;
     transform: translateY(-50%);
-    color: #8050a2;
+    color: #811fcc;
     font-size: 22px;
     font-weight: 700;
 }
@@ -10485,7 +10485,7 @@ body.confirmacion-pago-abierta {
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    background: #5b2a86;
+    background: #5f109a;
     color: #ffffff;
     font-size: 12px;
     font-weight: 700;
@@ -10500,7 +10500,7 @@ body.confirmacion-pago-abierta {
 .auto-cifra {
     font-size: 30px;
     font-weight: 700;
-    color: #5b2a86;
+    color: #5f109a;
     line-height: 1.1;
 }
 
@@ -10516,7 +10516,7 @@ body.confirmacion-pago-abierta {
     margin: 0;
     padding: 0;
     font-size: 12.5px;
-    color: #382345;
+    color: #381751;
     display: grid;
     gap: 3px;
 }
@@ -10529,7 +10529,7 @@ body.confirmacion-pago-abierta {
 .auto-ejecucion {
     margin-top: auto;
     padding-top: 8px;
-    border-top: 1px dashed #e5e1ee;
+    border-top: 1px dashed #e3dcf3;
     font-size: 11.5px;
     color: #777184;
 }

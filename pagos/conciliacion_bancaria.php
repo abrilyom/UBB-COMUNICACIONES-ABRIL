@@ -264,10 +264,10 @@ function etiquetaEstado(string $estado): string {
         }
         .conciliacion-indicador {
             background: #fff;
-            border: 1px solid #ece8f3;
+            border: 1px solid #ebe4f7;
             border-radius: 14px;
             padding: 19px;
-            box-shadow: 0 3px 12px rgba(40, 20, 70, .04);
+            box-shadow: 0 3px 12px rgba(49,13,77,.04);
         }
         .conciliacion-indicador span {
             display: block;
@@ -276,7 +276,7 @@ function etiquetaEstado(string $estado): string {
         }
         .conciliacion-indicador strong {
             display: block;
-            color: #39205f;
+            color: #440c6f;
             font-size: 27px;
             margin-top: 8px;
         }
@@ -290,7 +290,7 @@ function etiquetaEstado(string $estado): string {
         .conciliacion-filtros input,
         .conciliacion-filtros select {
             min-height: 42px;
-            border: 1px solid #ddd6e9;
+            border: 1px solid #e1d1ee;
             border-radius: 9px;
             padding: 8px 12px;
             background: #fff;
@@ -300,14 +300,14 @@ function etiquetaEstado(string $estado): string {
             padding: 8px 18px;
             border: 0;
             border-radius: 9px;
-            background: #60359a;
+            background: #6f15b4;
             color: #fff;
             cursor: pointer;
         }
         .conciliacion-tabla {
             overflow-x: auto;
             background: #fff;
-            border: 1px solid #ece8f3;
+            border: 1px solid #ebe4f7;
             border-radius: 13px;
         }
         .conciliacion-tabla table {
@@ -318,14 +318,14 @@ function etiquetaEstado(string $estado): string {
         .conciliacion-tabla th,
         .conciliacion-tabla td {
             padding: 13px 12px;
-            border-bottom: 1px solid #eeeaf4;
+            border-bottom: 1px solid #f0e7f7;
             text-align: left;
             font-size: 13px;
             vertical-align: top;
         }
         .conciliacion-tabla th {
-            background: #f8f5fc;
-            color: #51416c;
+            background: #f9f4fd;
+            color: #5c198f;
             font-weight: 700;
         }
         .conciliacion-tabla td small {
@@ -358,7 +358,7 @@ function etiquetaEstado(string $estado): string {
             color: #666;
         }
         .conciliacion-referencia {
-            color: #55318a;
+            color: #6413a2;
             font-weight: 700;
             overflow-wrap: anywhere;
         }
@@ -368,12 +368,12 @@ function etiquetaEstado(string $estado): string {
             color: #77718b;
         }
         .conciliacion-ayuda {
-            background: #f8f5fc;
-            border: 1px solid #e9e0f3;
+            background: #f9f4fd;
+            border: 1px solid #ebdcf7;
             border-radius: 12px;
             padding: 15px 18px;
             margin-bottom: 18px;
-            color: #55476b;
+            color: #5e1c91;
             font-size: 13px;
             line-height: 1.6;
         }

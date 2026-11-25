@@ -310,48 +310,48 @@ function exp_estado_clase(string $estado): string {
             display:flex; justify-content:space-between; align-items:center;
             flex-wrap:wrap; gap:16px;
         }
-        .exp-hero h2 { color:#432064; margin:7px 0; }
+        .exp-hero h2 { color:#470c74; margin:7px 0; }
         .exp-hero p { color:#71677d; margin:4px 0; }
         .exp-acciones { display:flex; flex-wrap:wrap; gap:9px; }
         .exp-btn {
             display:inline-flex; align-items:center; justify-content:center;
             padding:10px 15px; border-radius:9px;
-            background:#642c91; color:white; text-decoration:none;
+            background:#6611a6; color:white; text-decoration:none;
             font-weight:600;
         }
-        .exp-btn.secundario { background:#f1eafa; color:#54277e; }
+        .exp-btn.secundario { background:#f3e9fb; color:#590f91; }
         .exp-datos {
             display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
             gap:13px;
         }
         .exp-dato {
-            background:#fff; border:1px solid #e9e2f0;
+            background:#fff; border:1px solid #ebddf5;
             border-radius:12px; padding:15px;
         }
         .exp-dato span { display:block; color:#71677d; font-size:12px; margin-bottom:7px; }
-        .exp-dato strong { color:#432064; overflow-wrap:anywhere; }
+        .exp-dato strong { color:#470c74; overflow-wrap:anywhere; }
         .exp-indicadores {
             display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
             gap:14px;
         }
         .exp-indicador {
-            background:#fff; border:1px solid #e9e2f0;
+            background:#fff; border:1px solid #ebddf5;
             border-radius:13px; padding:17px;
         }
         .exp-indicador span { display:block; color:#71677d; font-size:13px; }
-        .exp-indicador strong { display:block; color:#51277b; font-size:24px; margin-top:8px; }
+        .exp-indicador strong { display:block; color:#570f8e; font-size:24px; margin-top:8px; }
         .exp-seccion {
-            background:#fff; border:1px solid #e9e2f0;
+            background:#fff; border:1px solid #ebddf5;
             border-radius:14px; padding:20px; min-width:0;
         }
-        .exp-seccion h3 { color:#432064; margin:0 0 16px; }
+        .exp-seccion h3 { color:#470c74; margin:0 0 16px; }
         .exp-tabla-scroll { overflow-x:auto; }
         .exp-tabla { width:100%; border-collapse:collapse; min-width:760px; }
         .exp-tabla th,.exp-tabla td {
-            padding:12px 10px; border-bottom:1px solid #eee8f3;
+            padding:12px 10px; border-bottom:1px solid #efe4f7;
             text-align:left; font-size:13px; vertical-align:top;
         }
-        .exp-tabla th { background:#f8f5fc; color:#51416c; }
+        .exp-tabla th { background:#f9f4fd; color:#5c198f; }
         .exp-tabla small { display:block; color:#77718b; margin-top:4px; }
         .exp-badge {
             display:inline-block; padding:5px 9px; border-radius:20px;
@@ -363,12 +363,12 @@ function exp_estado_clase(string $estado): string {
             background:#fce8ed; color:#a52c56;
         }
         .exp-badge.inactivo,.exp-badge.neutral { background:#eeeef2; color:#666; }
-        .exp-vacio { padding:24px; text-align:center; color:#77718b; background:#f8f5fc; border-radius:10px; }
+        .exp-vacio { padding:24px; text-align:center; color:#77718b; background:#f9f4fd; border-radius:10px; }
         .exp-nota {
-            padding:13px 15px; border-radius:10px; background:#f8f5fc;
-            color:#55476b; font-size:13px; line-height:1.6; margin-bottom:15px;
+            padding:13px 15px; border-radius:10px; background:#f9f4fd;
+            color:#5e1c91; font-size:13px; line-height:1.6; margin-bottom:15px;
         }
-        .exp-enlace { color:#60358f; font-weight:600; }
+        .exp-enlace { color:#6915aa; font-weight:600; }
         @media(max-width:900px) {
             .exp-datos,.exp-indicadores { grid-template-columns:repeat(2,minmax(0,1fr)); }
         }

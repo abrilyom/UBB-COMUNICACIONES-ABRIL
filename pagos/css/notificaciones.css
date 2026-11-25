@@ -15,10 +15,10 @@ body > .contenedor.nt-page {
 
 .nt-panel {
     padding: 26px;
-    border: 1px solid #eadff5;
+    border: 1px solid #ecdcf8;
     border-radius: 20px;
     background: #fff;
-    box-shadow: 0 8px 28px rgba(82,39,125,.07);
+    box-shadow: 0 8px 28px rgba(88,15,144,.07);
 }
 
 .nt-encabezado {
@@ -28,7 +28,7 @@ body > .contenedor.nt-page {
     gap: 20px;
     padding-bottom: 22px;
     margin-bottom: 22px;
-    border-bottom: 1px solid #eee5f6;
+    border-bottom: 1px solid #efe2f9;
 }
 
 .nt-titulo {
@@ -44,8 +44,8 @@ body > .contenedor.nt-page {
     display: grid;
     place-items: center;
     border-radius: 18px;
-    color: #7133a8;
-    background: #f1e5fb;
+    color: #7614c1;
+    background: #f2e4fc;
 }
 
 .nt-icono svg {
@@ -54,7 +54,7 @@ body > .contenedor.nt-page {
 }
 
 .nt-etiqueta {
-    color: #813bb5;
+    color: #8117d2;
     font-size: 11px;
     font-weight: 800;
     letter-spacing: 1.1px;
@@ -62,7 +62,7 @@ body > .contenedor.nt-page {
 
 .nt-titulo h1 {
     margin: 5px 0 6px;
-    color: #302044;
+    color: #36154f;
     font-size: 27px;
     font-weight: 800;
 }
@@ -79,7 +79,7 @@ body > .contenedor.nt-page {
     justify-content: center;
     padding: 12px 17px;
     border-radius: 11px;
-    background: #68339a;
+    background: #6e14b3;
     color: #fff;
     font-size: 13px;
     font-weight: 700;
@@ -88,7 +88,7 @@ body > .contenedor.nt-page {
 }
 
 .nt-regresar:hover {
-    background: #562080;
+    background: #560c8f;
     transform: translateY(-1px);
 }
 
@@ -105,9 +105,9 @@ body > .contenedor.nt-page {
     gap: 9px;
     min-height: 105px;
     padding: 18px;
-    border: 1px solid #eadcf7;
+    border: 1px solid #ecdaf9;
     border-radius: 15px;
-    background: #faf7fd;
+    background: #faf6fe;
 }
 
 .nt-indicador span {
@@ -128,15 +128,15 @@ body > .contenedor.nt-page {
 .nt-nota {
     margin-bottom: 20px;
     padding: 13px 16px;
-    border: 1px solid #eadcf7;
+    border: 1px solid #ecdaf9;
     border-radius: 11px;
-    background: #fcfaff;
+    background: #fdfaff;
     color: #766685;
     font-size: 12px;
 }
 
 .nt-nota strong {
-    color: #68339a;
+    color: #6e14b3;
     font-size: 15px;
 }
 
@@ -155,7 +155,7 @@ body > .contenedor.nt-page {
     gap: 10px;
     min-width: 260px;
     padding: 0 14px;
-    border: 1px solid #e5d7f0;
+    border: 1px solid #e6d3f4;
     border-radius: 11px;
     background: #fff;
 }
@@ -164,7 +164,7 @@ body > .contenedor.nt-page {
     width: 19px;
     height: 19px;
     flex-shrink: 0;
-    color: #79509a;
+    color: #7c1fc4;
 }
 
 .nt-busqueda input {
@@ -174,14 +174,14 @@ body > .contenedor.nt-page {
     border: 0;
     outline: 0;
     background: transparent;
-    color: #39264e;
+    color: #3e0f62;
     font: inherit;
     font-size: 13px;
 }
 
 .nt-busqueda:focus-within {
-    border-color: #8b55b5;
-    box-shadow: 0 0 0 3px rgba(113,51,168,.10);
+    border-color: #8e22e0;
+    box-shadow: 0 0 0 3px rgba(118,20,193,.10);
 }
 
 .nt-filtros select {
@@ -189,10 +189,10 @@ body > .contenedor.nt-page {
     max-width: 100%;
     height: 46px;
     padding: 0 35px 0 13px;
-    border: 1px solid #e5d7f0;
+    border: 1px solid #e6d3f4;
     border-radius: 11px;
     background: #fff;
-    color: #39264e;
+    color: #3e0f62;
     font: inherit;
     font-size: 12px;
     cursor: pointer;
@@ -200,8 +200,8 @@ body > .contenedor.nt-page {
 
 .nt-filtros select:focus {
     outline: none;
-    border-color: #8b55b5;
-    box-shadow: 0 0 0 3px rgba(113,51,168,.10);
+    border-color: #8e22e0;
+    box-shadow: 0 0 0 3px rgba(118,20,193,.10);
 }
 
 .nt-ayuda {
@@ -212,7 +212,7 @@ body > .contenedor.nt-page {
 
 .nt-tabla-contenedor {
     overflow-x: auto;
-    border: 1px solid #eee5f6;
+    border: 1px solid #efe2f9;
     border-radius: 14px;
 }
 
@@ -225,8 +225,8 @@ body > .contenedor.nt-page {
 
 .nt-tabla th {
     padding: 15px 12px;
-    background: #f1e6fa;
-    color: #68339a;
+    background: #f2e4fc;
+    color: #6e14b3;
     text-align: left;
     font-size: 10px;
     font-weight: 800;
@@ -236,8 +236,8 @@ body > .contenedor.nt-page {
 
 .nt-tabla td {
     padding: 13px 12px;
-    border-top: 1px solid #f0eaf5;
-    color: #51445f;
+    border-top: 1px solid #f1e7f8;
+    color: #561a84;
     font-size: 11px;
     vertical-align: middle;
 }
@@ -247,7 +247,7 @@ body > .contenedor.nt-page {
 }
 
 .nt-tabla tbody tr:hover {
-    background: #f8f1fd;
+    background: #f8f0fe;
 }
 
 .nt-tabla tbody tr[hidden] {
@@ -255,11 +255,11 @@ body > .contenedor.nt-page {
 }
 
 .nt-nombre {
-    color: #39264e;
+    color: #3e0f62;
 }
 
 .nt-saldo {
-    color: #68339a;
+    color: #6e14b3;
     white-space: nowrap;
 }
 
@@ -300,10 +300,10 @@ body > .contenedor.nt-page {
 
 .nt-btn-copiar {
     padding: 9px 11px;
-    border: 1px solid #e3d0f8;
+    border: 1px solid #e7cefa;
     border-radius: 9px;
-    background: #f6edff;
-    color: #7133a8;
+    background: #f7edff;
+    color: #7614c1;
     font: inherit;
     font-size: 11px;
     font-weight: 700;
@@ -313,7 +313,7 @@ body > .contenedor.nt-page {
 }
 
 .nt-btn-copiar:hover {
-    background: #7133a8;
+    background: #7614c1;
     color: #fff;
 }
 
@@ -343,7 +343,7 @@ body > .contenedor.nt-page {
 }
 
 .nt-pie strong {
-    color: #68339a;
+    color: #6e14b3;
 }
 
 .nt-error {
