@@ -53,6 +53,7 @@ $bloqueo = false;
 $contadores = [
     'candidatos' => 0,
     'ya_suspendidos' => 0,
+    'no_gestionados' => 0,
     'con_abono_sin_conciliar' => 0,
     'solicitadas' => 0,
     'no_registradas' => 0,
@@ -199,6 +200,13 @@ try {
             continue;
         }
 
+        // Si Grezz no conoce el servicio, no hay forma segura de cortarlo.
+        if ($estadoActual === 'DESCONOCIDO') {
+            $contadores['no_gestionados']++;
+            echo "  · Grezz no reporta este servicio. Requiere revisión manual.\n\n";
+            continue;
+        }
+
         // Protección: si llegó dinero con su referencia, no cortar todavía.
         $patron = '(^|[^A-Z0-9])UBBC' . $idCliente . 'S' . $idServicio . '([^0-9]|$)';
         $stmtAbono->bind_param('s', $patron);
@@ -262,6 +270,7 @@ try {
     echo "===== RESUMEN =====\n";
     echo "Servicios fuera de gracia:          {$contadores['candidatos']}\n";
     echo "Ya suspendidos en Grezz:            {$contadores['ya_suspendidos']}\n";
+    echo "No reportados por Grezz:            {$contadores['no_gestionados']}\n";
     echo "Detenidos por abono sin conciliar:  {$contadores['con_abono_sin_conciliar']}\n";
     echo ($confirmar ? "Suspensiones solicitadas:           " : "Suspensiones que se solicitarían:   ")
         . "{$contadores['solicitadas']}\n";
