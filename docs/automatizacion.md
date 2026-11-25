@@ -139,12 +139,17 @@ Sincronizar solo guarda el historial. Para que los módulos (pagos de hoy, próx
 | Pago parcial | Se aplica; la mensualidad sigue pendiente |
 | Pago mayor a todo el adeudo, varios servicios con adeudo, cliente sin ligar o sin mensualidades pendientes | `REVISION` |
 | Cortesía, personalizado o cheque | `REVISION` (no es un ingreso de dinero) |
+| Pago anterior a la primera mensualidad del cliente en UBB (más de 20 días antes de su vencimiento) | `HISTORICO`: se guarda, no se aplica ni se revisa |
+| Pago más de 20 días antes del vencimiento de la mensualidad pendiente más antigua | `REVISION` (puede ser de otro periodo) |
+
+Los 20 días (`UBB_UISP_DIAS_ANTICIPO`) son un mes menos los 10 de gracia: un pago que llega antes de eso suele ser del periodo anterior, pagado con retraso.
 | El servicio tiene un pago `PENDIENTE` en UBB o un pago igual `PAGADO` en ±3 días | `REVISION` (evita contar el mismo dinero dos veces) |
 
 El resultado queda en `uisp_pagos_importacion.estado_aplicacion` (`APLICADO` / `REVISION` con `motivo_revision`). El personal los revisa en **Historial UISP** (`reporte_uisp.php`, filtro "Aplicación a mensualidades"). No llama a Grezz ni suspende o reactiva servicios.
 
 ```bash
 mariadb ubb_pagos < db/migraciones/2026-11-28_aplicar_pagos_uisp.sql
+mariadb ubb_pagos < db/migraciones/2026-11-29_pagos_uisp_historico.sql
 docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/aplicar_pagos_uisp.php              # simulación
 docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/aplicar_pagos_uisp.php --confirmar
 ```

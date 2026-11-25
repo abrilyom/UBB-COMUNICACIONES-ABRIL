@@ -57,6 +57,7 @@ $tieneAplicacion = $db->query(
 $estadosAplicacion = [
     "APLICADO" => "Aplicado a mensualidades",
     "REVISION" => "En revisión manual",
+    "HISTORICO" => "Anterior a las mensualidades (no se aplica)",
     "SIN" => "Sin aplicar todavía",
 ];
 $aplicacion = $_GET["aplicacion"] ?? "";
@@ -275,6 +276,9 @@ header h1{font-size:21px}.panel{padding:15px}}
                 cliente <?= h($fila["id_cliente_ubb"]) ?> · servicio <?= h($fila["id_servicio_ubb"]) ?>
               <?php elseif ($fila["estado_aplicacion"] === "REVISION"): ?>
                 <span class="etiqueta revisar">Revisar</span>
+                <?= h($fila["motivo_revision"]) ?>
+              <?php elseif ($fila["estado_aplicacion"] === "HISTORICO"): ?>
+                <span class="etiqueta">Histórico</span>
                 <?= h($fila["motivo_revision"]) ?>
               <?php elseif ($fila["uisp_payment_id"] !== null): ?>
                 <span class="etiqueta">Pendiente</span>

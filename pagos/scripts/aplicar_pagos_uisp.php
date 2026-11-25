@@ -39,8 +39,15 @@ require_once __DIR__ . '/../includes/entorno_cli.php';
 const UISP_APLICAR_PROCESO = 'APLICAR_PAGOS_UISP';
 const UISP_METODOS_DINERO = ['EFECTIVO', 'TRANSFERENCIA', 'DEPOSITO', 'TARJETA'];
 const UISP_DIAS_DUPLICADO = 3;
+/** Un pago cuenta para una mensualidad si llega como mucho estos días antes de su vencimiento (un mes menos la gracia). */
+define('UISP_DIAS_ANTICIPO', max(1, (int)(getenv('UBB_UISP_DIAS_ANTICIPO') ?: 20)));
 
-final class RevisionPagoUisp extends RuntimeException
+class RevisionPagoUisp extends RuntimeException
+{
+}
+
+/** Pago de un periodo anterior a las mensualidades que existen en UBB: no se aplica ni se revisa. */
+final class HistoricoPagoUisp extends RevisionPagoUisp
 {
 }
 
@@ -119,6 +126,7 @@ $contadores = [
     'importe_aplicado' => 0.0,
     'mensualidades_pagadas' => 0,
     'revision' => 0,
+    'historicos' => 0,
 ];
 $motivos = [];
 
@@ -268,10 +276,37 @@ try {
             }
             $aplicado->close();
 
+            // ¿El pago es de antes de que existieran mensualidades en UBB para este cliente?
+            $fechaPago = fechaLocal((string)$p['fecha_original_uisp']);
+            $diaPago = new DateTimeImmutable(substr($fechaPago, 0, 10));
+            $anticipo = UISP_DIAS_ANTICIPO;
+
+            $stmt = $conexion->prepare("
+                SELECT MIN(fecha_vencimiento) FROM obligaciones_pago
+                WHERE id_cliente = ? AND concepto = 'MENSUALIDAD' AND fecha_vencimiento IS NOT NULL
+            ");
+            $stmt->bind_param('i', $idCliente);
+            $stmt->execute();
+            $primeraMensualidad = $stmt->get_result()->fetch_row()[0];
+            $stmt->close();
+
+            if ($primeraMensualidad !== null) {
+                $primera = new DateTimeImmutable(substr((string)$primeraMensualidad, 0, 10));
+
+                if ($diaPago < $primera->modify("-$anticipo days")) {
+                    throw new HistoricoPagoUisp(
+                        'Pago anterior a las mensualidades registradas en UBB (la primera vence ' .
+                        $primera->format('Y-m-d') . ').'
+                    );
+                }
+            }
+
             $servicios = array_values(array_unique(array_map(fn($o) => (int)$o['id_servicio'], $pendientes)));
 
             if (count($servicios) === 0) {
-                throw new RevisionPagoUisp("El cliente UBB $idCliente no tiene mensualidades pendientes.");
+                throw new RevisionPagoUisp($primeraMensualidad === null
+                    ? "El cliente UBB $idCliente no tiene mensualidades registradas en UBB."
+                    : "El cliente UBB $idCliente no tiene mensualidades pendientes (¿pago adelantado o repetido?).");
             }
             if (count($servicios) > 1) {
                 throw new RevisionPagoUisp(
@@ -280,6 +315,17 @@ try {
                 );
             }
             $idServicio = $servicios[0];
+
+            // Un pago muy anterior al vencimiento más antiguo probablemente es de otro periodo.
+            $vencimiento = new DateTimeImmutable(substr((string)$pendientes[0]['fecha_vencimiento'], 0, 10));
+
+            if ($diaPago < $vencimiento->modify("-$anticipo days")) {
+                throw new RevisionPagoUisp(sprintf(
+                    'Pago hecho %d días antes del vencimiento de la mensualidad pendiente más antigua (%s); puede ser de otro periodo.',
+                    (int)$diaPago->diff($vencimiento)->days,
+                    $vencimiento->format('Y-m-d')
+                ));
+            }
 
             // Pago PENDIENTE en UBB del mismo servicio (p. ej. transferencia sin confirmar).
             $stmt = $conexion->prepare("
@@ -299,7 +345,6 @@ try {
             }
 
             // Pago PAGADO igual registrado en UBB por otra vía en ±3 días.
-            $fechaPago = fechaLocal((string)$p['fecha_original_uisp']);
             $montoTexto = pesos($centavosPago);
             $dias = UISP_DIAS_DUPLICADO;
 
@@ -418,17 +463,24 @@ try {
             $conexion->commit();
         } catch (RevisionPagoUisp $e) {
             $conexion->rollback();
-            $contadores['revision']++;
             $motivo = $e->getMessage();
-            $tipo = preg_replace('/[0-9]+|\(.*?\)|"[^"]*"/', '#', $motivo);
-            $motivos[$tipo] = ($motivos[$tipo] ?? 0) + 1;
+            $esHistorico = $e instanceof HistoricoPagoUisp;
 
-            if ($mostradosRevision++ < 30) {
-                echo "  ⚠ UISP $idPagoUisp | {$p['fecha_original_uisp']} | {$p['monto']} | REVISIÓN: $motivo\n";
+            if ($esHistorico) {
+                $contadores['historicos']++;
+            } else {
+                $contadores['revision']++;
+                $tipo = preg_replace('/[0-9]+|\(.*?\)|"[^"]*"/', '#', $motivo);
+                $motivos[$tipo] = ($motivos[$tipo] ?? 0) + 1;
+
+                if ($mostradosRevision++ < 30) {
+                    echo "  ⚠ UISP $idPagoUisp | {$p['fecha_original_uisp']} | {$p['monto']} | REVISIÓN: $motivo\n";
+                }
             }
 
             if ($confirmar) {
-                marcarResultado($conexion, $idImportacion, 'REVISION', null, $idCliente, $idServicio, $motivo);
+                marcarResultado($conexion, $idImportacion, $esHistorico ? 'HISTORICO' : 'REVISION',
+                    null, $idCliente, $idServicio, $motivo);
             }
         } catch (Throwable $e) {
             $conexion->rollback();
@@ -443,6 +495,7 @@ try {
     echo "Aplicados:              {$contadores['aplicados']} | $" . number_format($contadores['importe_aplicado'], 2) . "\n";
     echo "Mensualidades pagadas:  {$contadores['mensualidades_pagadas']}\n";
     echo "A revisión manual:      {$contadores['revision']}\n";
+    echo "Históricos (no aplican): {$contadores['historicos']} (anteriores a las mensualidades de UBB)\n";
 
     if ($motivos) {
         arsort($motivos);
