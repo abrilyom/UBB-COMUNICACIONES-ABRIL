@@ -168,13 +168,20 @@ En el cron, después de sincronizar:
 
 Hay **dos redes distintas numeradas 192.168.102.0/24**: la de dns-server (`192.168.102.222`, router `192.168.102.1`) y la del CRM (`ubb-server6`, `192.168.102.253`). Por eso dns-server no puede usar `192.168.102.253`.
 
-Se usa la otra dirección del CRM, **`10.1.41.254`** (interfaz `vlan41`), y en **ubb-server6** hace falta una ruta para que le conteste a dns-server por `vlan41` en lugar de por su red local. Se probó el 25/11/2026 (funcionó) y se retiró: **pendiente de que el administrador de ubb-server6 la autorice**.
+La solución está en el router **MKR-FSL02** (`10.0.1.6`), igual a la que usa el panel de Grezz (`Panel UBB -> UISP`, origen `192.168.102.223`). Se agregaron el 25/11/2026 dos reglas NAT para dns-server:
 
-```bash
-ip route add 192.168.102.222/32 via 10.1.41.1 dev vlan41
+```
+/ip firewall nat add action=dst-nat chain=dstnat comment="Pagos UBB -> UISP" dst-address=10.0.1.6 dst-port=18445 protocol=tcp src-address=192.168.102.222 to-addresses=192.168.102.253 to-ports=8445
+/ip firewall nat add action=masquerade chain=srcnat comment="Pagos UBB -> UISP (regreso)" dst-address=192.168.102.253 dst-port=8445 protocol=tcp src-address=192.168.102.222
 ```
 
-Autorizada, debe quedar fija en un archivo aparte de netplan (por ejemplo `/etc/netplan/90-ruta-dns-server.yaml`, ruta `192.168.102.222/32 via 10.1.41.1` en `vlan41`). Sin ella, la sincronización falla con *"No se pudo conectar con UISP"* y el panel muestra el error; ningún pago se pierde, se cargan en la siguiente ejecución que funcione (últimos 7 días, o con `--desde`).
+- dns-server se conecta a **`https://10.0.1.6:18445/crm/api/v1.0`** (dirección por defecto del script) y el router lo pasa al CRM.
+- El masquerade hace que el CRM vea al router como origen, así contesta por el camino correcto.
+- El certificado del CRM no corresponde a esa IP, por eso no se verifica.
+- Solo funciona desde dns-server (`192.168.102.222`). No requiere cambios en ubb-server6.
+- Quitarlas: `/ip firewall nat remove [find comment~"Pagos UBB"]` (no toca las de Grezz).
+
+Si las reglas se borran o cambia la IP de dns-server, la sincronización falla con *"No se pudo conectar con UISP"* y el panel muestra el error; ningún pago se pierde, se cargan en la siguiente ejecución que funcione (últimos 7 días, o con `--desde`).
 
 ## Alcance actual de Grezz
 

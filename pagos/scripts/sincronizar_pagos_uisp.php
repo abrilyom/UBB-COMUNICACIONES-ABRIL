@@ -23,7 +23,7 @@ declare(strict_types=1);
  *
  * Configuración (variables de entorno, todas opcionales):
  *   UBB_PAGOS_ENTORNO      produccion | pruebas
- *   UBB_UISP_URL           https://10.1.41.254:8445/crm/api/v1.0
+ *   UBB_UISP_URL           https://10.0.1.6:18445/crm/api/v1.0
  *   UBB_UISP_TOKEN_FILE    /etc/ubb-uisp.token  (llave de solo lectura del CRM)
  *   UBB_UISP_CA            certificado del CRM para verificar TLS
  *   UBB_UISP_DIAS          días hacia atrás cuando no se indica --desde (7)
@@ -88,7 +88,7 @@ final class ClienteUisp
 
     public function __construct()
     {
-        $this->url = rtrim(getenv('UBB_UISP_URL') ?: 'https://10.1.41.254:8445/crm/api/v1.0', '/');
+        $this->url = rtrim(getenv('UBB_UISP_URL') ?: 'https://10.0.1.6:18445/crm/api/v1.0', '/');
         $archivo = getenv('UBB_UISP_TOKEN_FILE') ?: '/etc/ubb-uisp.token';
 
         if (!is_readable($archivo)) {
