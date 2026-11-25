@@ -87,6 +87,12 @@ La configuración vive en `/etc/ubb-notificaciones.env` (fuera del repositorio).
 - **SMS (Twilio):** se activa en minutos con una cuenta y número; tiene costo por mensaje.
 - **Sin proveedor:** los mensajes quedan en la cola y el personal los envía desde el módulo Notificaciones.
 
+## Alcance actual de Grezz
+
+La API de Grezz (RADIUS) por ahora solo expone los **servicios DHCP con equipo relacionado** (344 en la revisión del 25/11/2026: 302 activos, 9 suspendidos y 33 que no pudo resolver, con un campo `error` como `SIN_RELACION`). Los servicios **PPPoE**, que son la mayoría de fibra, todavía no aparecen.
+
+Por eso la suspensión automática **solo actúa sobre servicios que Grezz reporta como `ACTIVO`**. Los demás se listan como "no gestionables" para corte manual. Cuando Grezz exponga PPPoE, se incluirán sin cambiar el código de UBB Pagos.
+
 ## Pendiente
 
 - **Grezz en modo real:** `cliente_grezz.php` envía `simular: true`. Para operar en real hay que acordar con la plataforma de Grezz qué valor devuelve `resultado` cuando ejecuta la acción, y aceptarlo en `procesador_grezz.php`.

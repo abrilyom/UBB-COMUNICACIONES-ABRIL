@@ -38,6 +38,12 @@ function estadoServicioEnGrezz(int $idServicio): ?string
 
 /**
  * Estado de todos los servicios según Grezz: [id_servicio => ESTADO].
+ * Si Grezz no pudo resolver un servicio, el valor es "ERROR_<código>"
+ * (por ejemplo ERROR_SIN_RELACION).
+ *
+ * Nota: por ahora la API de Grezz solo expone servicios DHCP con equipo
+ * relacionado; los servicios PPPoE todavía no aparecen.
+ *
  * Devuelve null si Grezz no respondió correctamente.
  */
 function mapaEstadosGrezz(): ?array
@@ -57,9 +63,18 @@ function mapaEstadosGrezz(): ?array
     foreach ($consulta['respuesta']['servicios'] as $servicio) {
         $id = filter_var($servicio['id_servicio'] ?? null, FILTER_VALIDATE_INT);
         $estado = $servicio['estado_actual'] ?? null;
+        $error = $servicio['error'] ?? null;
 
-        if ($id && is_string($estado)) {
+        if (!$id) {
+            continue;
+        }
+
+        if (is_string($estado) && $estado !== '') {
             $mapa[(int)$id] = strtoupper($estado);
+        } elseif (is_string($error) && $error !== '') {
+            $mapa[(int)$id] = 'ERROR_' . strtoupper($error);
+        } else {
+            $mapa[(int)$id] = 'ERROR_SIN_ESTADO';
         }
     }
 

@@ -200,10 +200,16 @@ try {
             continue;
         }
 
-        // Si Grezz no conoce el servicio, no hay forma segura de cortarlo.
-        if ($estadoActual === 'DESCONOCIDO') {
+        // Solo se corta lo que Grezz reporta como ACTIVO.
+        if ($estadoActual !== 'ACTIVO') {
             $contadores['no_gestionados']++;
-            echo "  · Grezz no reporta este servicio. Requiere revisión manual.\n\n";
+
+            if ($estadoActual === 'DESCONOCIDO') {
+                echo "  · Grezz no reporta este servicio (posiblemente PPPoE, aún no disponible en su API). "
+                    . "Requiere corte manual.\n\n";
+            } else {
+                echo "  · Grezz no puede gestionarlo ($estadoActual). Requiere revisión manual.\n\n";
+            }
             continue;
         }
 
@@ -270,7 +276,7 @@ try {
     echo "===== RESUMEN =====\n";
     echo "Servicios fuera de gracia:          {$contadores['candidatos']}\n";
     echo "Ya suspendidos en Grezz:            {$contadores['ya_suspendidos']}\n";
-    echo "No reportados por Grezz:            {$contadores['no_gestionados']}\n";
+    echo "No gestionables por Grezz (manual): {$contadores['no_gestionados']}\n";
     echo "Detenidos por abono sin conciliar:  {$contadores['con_abono_sin_conciliar']}\n";
     echo ($confirmar ? "Suspensiones solicitadas:           " : "Suspensiones que se solicitarían:   ")
         . "{$contadores['solicitadas']}\n";
