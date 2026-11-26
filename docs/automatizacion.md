@@ -129,6 +129,30 @@ La configuración vive en `/etc/ubb-notificaciones.env` (fuera del repositorio).
 
 Variables opcionales: `UBB_UISP_URL`, `UBB_UISP_TOKEN_FILE`, `UBB_UISP_CA` (certificado del CRM para verificar TLS; sin ella no se verifica) y `UBB_UISP_DIAS`.
 
+### Facturas de UISP
+
+`pagos/scripts/sincronizar_facturas_uisp.php` copia las facturas del CRM en `uisp_facturas` (solo lectura sobre UISP; no cambia pagos ni mensualidades): total, descuento, pagado, saldo, estado, periodo que cobra (leído del concepto, p. ej. *"1 Oct 2026 – 31 Oct 2026"*), conceptos (servicio, reconexión u otros cargos) y los pagos que la cubren.
+
+Base para que "lo que debe el cliente" salga de la factura y no del precio del plan:
+
+- Clientes que se facturan en **UISP** → `uisp_facturas`.
+- Clientes nuevos que se facturan en la **plataforma de Jamileth** → `ubb_plataforma.vw_facturas_pendientes` (`total` = importe completo, `saldo` = lo que falta).
+- Nunca tomar el mismo mes de un cliente de las dos fuentes.
+
+Pendiente de definir con Jamileth: cómo identificar a qué fuente pertenece cada cliente, dónde pagan los clientes nuevos y quién marca sus facturas como pagadas.
+
+```bash
+mariadb ubb_pagos < db/migraciones/2026-12-01_facturas_uisp.sql
+docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/sincronizar_facturas_uisp.php --desde=2026-10-01               # simulación
+docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/sincronizar_facturas_uisp.php --desde=2026-10-01 --confirmar
+```
+
+En el cron, cada hora (revisa las facturas de los últimos 62 días para actualizar su estado):
+
+```cron
+5 * * * *  docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/sincronizar_facturas_uisp.php --confirmar >> /var/log/ubb/facturas_uisp.log 2>&1
+```
+
 ### Aplicar los pagos de UISP a las mensualidades
 
 Sincronizar solo guarda el historial. Para que los módulos (pagos de hoy, próximos, vencidos, suspensiones) los reflejen, `pagos/scripts/aplicar_pagos_uisp.php` registra cada pago en `pagos` y lo aplica a `obligaciones_pago`, igual que la conciliación bancaria:
