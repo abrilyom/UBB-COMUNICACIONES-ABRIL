@@ -11,6 +11,10 @@
 
   if (!contenedor || !boton || !contador || !panel || !estado || !lista || !refrescar) return;
 
+  // El encabezado recorta todo lo que sobresale de él (overflow:hidden y
+  // varias capas de estilos), así que el panel vive directamente en <body>.
+  document.body.append(panel);
+
   const ENDPOINT = 'avisos_plataforma.php';
   let avisos = [];
 
@@ -162,7 +166,7 @@
   refrescar.addEventListener('click', () => cargar(true));
 
   document.addEventListener('click', (e) => {
-    if (!panel.hidden && !contenedor.contains(e.target)) abrir(false);
+    if (!panel.hidden && !contenedor.contains(e.target) && !panel.contains(e.target)) abrir(false);
   });
 
   document.addEventListener('keydown', (e) => {

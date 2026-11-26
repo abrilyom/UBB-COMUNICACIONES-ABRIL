@@ -5396,7 +5396,7 @@ body {
 /* fixed: el encabezado recorta lo que sobresale (overflow:hidden); la
    posición exacta la pone avisos-plataforma.js junto a la campanita. */
 .ubb-avisos-panel {
-    position:fixed;right:16px;top:90px;z-index:1100;
+    position:fixed;right:16px;top:90px;z-index:3000;
     width:min(360px,calc(100vw - 32px));max-height:min(440px,70vh);
     display:flex;flex-direction:column;
     background:#fff;border:1px solid #e6d9e9;border-radius:12px;
