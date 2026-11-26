@@ -25,7 +25,7 @@ function h($valor): string
 
 /** Categoría a partir del motivo que escribe aplicar_pagos_uisp.php. */
 const CATEGORIAS_REVISION = [
-    "SOBRANTE" => ["Sobrante por confirmar", "Pagó más de lo que debe y UISP lo dejó a favor. ¿Se abona a su siguiente mensualidad?"],
+    "SOBRANTE" => ["Sobrante por confirmar", "El pago ya cubrió lo que debía; sobró dinero y UISP lo dejó a favor. ¿Se abona a su siguiente mensualidad?"],
     "DIFERENCIA" => ["Diferencia con UISP", "Pagó más de lo que debe en UBB, pero UISP no lo dejó a favor: UISP cobró otro precio, un cargo extra o un mes que UBB no tiene."],
     "SIN_MENSUALIDADES" => ["Cliente sin mensualidades", "El cliente no tiene mensualidades en UBB (por ejemplo, cliente nuevo)."],
     "METODO" => ["Método no reconocido", "Personalizado, cheque u otro método que no se sabe si es dinero."],
@@ -63,8 +63,13 @@ function categoriaRevision(string $motivo): string
 }
 
 /** Decisiones que se pueden tomar según la categoría. */
-function decisionesPermitidas(string $categoria): array
+function decisionesPermitidas(string $categoria, string $estado = "REVISION"): array
 {
+    // Pago ya aplicado con sobrante: solo se decide si el sobrante se abona.
+    if ($estado === "APLICADO") {
+        return ["SALDO_FAVOR"];
+    }
+
     return in_array($categoria, ["SOBRANTE", "DIFERENCIA"], true)
         ? ["SALDO_FAVOR", "HISTORICO"]
         : ["HISTORICO"];
@@ -76,6 +81,10 @@ $error = null;
 $tieneDecision = $conexion->query(
     "SHOW COLUMNS FROM uisp_pagos_importacion LIKE 'decision_revision'"
 )->num_rows > 0;
+
+// En revisión: los que no se aplicaron, y los aplicados cuyo sobrante falta decidir.
+$enRevision = "(estado_aplicacion = 'REVISION' OR (estado_aplicacion = 'APLICADO' AND motivo_revision LIKE 'Sobrante de%'"
+    . ($tieneDecision ? " AND decision_revision IS NULL" : "") . "))";
 
 /* ===== Guardar una decisión ===== */
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
@@ -94,8 +103,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $error = "Datos no válidos.";
     } else {
         $stmt = $conexion->prepare("
-            SELECT motivo_revision FROM uisp_pagos_importacion
-            WHERE id_importacion = ? AND estado_aplicacion = 'REVISION'
+            SELECT motivo_revision, estado_aplicacion FROM uisp_pagos_importacion
+            WHERE id_importacion = ? AND $enRevision
         ");
         $stmt->bind_param("i", $idImportacion);
         $stmt->execute();
@@ -105,14 +114,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         if (!$fila) {
             $error = "Ese pago ya no está en revisión.";
         } elseif ($accion !== "QUITAR"
-            && !in_array($accion, decisionesPermitidas(categoriaRevision((string)$fila["motivo_revision"])), true)) {
+            && !in_array($accion, decisionesPermitidas(categoriaRevision((string)$fila["motivo_revision"]), (string)$fila["estado_aplicacion"]), true)) {
             $error = "Esa decisión no aplica para este pago.";
         } else {
             $decision = $accion === "QUITAR" ? null : $accion;
             $stmt = $conexion->prepare("
                 UPDATE uisp_pagos_importacion
                 SET decision_revision = ?, decidido_en = IF(? IS NULL, NULL, NOW())
-                WHERE id_importacion = ? AND estado_aplicacion = 'REVISION'
+                WHERE id_importacion = ? AND $enRevision
             ");
             $stmt->bind_param("ssi", $decision, $decision, $idImportacion);
             $stmt->execute();
@@ -135,10 +144,10 @@ $columnasDecision = $tieneDecision ? ", decision_revision, decidido_en" : "";
 $pagos = $conexion->query("
     SELECT id_importacion, uisp_payment_id, uisp_client_id, cliente_nombre_uisp,
            monto, credito_uisp, fecha_original_uisp, metodo_original_uisp,
-           id_cliente_ubb, id_servicio_ubb, motivo_revision, aplicado_en
+           id_cliente_ubb, id_servicio_ubb, motivo_revision, aplicado_en, estado_aplicacion
            $columnasDecision
     FROM uisp_pagos_importacion
-    WHERE estado_aplicacion = 'REVISION'
+    WHERE $enRevision
     ORDER BY fecha_original_uisp DESC
 ")->fetch_all(MYSQLI_ASSOC);
 
@@ -278,7 +287,7 @@ $visibles = $filtro === ""
                                 <button name="accion" value="QUITAR">Quitar decisión</button>
                             </form>
                         <?php elseif ($tieneDecision): ?>
-                            <?php foreach (decisionesPermitidas($p["categoria"]) as $d): ?>
+                            <?php foreach (decisionesPermitidas($p["categoria"], (string)$p["estado_aplicacion"]) as $d): ?>
                                 <form method="post"
                                       onsubmit="return confirm('<?= $d === "SALDO_FAVOR"
                                           ? "¿Abonar este pago a lo que debe y dejar el sobrante como saldo a favor para su siguiente mensualidad?"

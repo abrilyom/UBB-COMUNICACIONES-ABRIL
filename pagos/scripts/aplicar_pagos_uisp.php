@@ -148,6 +148,8 @@ $contadores = [
     'saldo_favor_generado' => 0.0,
     'saldo_favor_aplicado' => 0.0,
     'mensualidades_con_saldo_favor' => 0,
+    'sobrantes_por_confirmar' => 0,
+    'importe_sobrantes_por_confirmar' => 0.0,
 ];
 $motivos = [];
 
@@ -540,15 +542,18 @@ try {
                 ));
             }
 
-            // Mientras no se confirme la regla (UBB_UISP_SALDO_FAVOR=1), cada sobrante se revisa a mano.
+            // Mientras no se confirme la regla (UBB_UISP_SALDO_FAVOR=1), el pago SÍ se aplica a lo
+            // que debe, pero el sobrante queda sin abonar hasta que el personal lo apruebe en
+            // Revisión UISP (motivo "Sobrante de …" en un pago APLICADO).
+            $sobrantePorConfirmar = null;
             if ($sobrante > 0 && !$aprobadoSaldoFavor && !UISP_SALDO_FAVOR_AUTOMATICO) {
-                throw new RevisionPagoUisp(sprintf(
+                $sobrantePorConfirmar = sprintf(
                     'Sobrante de %s (paga %s y en UBB debe %s; UISP también lo registró a favor): '
                         . 'falta confirmar si se abona a la siguiente mensualidad.',
                     pesos($sobrante),
                     $montoTexto,
                     pesos($saldoTotal)
-                ));
+                );
             }
 
             // Repartir el pago: por factura, a la mensualidad de cada factura que cubrió;
@@ -591,7 +596,12 @@ try {
                 fn($a) => $a['periodo'] . ' $' . pesos($a['centavos']) . ($a['liquida'] ? ' (pagada)' : ' (parcial)'),
                 $aplicaciones
             );
-            if ($restante > 0) {
+            if ($restante > 0 && $sobrantePorConfirmar !== null) {
+                // Queda en el pago sin abonarse hasta que se apruebe en Revisión UISP.
+                $partes[] = 'sobrante $' . pesos($restante) . ' por confirmar';
+                $contadores['sobrantes_por_confirmar']++;
+                $contadores['importe_sobrantes_por_confirmar'] += $restante / 100;
+            } elseif ($restante > 0) {
                 $partes[] = 'saldo a favor $' . pesos($restante);
                 $contadores['saldo_favor_generado'] += $restante / 100;
 
@@ -673,7 +683,7 @@ try {
             $insertarAplicacion->close();
             $marcarPagada->close();
 
-            marcarResultado($conexion, $idImportacion, 'APLICADO', $idPago, $idCliente, $idServicio, null);
+            marcarResultado($conexion, $idImportacion, 'APLICADO', $idPago, $idCliente, $idServicio, $sobrantePorConfirmar);
             $conexion->commit();
         } catch (RevisionPagoUisp $e) {
             $conexion->rollback();
@@ -864,6 +874,9 @@ try {
         . " (descuentos, no son ingreso)\n";
     echo "Mensualidades pagadas:  {$contadores['mensualidades_pagadas']}\n";
     echo "Saldo a favor nuevo:    $" . number_format($contadores['saldo_favor_generado'], 2) . " (sobrantes, para la siguiente mensualidad)\n";
+    echo "Sobrantes por confirmar: {$contadores['sobrantes_por_confirmar']} | $"
+        . number_format($contadores['importe_sobrantes_por_confirmar'], 2)
+        . " (pago aplicado; el sobrante espera decisión en Revisión UISP)\n";
     echo "Saldo a favor abonado:  $" . number_format($contadores['saldo_favor_aplicado'], 2)
         . " a {$contadores['mensualidades_con_saldo_favor']} mensualidades\n";
     echo "A revisión manual:      {$contadores['revision']}\n";
