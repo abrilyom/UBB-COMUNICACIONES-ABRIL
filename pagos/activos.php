@@ -235,8 +235,8 @@ $hasta = min($inicio + $porPagina, $totalFiltrados);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clientes activos - UBB Comunicaciones</title>
 
-    <link rel="stylesheet" href="css/pagos.css">
-    <link rel="stylesheet" href="css/clientes-activos.css">
+    <link rel="stylesheet" href="css/pagos.css?v=<?php echo filemtime(__DIR__ . '/css/pagos.css'); ?>">
+    <link rel="stylesheet" href="css/clientes-activos.css?v=<?php echo filemtime(__DIR__ . '/css/clientes-activos.css'); ?>">
 </head>
 
 <body>

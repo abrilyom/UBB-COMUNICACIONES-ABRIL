@@ -166,7 +166,7 @@ $visibles = $filtro === ""
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Revisión de pagos UISP | UBB Comunicaciones</title>
-    <link rel="stylesheet" href="css/pagos.css">
+    <link rel="stylesheet" href="css/pagos.css?v=<?php echo filemtime(__DIR__ . '/css/pagos.css'); ?>">
     <style>
         .rv-page h1{margin:0 0 6px;color:#3d1d5c}
         .rv-page .rv-sub{margin:0 0 20px;color:#6f6680;line-height:1.5}

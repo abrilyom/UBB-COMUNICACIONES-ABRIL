@@ -211,8 +211,8 @@ $hasta = min($inicio + $porPagina, $totalFiltrados);
 
     <title>Clientes suspendidos - UBB Comunicaciones</title>
 
-    <link rel="stylesheet" href="css/pagos.css">
-    <link rel="stylesheet" href="css/suspendidos.css">
+    <link rel="stylesheet" href="css/pagos.css?v=<?php echo filemtime(__DIR__ . '/css/pagos.css'); ?>">
+    <link rel="stylesheet" href="css/suspendidos.css?v=<?php echo filemtime(__DIR__ . '/css/suspendidos.css'); ?>">
 </head>
 
 <body>

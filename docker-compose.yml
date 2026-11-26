@@ -1,8 +1,11 @@
 services:
 
-  servidor-pagos-yomyom:
+  # El nombre debe coincidir con el contenedor que ya corre en dns-server:
+  # los cron usan "docker exec servidor-aviso-yomyom ...".
+  # No usar "docker compose ... --remove-orphans" en el servidor.
+  servidor-aviso-yomyom:
     image: php:apache
-    container_name: servidor-pagos-yomyom
+    container_name: servidor-aviso-yomyom
     restart: unless-stopped
     ports:
       - "8080:80"

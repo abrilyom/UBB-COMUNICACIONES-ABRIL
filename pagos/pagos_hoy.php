@@ -79,8 +79,8 @@ $fecha_hoy_texto =
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Pagos realizados hoy - UBB Comunicaciones</title>
-    <link rel="stylesheet" href="css/pagos.css">
-    <link rel="stylesheet" href="css/pagos-hoy.css">
+    <link rel="stylesheet" href="css/pagos.css?v=<?php echo filemtime(__DIR__ . '/css/pagos.css'); ?>">
+    <link rel="stylesheet" href="css/pagos-hoy.css?v=<?php echo filemtime(__DIR__ . '/css/pagos-hoy.css'); ?>">
 
     
 

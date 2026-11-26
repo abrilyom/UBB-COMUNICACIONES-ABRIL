@@ -214,8 +214,8 @@ $totalNotificaciones = count($notificaciones);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notificaciones - UBB Comunicaciones</title>
-    <link rel="stylesheet" href="css/pagos.css">
-    <link rel="stylesheet" href="css/notificaciones.css">
+    <link rel="stylesheet" href="css/pagos.css?v=<?php echo filemtime(__DIR__ . '/css/pagos.css'); ?>">
+    <link rel="stylesheet" href="css/notificaciones.css?v=<?php echo filemtime(__DIR__ . '/css/notificaciones.css'); ?>">
 </head>
 <body>
 

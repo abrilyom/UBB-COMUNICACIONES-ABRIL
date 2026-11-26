@@ -234,7 +234,7 @@ th{background:#f9f5fa;color:#785d7e}
 .pie{font-size:12px;color:#716982;margin-top:15px}
 @media(max-width:600px){.contenedor{padding:12px}.encabezado{padding:20px}.tarjeta h2{font-size:22px}}
 </style>
-    <link rel="stylesheet" href="css/pagos.css">
+    <link rel="stylesheet" href="css/pagos.css?v=<?php echo filemtime(__DIR__ . '/css/pagos.css'); ?>">
 </head>
 <body>
 <?php require __DIR__ . "/includes/encabezado.php"; ?>

@@ -4,6 +4,12 @@
  * SOLO LECTURA: no inserta ni modifica datos.
  */
 
+// Solo se ejecuta desde la terminal (docker exec ... php ...), nunca desde el navegador.
+if (PHP_SAPI !== 'cli') {
+    http_response_code(403);
+    exit("Acceso no permitido.\n");
+}
+
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 require_once __DIR__ . '/../conexion.php';

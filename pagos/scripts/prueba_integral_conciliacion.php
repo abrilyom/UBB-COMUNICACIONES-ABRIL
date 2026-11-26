@@ -1,6 +1,12 @@
 <?php
 declare(strict_types=1);
 
+// Solo se ejecuta desde la terminal (docker exec ... php ...), nunca desde el navegador.
+if (PHP_SAPI !== 'cli') {
+    http_response_code(403);
+    exit("Acceso no permitido.\n");
+}
+
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 require __DIR__ . '/../conexion.php';
 

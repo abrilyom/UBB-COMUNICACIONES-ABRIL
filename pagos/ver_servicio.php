@@ -11,10 +11,10 @@ if (!$id_servicio || $id_servicio <=0){
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UFT-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Información del servicio | UBB Comunicaciones</title>
-    <link rel="stylesheet" href="css/pagos.css">
+    <link rel="stylesheet" href="css/pagos.css?v=<?php echo filemtime(__DIR__ . '/css/pagos.css'); ?>">
 </head>
 <body>
 

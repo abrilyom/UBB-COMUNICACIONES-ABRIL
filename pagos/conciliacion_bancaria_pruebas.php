@@ -1,6 +1,13 @@
 <?php
 declare(strict_types=1);
 
+// Pagina de pruebas: solo se muestra si el contenedor corre con
+// UBB_PAGOS_ENTORNO=pruebas. En produccion responde "no disponible".
+if (getenv('UBB_PAGOS_ENTORNO') !== 'pruebas') {
+    http_response_code(404);
+    exit('Página no disponible.');
+}
+
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 try {
@@ -265,7 +272,7 @@ $auditoria = $conexion->query("
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Conciliación bancaria - Pruebas UBB</title>
-<link rel="stylesheet" href="css/pagos.css">
+<link rel="stylesheet" href="css/pagos.css?v=<?php echo filemtime(__DIR__ . '/css/pagos.css'); ?>">
 <style>
 .pruebas-banner {
     padding: 13px 17px;
