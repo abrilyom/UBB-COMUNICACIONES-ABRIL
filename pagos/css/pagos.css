@@ -10703,7 +10703,7 @@ header.ubb-encabezado-ref {
             #ffffff 100%
         ) !important;
         border-bottom: 0 !important;
-        box-shadow: 0 1px 0 #f0e4f3 !important;
+        box-shadow: none !important;
     }
 
     /* Ondas decorativas en morado del panel */
