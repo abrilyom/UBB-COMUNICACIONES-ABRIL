@@ -343,10 +343,43 @@ try {
                     $ligadas[(int)$fila['uisp_invoice_id']] = $fila;
                 }
 
-                if (count($ligadas) === count($coberturas)) {
-                    // Todas las facturas que cubrió tienen su mensualidad: se aplica cada monto a la suya.
+                // Periodo de cada factura cubierta. Una factura que no está en la copia
+                // (uisp_facturas) se creó antes de octubre: también es historia.
+                $periodos = [];
+                $r = $conexion->query("SELECT uisp_invoice_id, periodo_inicio FROM uisp_facturas WHERE uisp_invoice_id IN ($idsFacturas)");
+                while ([$idF, $inicioF] = $r->fetch_row()) {
+                    $periodos[(int)$idF] = $inicioF;
+                }
+
+                $historicas = [];
+                $pendientesDeLigar = 0;
+                foreach ($coberturas as $c) {
+                    $idF = (int)$c['factura'];
+                    if (isset($ligadas[$idF])) {
+                        continue;
+                    }
+                    $inicioF = $periodos[$idF] ?? null;
+                    if ($inicioF === null || $inicioF < UISP_MENSUALIDADES_DESDE) {
+                        $historicas[$idF] = centavos($c['monto'] ?? 0);
+                    } else {
+                        $pendientesDeLigar++;
+                    }
+                }
+
+                if ($ligadas === [] && $pendientesDeLigar === 0) {
+                    throw new HistoricoPagoUisp(
+                        'Pagó solo facturas de UISP anteriores a las mensualidades de UBB ('
+                        . implode(', ', array_map(fn($id) => ($periodos[$id] ?? 'antes de octubre'), array_keys($historicas))) . ').'
+                    );
+                }
+
+                if ($ligadas !== [] && $pendientesDeLigar === 0) {
+                    // Se aplica cada monto a la mensualidad de su factura; lo de facturas viejas es historia.
                     $porFactura = [];
                     foreach ($coberturas as $c) {
+                        if (!isset($ligadas[(int)$c['factura']])) {
+                            continue;
+                        }
                         $o = $ligadas[(int)$c['factura']];
                         $idObligacion = (int)$o['id_obligacion'];
                         $aplicado->bind_param('i', $idObligacion);
@@ -357,17 +390,6 @@ try {
                         $o['saldo'] = max(0, $o['estado'] === 'CANCELADA' ? 0 : $saldo);
                         $o['cubre'] = min(centavos($c['monto'] ?? 0), $o['saldo']);
                         $porFactura[] = $o;
-                    }
-                } elseif ($ligadas === []) {
-                    // Ninguna tiene mensualidad: si todas son de antes de las mensualidades de UBB, es historia.
-                    $ultimoPeriodo = $conexion->query("
-                        SELECT MAX(periodo_inicio) FROM uisp_facturas WHERE uisp_invoice_id IN ($idsFacturas)
-                    ")->fetch_row()[0];
-
-                    if ($ultimoPeriodo !== null && $ultimoPeriodo < UISP_MENSUALIDADES_DESDE) {
-                        throw new HistoricoPagoUisp(
-                            "Pagó la factura de UISP del periodo que inicia el $ultimoPeriodo, anterior a las mensualidades de UBB."
-                        );
                     }
                 }
             }
@@ -499,7 +521,9 @@ try {
             $saldoTotal = $porFactura !== null
                 ? (int)array_sum(array_column($porFactura, 'cubre'))
                 : (int)array_sum(array_column($pendientes, 'saldo'));
-            $sobrante = max(0, $centavosPago - $saldoTotal);
+            // Lo que el pago cubrió de facturas viejas (historia) no es sobrante.
+            $centavosHistoricos = $porFactura !== null ? (int)array_sum($historicas ?? []) : 0;
+            $sobrante = max(0, $centavosPago - $saldoTotal - $centavosHistoricos);
             $creditoUisp = centavos($p['credito_uisp'] ?? 0);
 
             // Si el personal ya decidió en Revisión UISP que es saldo a favor, se respeta.
@@ -559,6 +583,9 @@ try {
                 ];
                 $restante -= $monto;
             }
+
+            // La parte que pagó facturas viejas ya quedó en la historia de UISP: no es saldo a favor.
+            $restante = max(0, $restante - $centavosHistoricos);
 
             $partes = array_map(
                 fn($a) => $a['periodo'] . ' $' . pesos($a['centavos']) . ($a['liquida'] ? ' (pagada)' : ' (parcial)'),
@@ -683,7 +710,12 @@ try {
      */
     $creditos = $conexion->query("
         SELECT p.id_pago, p.id_cliente, p.id_servicio, p.referencia,
-               p.monto - COALESCE(SUM(po.monto_aplicado), 0) AS disponible
+               -- Sin decisión del personal, el saldo a favor no puede ser mayor al que registró UISP
+               -- (así lo que pagó facturas viejas no se vuelve saldo a favor).
+               IF(MAX(u.decision_revision) = 'SALDO_FAVOR',
+                  p.monto - COALESCE(SUM(po.monto_aplicado), 0),
+                  LEAST(p.monto - COALESCE(SUM(po.monto_aplicado), 0), COALESCE(MAX(u.credito_uisp), 0))
+               ) AS disponible
         FROM pagos p
         LEFT JOIN pagos_obligaciones po ON po.id_pago = p.id_pago
         LEFT JOIN uisp_pagos_importacion u ON u.id_pago_ubb = p.id_pago
