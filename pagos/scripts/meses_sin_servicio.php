@@ -188,6 +188,7 @@ $hoyTexto = $hoy->format('Y-m-d');
 $contadores = [
     'suspendidos_uisp' => 0,
     'cortes_abiertos_nuevos' => 0,
+    'inicio_estimado' => 0,
     'cortes_cerrados' => 0,
     'cortes_revisados' => 0,
     'mensualidades_no_cobradas' => 0,
@@ -393,8 +394,13 @@ try {
             }
             $contadores['cortes_abiertos_nuevos']++;
             $fechaInicio = $s['inicio'] ?? $hoyTexto;
-            echo "  ✂ Servicio $idServicio cortado en UISP desde $fechaInicio"
-                . ($s['inicio'] === null ? ' (fecha de detección)' : '') . "\n";
+            if ($contadores['cortes_abiertos_nuevos'] <= 30) {
+                echo "  ✂ Servicio $idServicio cortado en UISP desde $fechaInicio"
+                    . ($s['inicio'] === null ? ' (fecha de detección)' : '') . "\n";
+            }
+            if ($s['inicio'] === null) {
+                $contadores['inicio_estimado']++;
+            }
 
             if ($confirmar) {
                 abrirCorteMss($conexion, $idServicio, $s['id_cliente'], 'UISP', $s['uisp_service_id'],
@@ -418,16 +424,22 @@ try {
     }
 
     /* ===================== 1b. Cortes de Grezz ===================== */
-    $r = $conexion->query("
-        SELECT id_solicitud, id_cliente, id_servicio, accion, DATE(fecha_respuesta) AS fecha
-        FROM solicitudes_estado_servicio
-        WHERE estado = 'COMPLETADA' AND fecha_respuesta IS NOT NULL
-        ORDER BY fecha_respuesta, id_solicitud
-    ");
     $abiertoGrezz = [];
     $cortesGrezz = [];
+    $solicitudesGrezz = [];
 
-    while ($f = $r->fetch_assoc()) {
+    if ($conexion->query("SHOW TABLES LIKE 'solicitudes_estado_servicio'")->num_rows > 0) {
+        $solicitudesGrezz = $conexion->query("
+            SELECT id_solicitud, id_cliente, id_servicio, accion, DATE(fecha_respuesta) AS fecha
+            FROM solicitudes_estado_servicio
+            WHERE estado = 'COMPLETADA' AND fecha_respuesta IS NOT NULL
+            ORDER BY fecha_respuesta, id_solicitud
+        ")->fetch_all(MYSQLI_ASSOC);
+    } else {
+        echo "Aviso: no existe solicitudes_estado_servicio en esta base; se omiten los cortes de Grezz.\n";
+    }
+
+    foreach ($solicitudesGrezz as $f) {
         $idServicio = (int)$f['id_servicio'];
 
         if ($f['accion'] === 'SUSPENDER' && !isset($abiertoGrezz[$idServicio])) {
@@ -690,7 +702,8 @@ try {
     echo "\n===== RESUMEN =====\n";
     if ($usarUisp) {
         echo "Servicios suspendidos en UISP:      {$contadores['suspendidos_uisp']}\n";
-        echo "Cortes nuevos (UISP):               {$contadores['cortes_abiertos_nuevos']}\n";
+        echo "Cortes nuevos (UISP):               {$contadores['cortes_abiertos_nuevos']}"
+            . " ({$contadores['inicio_estimado']} sin fecha real de corte)\n";
         echo "Cortes cerrados (UISP):             {$contadores['cortes_cerrados']}\n";
     }
     echo "Cortes revisados:                   {$contadores['cortes_revisados']}\n";
