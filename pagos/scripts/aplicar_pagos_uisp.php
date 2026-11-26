@@ -54,6 +54,8 @@ define('UISP_DIAS_ANTICIPO', max(1, (int)(getenv('UBB_UISP_DIAS_ANTICIPO') ?: 20
  * revisión y el personal decide en Revisión UISP. Encender con UBB_UISP_SALDO_FAVOR=1.
  */
 define('UISP_SALDO_FAVOR_AUTOMATICO', getenv('UBB_UISP_SALDO_FAVOR') === '1');
+/** Primer mes con mensualidades en UBB: una factura de UISP de antes es historia. */
+define('UISP_MENSUALIDADES_DESDE', getenv('UBB_MENSUALIDADES_UISP_DESDE') ?: '2026-11-01');
 
 class RevisionPagoUisp extends RuntimeException
 {
@@ -201,7 +203,8 @@ try {
 
     $pagosUisp = $conexion->query("
         SELECT id_importacion, uisp_payment_id, uisp_client_id, monto, moneda, credito_uisp,
-               fecha_original_uisp, metodo_original_uisp, metodo_normalizado, decision_revision
+               fecha_original_uisp, metodo_original_uisp, metodo_normalizado, decision_revision,
+               facturas_uisp_json
         FROM uisp_pagos_importacion
         WHERE uisp_payment_id IS NOT NULL
           AND $estados
@@ -316,12 +319,72 @@ try {
                     $pendientes[] = $o;
                 }
             }
-            $aplicado->close();
-
-            // ¿El pago es de antes de que existieran mensualidades en UBB para este cliente?
             $fechaPago = fechaLocal((string)$p['fecha_original_uisp']);
             $diaPago = new DateTimeImmutable(substr($fechaPago, 0, 10));
             $anticipo = UISP_DIAS_ANTICIPO;
+
+            /* ===== Por factura: el pago va a la mensualidad de la factura de UISP que cubrió ===== */
+            $porFactura = null;
+            $coberturas = array_values(array_filter(
+                json_decode((string)($p['facturas_uisp_json'] ?? ''), true) ?: [],
+                fn($c) => !empty($c['factura'])
+            ));
+
+            if ($coberturas) {
+                $idsFacturas = implode(',', array_map(fn($c) => (int)$c['factura'], $coberturas));
+                $ligadas = [];
+                $r = $conexion->query("
+                    SELECT uisp_invoice_id, id_obligacion, id_servicio, periodo, monto, estado
+                    FROM obligaciones_pago
+                    WHERE uisp_invoice_id IN ($idsFacturas) AND id_cliente = $idCliente
+                    FOR UPDATE
+                ");
+                while ($fila = $r->fetch_assoc()) {
+                    $ligadas[(int)$fila['uisp_invoice_id']] = $fila;
+                }
+
+                if (count($ligadas) === count($coberturas)) {
+                    // Todas las facturas que cubrió tienen su mensualidad: se aplica cada monto a la suya.
+                    $porFactura = [];
+                    foreach ($coberturas as $c) {
+                        $o = $ligadas[(int)$c['factura']];
+                        $idObligacion = (int)$o['id_obligacion'];
+                        $aplicado->bind_param('i', $idObligacion);
+                        $aplicado->execute();
+                        $saldo = centavos($o['monto'])
+                            - centavos($aplicado->get_result()->fetch_row()[0])
+                            - ($simulado[$idObligacion] ?? 0);
+                        $o['saldo'] = max(0, $o['estado'] === 'CANCELADA' ? 0 : $saldo);
+                        $o['cubre'] = min(centavos($c['monto'] ?? 0), $o['saldo']);
+                        $porFactura[] = $o;
+                    }
+                } elseif ($ligadas === []) {
+                    // Ninguna tiene mensualidad: si todas son de antes de las mensualidades de UBB, es historia.
+                    $ultimoPeriodo = $conexion->query("
+                        SELECT MAX(periodo_inicio) FROM uisp_facturas WHERE uisp_invoice_id IN ($idsFacturas)
+                    ")->fetch_row()[0];
+
+                    if ($ultimoPeriodo !== null && $ultimoPeriodo < UISP_MENSUALIDADES_DESDE) {
+                        throw new HistoricoPagoUisp(
+                            "Pagó la factura de UISP del periodo que inicia el $ultimoPeriodo, anterior a las mensualidades de UBB."
+                        );
+                    }
+                }
+            }
+            $aplicado->close();
+
+            if ($porFactura !== null) {
+                $serviciosFactura = array_values(array_unique(array_map(fn($o) => (int)$o['id_servicio'], $porFactura)));
+                if (count($serviciosFactura) > 1) {
+                    throw new RevisionPagoUisp(
+                        'El pago cubrió facturas de varios servicios (' . implode(', ', $serviciosFactura) . ').'
+                    );
+                }
+                $idServicio = $serviciosFactura[0];
+            }
+
+            // ¿El pago es de antes de que existieran mensualidades en UBB para este cliente?
+            if ($porFactura === null) {
 
             $stmt = $conexion->prepare("
                 SELECT MIN(fecha_vencimiento) FROM obligaciones_pago
@@ -388,6 +451,7 @@ try {
                 }
                 $idServicio = $todos[0];
             }
+            } // Fin de la regla por fechas (pagos que no se pudieron ligar por factura).
 
             // Pago PENDIENTE en UBB del mismo servicio (p. ej. transferencia sin confirmar).
             $stmt = $conexion->prepare("
@@ -432,7 +496,9 @@ try {
             // Lo que sobra después de cubrir lo que debe es saldo a favor para la siguiente
             // mensualidad. Solo si UISP también lo registró como saldo a favor del pago: si no,
             // la diferencia viene de un precio o cargo distinto entre UISP y UBB, y se revisa.
-            $saldoTotal = (int)array_sum(array_column($pendientes, 'saldo'));
+            $saldoTotal = $porFactura !== null
+                ? (int)array_sum(array_column($porFactura, 'cubre'))
+                : (int)array_sum(array_column($pendientes, 'saldo'));
             $sobrante = max(0, $centavosPago - $saldoTotal);
             $creditoUisp = centavos($p['credito_uisp'] ?? 0);
 
@@ -461,11 +527,26 @@ try {
                 ));
             }
 
-            // Repartir el pago de la mensualidad más antigua a la más nueva.
+            // Repartir el pago: por factura, a la mensualidad de cada factura que cubrió;
+            // si no, de la mensualidad más antigua a la más nueva.
             $restante = $centavosPago;
             $aplicaciones = [];
 
-            foreach ($pendientes as $o) {
+            foreach ($porFactura ?? [] as $o) {
+                $monto = min($restante, $o['cubre']);
+                if ($monto <= 0) {
+                    continue;
+                }
+                $aplicaciones[] = [
+                    'id_obligacion' => (int)$o['id_obligacion'],
+                    'periodo' => $o['periodo'],
+                    'centavos' => $monto,
+                    'liquida' => $monto === $o['saldo'],
+                ];
+                $restante -= $monto;
+            }
+
+            foreach ($porFactura === null ? $pendientes : [] as $o) {
                 if ($restante === 0) {
                     break;
                 }

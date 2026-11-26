@@ -273,3 +273,35 @@ En el cron, junto con los pagos de UISP (cada 15 minutos):
 ```
 
 **Pendiente:** no cobrar los meses en que el servicio estuvo cortado (regla del ingeniero: al reactivar se cobra el mes actual + $39 de reconexión). Se implementará cuando los cortes sean automáticos, para marcarlo con el corte real.
+
+## Mensualidades desde las facturas de UISP
+
+Igual que con la plataforma de Jamileth, para los servicios que se facturan en UISP la mensualidad sale de **su factura de UISP**, no del precio del plan (la factura puede incluir reconexión u otros cargos).
+
+1. `sincronizar_facturas_uisp.php` copia las facturas del CRM en `uisp_facturas` (solo lectura).
+2. `mensualidades_desde_uisp.php` mantiene una mensualidad por factura (`obligaciones_pago.uisp_invoice_id`), para facturas cuyo periodo empieza desde `UBB_MENSUALIDADES_UISP_DESDE` (2026-11-01):
+   - Si ya existe la mensualidad de ese servicio y mes (por plan), la **liga** y **ajusta su monto** al total de la factura (no cambia su referencia).
+   - Si no existe, la crea con referencia `UBBC<cliente>S<servicio>M<AAAAMMDD>` y vencimiento en el inicio del periodo.
+   - Factura anulada → mensualidad cancelada (si no tiene pagos). Total que cambia → se ajusta.
+   - En UISP 1,080 de 1,081 clientes tienen un solo servicio: el servicio UBB se identifica por el cliente (`clientes.uisp_id`).
+3. `aplicar_pagos_uisp.php` aplica cada pago **a la mensualidad de la factura que cubrió** (dato de UISP). Si cubrió solo facturas de antes de 2026-11-01, el pago es `HISTORICO`. Si no se puede ligar por factura, usa la regla anterior por fechas.
+
+```bash
+mariadb ubb_pagos < db/migraciones/2026-12-01_facturas_uisp.sql
+mariadb ubb_pagos < db/migraciones/2026-12-04_mensualidades_uisp.sql
+docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/sincronizar_facturas_uisp.php --desde=2026-10-01 --confirmar
+docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/mensualidades_desde_uisp.php              # simulación
+docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/mensualidades_desde_uisp.php --confirmar
+```
+
+Cron (cada 15 minutos, en este orden):
+
+```cron
+*/15 * * * * (docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/sincronizar_facturas_plataforma.php --confirmar; docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/sincronizar_pagos_uisp.php --confirmar; docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/sincronizar_facturas_uisp.php --confirmar && docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/mensualidades_desde_uisp.php --confirmar; docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/aplicar_pagos_uisp.php --confirmar) >> /var/log/ubb/pagos_uisp.log 2>&1
+```
+
+## Respuestas de Grezz (26/11/2026)
+
+- Modo real: `resultado = "APLICADO"` (ya quedó hecho) o `"SIN_CAMBIOS"` (ya estaba así): las dos son `COMPLETADA`. El POST ejecuta antes de responder. `procesador_grezz.php` ya lo interpreta; el modo sigue en simulación (`GREZZ_SIMULAR` en `api/cliente_grezz.php`).
+- PPPoE: la consulta (GET) se publica el 26/11; suspender/reactivar PPPoE se habilita después de probarlo.
+- Fechas de corte: su API solo guarda cortes desde el 24/11 hechos por su panel o API. **La fuente más completa del historial de suspensiones es UISP** (estado de cada servicio en el CRM: 745 activos, 231 suspendidos, 105 terminados el 26/11). Usarla para la regla de "no cobrar meses sin servicio".

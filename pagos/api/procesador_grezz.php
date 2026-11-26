@@ -90,16 +90,18 @@ function procesarSolicitudGrezz(
             $resultadoGrezz = $respuesta['resultado'] ?? '';
             $mensaje = (string)($respuesta['mensaje'] ?? '');
 
-            if (
-                $codigoHttp >= 200
+            $respuestaOk = $codigoHttp >= 200
                 && $codigoHttp < 300
-                && ($respuesta['ok'] ?? false) === true
-                && in_array(
-                    $resultadoGrezz,
-                    ['SIMULADO', 'SIN_CAMBIOS'],
-                    true
-                )
-            ) {
+                && ($respuesta['ok'] ?? false) === true;
+
+            // Según Grezz (26/11/2026): en modo real responde APLICADO (ya quedó hecho)
+            // o SIN_CAMBIOS (ya estaba así); las dos cuentan como COMPLETADA.
+            // Mientras cliente_grezz.php envíe "simular": true, todo queda SIMULADA.
+            if ($respuestaOk && $resultadoGrezz === 'APLICADO') {
+                $estado = 'COMPLETADA';
+            } elseif ($respuestaOk && $resultadoGrezz === 'SIN_CAMBIOS' && !GREZZ_SIMULAR) {
+                $estado = 'COMPLETADA';
+            } elseif ($respuestaOk && in_array($resultadoGrezz, ['SIMULADO', 'SIN_CAMBIOS'], true)) {
                 $estado = 'SIMULADA';
             } elseif ($codigoHttp >= 400 && $codigoHttp < 500) {
                 $estado = 'RECHAZADA';

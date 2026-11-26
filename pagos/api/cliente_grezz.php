@@ -9,6 +9,12 @@ declare(strict_types=1);
  * No ejecuta cambios reales en RADIUS, MikroTik ni UISP.
  */
 
+/**
+ * Modo de las solicitudes a Grezz. true = simulación (no corta ni reconecta).
+ * Cambiar a false solo cuando se acuerde operar en real.
+ */
+const GREZZ_SIMULAR = true;
+
 function llamarApiGrezz(array $solicitud): array
 {
     $idServicio = (string)($solicitud['id_servicio'] ?? '');
@@ -56,7 +62,7 @@ function llamarApiGrezz(array $solicitud): array
         'solicitud_id' => $idSolicitud,
         'motivo' => $motivo,
         'referencia' => $referencia,
-        'simular' => true
+        'simular' => GREZZ_SIMULAR
     ];
 
     $json = json_encode(
