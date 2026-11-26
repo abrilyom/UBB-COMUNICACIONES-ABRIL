@@ -10693,16 +10693,17 @@ header.ubb-encabezado-ref {
 
 @media (min-width: 901px) {
     /* Izquierda: transparente para que se vea el panel.
-       Derecha: mismo fondo claro del contenido */
+       Derecha: fondo blanco */
     header.ubb-encabezado-ref {
         background: linear-gradient(
             90deg,
             transparent 0,
             transparent 258px,
-            #f7f3f9 258px,
-            #f7f3f9 100%
+            #ffffff 258px,
+            #ffffff 100%
         ) !important;
         border-bottom: 0 !important;
+        box-shadow: 0 1px 0 #f0e4f3 !important;
     }
 
     /* Ondas decorativas en morado del panel */
