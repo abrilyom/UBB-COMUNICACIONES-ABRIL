@@ -272,7 +272,7 @@ En el cron, junto con los pagos de UISP (cada 15 minutos):
 */15 * * * * (docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/sincronizar_facturas_plataforma.php --confirmar; docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/sincronizar_pagos_uisp.php --confirmar && docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/aplicar_pagos_uisp.php --confirmar) >> /var/log/ubb/pagos_uisp.log 2>&1
 ```
 
-**Pendiente:** no cobrar los meses en que el servicio estuvo cortado (regla del ingeniero: al reactivar se cobra el mes actual + $39 de reconexión). Se implementará cuando los cortes sean automáticos, para marcarlo con el corte real.
+**Meses sin servicio:** ver la sección *No cobrar los meses en que el servicio estuvo cortado*.
 
 ## Mensualidades desde las facturas de UISP
 
@@ -299,6 +299,46 @@ Cron (cada 15 minutos, en este orden):
 ```cron
 */15 * * * * (docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/sincronizar_facturas_plataforma.php --confirmar; docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/sincronizar_pagos_uisp.php --confirmar; docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/sincronizar_facturas_uisp.php --confirmar && docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/mensualidades_desde_uisp.php --confirmar; docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/aplicar_pagos_uisp.php --confirmar) >> /var/log/ubb/pagos_uisp.log 2>&1
 ```
+
+## No cobrar los meses en que el servicio estuvo cortado
+
+Regla del ingeniero (confirmada el 26/11/2026): **al reactivar se cobra el mes actual + $39 de reconexión**. El mes que provocó el corte y los meses sin servicio no se cobran.
+
+`pagos/scripts/meses_sin_servicio.php`:
+
+1. **Cortes** (`servicios_cortes`), de dos fuentes; si se enciman, cuentan como uno:
+   - **UISP**: servicios suspendidos en el CRM (solo lectura, `GET /clients/services`). Si UISP no trae la fecha del corte (`suspensionPeriods`), se toma el día en que se detectó (`inicio_estimado = 1`). Cuando deja de estar suspendido, el corte se cierra ese día.
+   - **GREZZ**: suspensiones y reactivaciones `COMPLETADA` que pidió UBB Pagos.
+2. **Regla**, con *mes actual* = el mes de hoy (si sigue cortado) o el mes en que se reactivó:
+
+| Caso | Resultado |
+|---|---|
+| Mensualidad sin pagos de un mes anterior al mes actual | `CANCELADA` con `no_cobro_motivo` = `MES_DEL_CORTE` (vencía antes del corte) o `SERVICIO_CORTADO` |
+| Mensualidad anterior con pago parcial | No se toca; a revisión |
+| Mensualidad del mes actual, cliente que paga en UBB Pagos (plataforma de Jamileth) | Se le suma la reconexión (`cargo_reconexion`, $39). Si el corte sigue y cambia el mes, la reconexión pasa al mes nuevo |
+| Mensualidad del mes actual, cliente que paga en UISP | UBB no suma nada (el pago de UISP no cubriría los $39 y el servicio quedaría con adeudo vencido). Si su factura de UISP no trae reconexión, se lista para que el personal la agregue |
+| Mensualidad cancelada ligada a una factura | Se lista: el personal anula la factura en UISP y Jamileth la cancela en la plataforma. UBB no escribe en ninguna |
+
+`mensualidades_desde_uisp.php` y `sincronizar_facturas_plataforma.php` no reabren las mensualidades canceladas por corte, y la plataforma conserva `cargo_reconexion` sobre el total de la factura. **Acordar con Jamileth** que no agregue reconexión en su factura (UBB ya la suma) y qué hace con un pago que trae $39 más que el saldo de la factura.
+
+**Deshacer** un corte mal detectado: `php meses_sin_servicio.php --deshacer=<id_corte> --confirmar` regresa sus mensualidades a `PENDIENTE`, quita la reconexión y lo marca `anulado` para no volver a aplicarlo.
+
+```bash
+mariadb ubb_pagos_pruebas < db/migraciones/2026-12-05_meses_sin_servicio.sql
+mariadb ubb_pagos < db/migraciones/2026-12-05_meses_sin_servicio.sql
+docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/meses_sin_servicio.php              # simulación
+docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/meses_sin_servicio.php --confirmar
+```
+
+Antes de confirmar, revisar en la simulación: cuántos servicios suspendidos reporta UISP (debe parecerse a los 231 del 26/11; si sale el total de servicios, UISP ignoró el filtro, pero el script igual revisa el estado de cada uno) y si las fechas de corte salen como "fecha de detección" (UISP no envió `suspensionPeriods`).
+
+Cron: después de las mensualidades y antes de aplicar los pagos de UISP (dentro de la línea de cada 15 minutos):
+
+```cron
+... && docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/mensualidades_desde_uisp.php --confirmar; docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/meses_sin_servicio.php --confirmar; docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/aplicar_pagos_uisp.php --confirmar) >> /var/log/ubb/pagos_uisp.log 2>&1
+```
+
+Variables opcionales: `UBB_CARGO_RECONEXION` (39) y `UBB_CORTES_DIAS` (62, días que se siguen revisando los cortes ya cerrados).
 
 ## Respuestas de Grezz (26/11/2026)
 

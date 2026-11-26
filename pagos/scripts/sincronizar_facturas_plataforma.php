@@ -98,6 +98,11 @@ try {
     $tipoEstado = (string)$conexion->query("SHOW COLUMNS FROM obligaciones_pago LIKE 'estado'")->fetch_assoc()['Type'];
     $admiteCancelada = str_contains($tipoEstado, "'CANCELADA'");
 
+    // Columnas de meses sin servicio (2026-12-05_meses_sin_servicio.sql, opcional).
+    $colCorte = $conexion->query("SHOW COLUMNS FROM obligaciones_pago LIKE 'cargo_reconexion'")->num_rows > 0
+        ? 'cargo_reconexion, no_cobro_motivo'
+        : '0 AS cargo_reconexion, NULL AS no_cobro_motivo';
+
     echo $confirmar
         ? "MODO: CONFIRMAR (se guardarán los cambios)\n\n"
         : "MODO: SIMULACIÓN (no se guardará nada)\n\n";
@@ -131,7 +136,7 @@ try {
         $periodo = str_replace('-', '', substr((string)$f['periodo_inicio'], 0, 7));
         $vencimiento = substr((string)$f['periodo_inicio'], 0, 10);
 
-        $stmt = $conexion->prepare("SELECT id_obligacion, monto, estado FROM obligaciones_pago WHERE id_factura = ?");
+        $stmt = $conexion->prepare("SELECT id_obligacion, monto, estado, $colCorte FROM obligaciones_pago WHERE id_factura = ?");
         $stmt->bind_param('i', $idFactura);
         $stmt->execute();
         $obligacion = $stmt->get_result()->fetch_assoc();
@@ -161,6 +166,15 @@ try {
         }
 
         if ($obligacion) {
+            // Mes que no se cobra porque el servicio estaba cortado (meses_sin_servicio.php): no se reabre.
+            if ($obligacion['estado'] === 'CANCELADA' && $obligacion['no_cobro_motivo'] !== null) {
+                $contadores['sin_cambios']++;
+                continue;
+            }
+
+            // La reconexión que suma UBB (meses_sin_servicio.php) se conserva sobre el total de la factura.
+            $total += centavosFp($obligacion['cargo_reconexion']);
+
             // La factura puede cambiar de total si se le agrega un cargo (reconexión, equipo…).
             if (centavosFp($obligacion['monto']) === $total) {
                 $contadores['sin_cambios']++;
@@ -270,6 +284,12 @@ try {
             } else {
                 $revision[] = "Pago {$p['id_pago']} trae id_factura $idFactura, pero no hay mensualidad para esa factura.";
             }
+            continue;
+        }
+
+        if ($obligacion['estado'] === 'CANCELADA') {
+            $revision[] = "Pago {$p['id_pago']} de la factura $idFactura: su mensualidad {$obligacion['id_obligacion']} está cancelada "
+                . "(p. ej. mes sin servicio por corte); no se aplica.";
             continue;
         }
 

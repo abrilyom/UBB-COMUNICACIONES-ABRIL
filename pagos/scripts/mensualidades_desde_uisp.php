@@ -86,6 +86,7 @@ $contadores = [
     'sin_cambios' => 0,
     'antes_de_desde' => 0,
     'sin_servicio_ubb' => 0,
+    'no_cobradas_por_corte' => 0,
     'para_revision' => 0,
 ];
 $revision = [];
@@ -103,6 +104,10 @@ try {
     if ($conexion->query("SHOW TABLES LIKE 'uisp_facturas'")->num_rows === 0) {
         throw new RuntimeException('Falta aplicar db/migraciones/2026-12-01_facturas_uisp.sql.');
     }
+
+    // Mensualidades que no se cobran por corte (2026-12-05_meses_sin_servicio.sql, opcional).
+    $colNoCobro = $conexion->query("SHOW COLUMNS FROM obligaciones_pago LIKE 'no_cobro_motivo'")->num_rows > 0
+        ? 'no_cobro_motivo' : 'NULL AS no_cobro_motivo';
 
     echo $confirmar
         ? "MODO: CONFIRMAR (se guardarán los cambios)\n"
@@ -153,7 +158,7 @@ try {
         $anulada = $f['estado'] === 'ANULADA';
 
         // ¿Ya hay mensualidad ligada a esta factura?
-        $stmt = $conexion->prepare("SELECT id_obligacion, monto, estado FROM obligaciones_pago WHERE uisp_invoice_id = ?");
+        $stmt = $conexion->prepare("SELECT id_obligacion, monto, estado, $colNoCobro FROM obligaciones_pago WHERE uisp_invoice_id = ?");
         $stmt->bind_param('i', $idFactura);
         $stmt->execute();
         $ligada = $stmt->get_result()->fetch_assoc();
@@ -161,6 +166,12 @@ try {
 
         if (!$ligada && $inicioPeriodo < $desde) {
             $contadores['antes_de_desde']++;
+            continue;
+        }
+
+        // Mes que no se cobra porque el servicio estaba cortado (meses_sin_servicio.php): no se reabre.
+        if ($ligada && $ligada['estado'] === 'CANCELADA' && $ligada['no_cobro_motivo'] !== null) {
+            $contadores['no_cobradas_por_corte']++;
             continue;
         }
 
@@ -220,7 +231,7 @@ try {
 
             // ¿Existe ya la mensualidad de ese servicio y mes (por plan)?
             $stmt = $conexion->prepare("
-                SELECT id_obligacion, monto, estado, uisp_invoice_id, id_factura
+                SELECT id_obligacion, monto, estado, uisp_invoice_id, id_factura, $colNoCobro
                 FROM obligaciones_pago
                 WHERE id_servicio = ? AND periodo = ? AND concepto = 'MENSUALIDAD'
             ");
@@ -260,6 +271,11 @@ try {
                     $stmt->execute();
                     $stmt->close();
                 }
+                continue;
+            }
+
+            if ($existente['estado'] === 'CANCELADA' && $existente['no_cobro_motivo'] !== null) {
+                $contadores['no_cobradas_por_corte']++;
                 continue;
             }
 
@@ -325,6 +341,7 @@ try {
     echo "Canceladas (factura anulada):  {$contadores['canceladas']}\n";
     echo "Sin cambios:                   {$contadores['sin_cambios']}\n";
     echo "Sin servicio UBB identificable: {$contadores['sin_servicio_ubb']}\n";
+    echo "No cobradas (servicio cortado): {$contadores['no_cobradas_por_corte']}\n";
 
     if ($revision) {
         echo "\nPara revisión ({$contadores['para_revision']}, primeras 30):\n";
