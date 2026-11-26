@@ -7,6 +7,7 @@ declare(strict_types=1);
  */
 
 require_once __DIR__ . '/cliente_grezz.php';
+require_once __DIR__ . '/aviso_monitoreo.php';
 
 function procesarSolicitudGrezz(
     mysqli $conexion,
@@ -162,7 +163,24 @@ function procesarSolicitudGrezz(
             );
         }
 
+        $actualizada = $stmtGuardar->affected_rows === 1;
         $stmtGuardar->close();
+
+        // Corte o reactivación real: avisar al monitoreo (Telegram) para que
+        // lo reporte como corte por pago. Solo una vez por solicitud y sin
+        // detener el flujo si el aviso falla.
+        if ($actualizada && $estado === 'COMPLETADA') {
+            try {
+                avisarMonitoreo(
+                    (string)($solicitud['accion'] ?? ''),
+                    (int)$idServicio,
+                    (string)($solicitud['motivo'] ?? ''),
+                    $resultado['respuesta'] ?? null
+                );
+            } catch (Throwable $e) {
+                error_log('Aviso a monitoreo con error: ' . $e->getMessage());
+            }
+        }
 
         return [
             'id_solicitud' => $idSolicitud,

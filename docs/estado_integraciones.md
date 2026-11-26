@@ -23,6 +23,7 @@ Identificadores compartidos: `id_cliente`, `id_servicio`, `id_plan`. Para UISP: 
 | Conciliación bancaria (CSV) | ✅ Implementada y probada | `scripts/importar_movimientos_bancarios.php`, `scripts/conciliar_automatico.php` |
 | API de BBVA | ⏳ Pendiente del banco | — usará el mismo proceso de conciliación |
 | Pagos registrados en UISP | ✅ Implementada (API del CRM vía NAT en MKR-FSL02, 10.0.1.6:18445); se aplica a mensualidades | `scripts/sincronizar_pagos_uisp.php` → `uisp_pagos_importacion` (ver `docs/automatizacion.md`) |
+| Aviso al monitoreo de Christian (Telegram) en cortes y reactivaciones | 🟡 Implementado; solo se envía con solicitudes `COMPLETADA` (hoy Grezz está en simulación) y falta instalar `/etc/ubb-monitoreo.key` | `api/aviso_monitoreo.php`, `api/procesador_grezz.php` |
 | Notificaciones WhatsApp / SMS | 🟡 Implementada, sin proveedor contratado | `scripts/generar_recordatorios.php`, `scripts/enviar_notificaciones.php` |
 | `integracion_winbox` (Jamileth) | Solo consulta | No se modifica |
 

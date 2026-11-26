@@ -129,6 +129,28 @@ La configuración vive en `/etc/ubb-notificaciones.env` (fuera del repositorio).
 
 Variables opcionales: `UBB_UISP_URL`, `UBB_UISP_TOKEN_FILE`, `UBB_UISP_CA` (certificado del CRM para verificar TLS; sin ella no se verifica) y `UBB_UISP_DIAS`.
 
+### Aviso al monitoreo (Telegram) en cortes y reactivaciones
+
+Cuando Grezz confirma un corte o una reactivación real (solicitud `COMPLETADA`), `pagos/api/procesador_grezz.php` avisa al servidor de monitoreo de Christian con `pagos/api/aviso_monitoreo.php`, para que Telegram lo reporte como **corte por pago** y no como falla de antena o fibra:
+
+```http
+POST http://192.168.100.224:5000/api/v1/webhook/administrativo
+X-API-Key: <llave>
+Content-Type: application/json
+
+{"accion": "BAJA_PAGO", "mac": "18:E8:29:D7:46:E9", "motivo": "Adeudo mensual", "ejecutado_por": "Pagos"}
+```
+
+`SUSPENDER` → `BAJA_PAGO` y `REACTIVAR` → `REACTIVACION`. La MAC se toma de Grezz. Las solicitudes `SIMULADA` no se avisan. Si el aviso falla, el corte sigue igual y el error queda en el log de PHP.
+
+Para activarlo, guardar la llave fuera del repositorio (sin ella no se envía nada):
+
+```bash
+sudo install -m 600 /dev/null /etc/ubb-monitoreo.key && sudo nano /etc/ubb-monitoreo.key
+```
+
+Variables opcionales: `UBB_MONITOREO_URL` y `UBB_MONITOREO_KEY_FILE`.
+
 ### Facturas de UISP
 
 `pagos/scripts/sincronizar_facturas_uisp.php` copia las facturas del CRM en `uisp_facturas` (solo lectura sobre UISP; no cambia pagos ni mensualidades): total, descuento, pagado, saldo, estado, periodo que cobra (leído del concepto, p. ej. *"1 Oct 2026 – 31 Oct 2026"*), conceptos (servicio, reconexión u otros cargos) y los pagos que la cubren.
