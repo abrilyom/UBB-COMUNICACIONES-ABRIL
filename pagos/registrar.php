@@ -484,6 +484,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $saldo_centavos = 0;
 
             /*
+             * Factura de la plataforma (servicios con factura_en_plataforma = 1).
+             * La plataforma de facturación liga el pago a su factura por pagos.id_factura.
+             */
+            $id_factura = null;
+
+            /*
              * Validar y bloquear la mensualidad seleccionada.
              */
             if ($id_obligacion !== "") {
@@ -503,6 +509,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         o.id_obligacion,
                         o.monto,
                         o.estado,
+                        o.id_factura,
+                        o.referencia_cobro,
                         COALESCE((
                             SELECT SUM(a.monto_aplicado)
                             FROM pagos_obligaciones a
@@ -550,6 +558,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     || $filaObligacion["estado"] !== "PENDIENTE"
                 ) {
                     throw new DomainException("La mensualidad no existe o ya no está pendiente.");
+                }
+
+                // Mensualidad que viene de una factura de la plataforma: el pago se liga a esa
+                // factura y, si no se capturó referencia, se usa su folio (FAC-000001).
+                if ($filaObligacion["id_factura"] !== null) {
+                    $id_factura = (int)$filaObligacion["id_factura"];
+
+                    if ($referencia === "") {
+                        $referencia = (string)$filaObligacion["referencia_cobro"];
+                    }
                 }
 
                 /*
@@ -643,9 +661,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         metodo_pago,
                         referencia,
                         observaciones,
-                        estado_pago
+                        estado_pago,
+                        id_factura
                     )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ";
 
             $stmtPago = $conexion->prepare($sqlPago);
@@ -655,7 +674,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             }
 
             $stmtPago->bind_param(
-                "iissssss",
+                "iissssssi",
                 $id_cliente,
                 $id_servicio,
                 $monto,
@@ -663,7 +682,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $metodo_pago,
                 $referencia,
                 $observaciones,
-                $estadoPago
+                $estadoPago,
+                $id_factura
             );
 
             if (!$stmtPago->execute()) {

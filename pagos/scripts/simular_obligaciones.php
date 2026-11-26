@@ -61,6 +61,9 @@ try {
     $r = $plataforma->query("
         SELECT id_servicio, id_cliente, fecha_instalacion, paquete_referencia, estado
         FROM servicios
+        -- Los que se facturan en la plataforma toman su mensualidad de la factura
+        -- (scripts/sincronizar_facturas_plataforma.php), no del precio del plan.
+        WHERE COALESCE(factura_en_plataforma, 0) = 0
     ");
 
     while ($f = $r->fetch_assoc()) {

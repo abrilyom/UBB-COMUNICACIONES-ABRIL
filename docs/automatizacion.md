@@ -238,3 +238,38 @@ Por eso la suspensión automática **solo actúa sobre servicios que Grezz repor
 
 - **Grezz en modo real:** `cliente_grezz.php` envía `simular: true`. Para operar en real hay que acordar con la plataforma de Grezz qué valor devuelve `resultado` cuando ejecuta la acción, y aceptarlo en `procesador_grezz.php`.
 - **API de BBVA:** cuando esté disponible, sus movimientos se guardan en `movimientos_bancarios` con `fuente_datos = 'API'` y siguen exactamente el mismo proceso.
+
+## Clientes que se facturan en la plataforma (Jamileth)
+
+Acordado con Jamileth el 26/11/2026:
+
+| Servicio | Quién factura | Dónde paga | Lo que debe |
+|---|---|---|---|
+| `servicios.factura_en_plataforma = 0` (los actuales) | UISP | UISP | Factura de UISP |
+| `servicios.factura_en_plataforma = 1` (los nuevos) | Plataforma de Jamileth | **UBB Pagos** | `facturas.saldo` de la plataforma |
+
+- Si un servicio pasa a facturarse en la plataforma, cambia el campo y su primera factura empieza en el periodo siguiente (no se repite el mes). Guiarse por el campo, no por una fecha.
+- La plataforma liga cada pago de UBB con su factura por **`pagos.id_factura`**. Cada 15 minutos aplica los pagos `PAGADO` (los registra como `PAGO-<id_pago>`) e ignora `PENDIENTE` y `CANCELADO`; si un pago aplicado pasa a `CANCELADO`, lo retira y la factura vuelve a pendiente.
+- Prepago: el periodo de la factura es el mes que se va a usar; `fecha_limite_pago` = inicio + 10 días de gracia.
+
+`scripts/sincronizar_facturas_plataforma.php` (solo lectura en `ubb_plataforma`):
+
+1. Crea una mensualidad por factura (`obligaciones_pago.id_factura`): monto = total (incluye reconexión y otros cargos), periodo = mes de `periodo_inicio`, vencimiento = `periodo_inicio`, referencia = folio. Si la factura cambia de total, actualiza el monto; si se cancela, la mensualidad pasa a `CANCELADA` (si no tiene pagos).
+2. Liga los pagos `PAGADO` con `id_factura` a su mensualidad.
+3. Si el pago de una factura se cancela, su mensualidad vuelve a `PENDIENTE`.
+
+No toca mensualidades por plan existentes: si una choca con una factura (mismo servicio y mes) la reporta. `simular_obligaciones.php` ya no genera mensualidades por plan para estos servicios, y **Registrar pago** llena `id_factura` (y el folio como referencia) al elegir la mensualidad. Los pagos de estos clientes que aparezcan en UISP van a Revisión UISP.
+
+```bash
+mariadb ubb_pagos < db/migraciones/2026-12-03_facturas_plataforma.sql
+docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/sincronizar_facturas_plataforma.php              # simulación
+docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/sincronizar_facturas_plataforma.php --confirmar
+```
+
+En el cron, junto con los pagos de UISP (cada 15 minutos):
+
+```cron
+*/15 * * * * (docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/sincronizar_facturas_plataforma.php --confirmar; docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/sincronizar_pagos_uisp.php --confirmar && docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/aplicar_pagos_uisp.php --confirmar) >> /var/log/ubb/pagos_uisp.log 2>&1
+```
+
+**Pendiente:** no cobrar los meses en que el servicio estuvo cortado (regla del ingeniero: al reactivar se cobra el mes actual + $39 de reconexión). Se implementará cuando los cortes sean automáticos, para marcarlo con el corte real.

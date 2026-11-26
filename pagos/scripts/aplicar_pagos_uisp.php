@@ -181,6 +181,13 @@ try {
     while ($fila = $r->fetch_assoc()) {
         $clientesUisp[$fila['uisp_id']][] = (int)$fila['id_cliente'];
     }
+
+    // Clientes que se facturan en la plataforma: pagan en UBB con su factura, no en UISP.
+    $clientesFacturaPlataforma = [];
+    $r = $plataforma->query("SELECT DISTINCT id_cliente FROM servicios WHERE factura_en_plataforma = 1");
+    while ($fila = $r->fetch_row()) {
+        $clientesFacturaPlataforma[(int)$fila[0]] = true;
+    }
     $plataforma->close();
     $plataforma = null;
 
@@ -245,6 +252,13 @@ try {
                 );
             }
             $idCliente = $clientes[0];
+
+            if (isset($clientesFacturaPlataforma[$idCliente])) {
+                throw new RevisionPagoUisp(
+                    "El cliente UBB $idCliente se factura en la plataforma: su pago debe registrarse en UBB "
+                    . 'con su factura (FAC-…), no en UISP.'
+                );
+            }
 
             // Si ya existe el pago (ejecución interrumpida), solo se marca.
             $stmt = $conexion->prepare('SELECT id_pago, id_servicio FROM pagos WHERE referencia = ? LIMIT 1');
