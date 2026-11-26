@@ -302,45 +302,17 @@ $inicio_semana = $obj_fecha->modify('monday this week');
 $fin_semana = $inicio_semana->modify('+6 days');
 $inicio_siguiente_semana = $inicio_semana->modify('+7 days');
 
-$ingresos_uisp = [];
-$ingresos_ubb = [];
+$ingresos_semana = [];
 
 for ($i = 0; $i < 7; $i++) {
     $fecha = $inicio_semana->modify("+$i days")->format('Y-m-d');
-    $ingresos_uisp[$fecha] = 0.0;
-    $ingresos_ubb[$fecha] = 0.0;
+    $ingresos_semana[$fecha] = 0.0;
 }
 
-$inicio_sql = $inicio_semana->format('Y-m-d');
-$fin_sql = $inicio_siguiente_semana->format('Y-m-d');
-
-/* ===== HISTORICO UISP: SOLO LECTURA ===== */
-$stmt_uisp = $conexion->prepare(
-    "SELECT
-         DATE(LEFT(fecha_original_uisp, 10)) AS dia,
-         SUM(monto) AS ingresos
-     FROM uisp_pagos_importacion
-     WHERE LEFT(fecha_original_uisp, 10) >= ?
-       AND LEFT(fecha_original_uisp, 10) < ?
-       AND moneda = 'MXN'
-       AND metodo_original_uisp NOT LIKE '%cortes%'
-     GROUP BY dia
-     ORDER BY dia"
-);
-
-$stmt_uisp->bind_param('ss', $inicio_sql, $fin_sql);
-$stmt_uisp->execute();
-$resultado_uisp = $stmt_uisp->get_result();
-
-while ($fila = $resultado_uisp->fetch_assoc()) {
-    $dia = $fila['dia'];
-    if (array_key_exists($dia, $ingresos_uisp)) {
-        $ingresos_uisp[$dia] = (float)$fila['ingresos'];
-    }
-}
-$stmt_uisp->close();
-
-/* ===== PAGOS NUEVOS UBB: EXCLUIR LOS CUATRO REGISTROS DE PRUEBA ===== */
+/* ===== INGRESOS DE LA SEMANA =====
+   La tabla pagos ya incluye los pagos que llegan desde UISP
+   (scripts/aplicar_pagos_uisp.php), así que es la única fuente.
+   Se excluyen los cuatro registros de prueba. */
 $stmt_ubb = $conexion->prepare(
     "SELECT
          DATE(fecha_pago) AS dia,
@@ -364,29 +336,18 @@ $resultado_ubb = $stmt_ubb->get_result();
 
 while ($fila = $resultado_ubb->fetch_assoc()) {
     $dia = $fila['dia'];
-    if (array_key_exists($dia, $ingresos_ubb)) {
-        $ingresos_ubb[$dia] = (float)$fila['ingresos'];
+    if (array_key_exists($dia, $ingresos_semana)) {
+        $ingresos_semana[$dia] = (float)$fila['ingresos'];
     }
 }
 $stmt_ubb->close();
 
-$total_uisp_semana = array_sum($ingresos_uisp);
-$total_ubb_semana = array_sum($ingresos_ubb);
-
-$maximo_diario = 0.0;
-foreach ($ingresos_uisp as $fecha => $importe) {
-    $maximo_diario = max(
-        $maximo_diario,
-        $importe,
-        $ingresos_ubb[$fecha]
-    );
-}
+$total_ingresos_semana = array_sum($ingresos_semana);
+$maximo_diario = max($ingresos_semana);
 
 $escala_ingresos = $maximo_diario > 0
     ? ceil($maximo_diario / 4 / 100) * 100 : 100;
 $maximo_eje_ingresos = $escala_ingresos * 4;
-
-$total_ingresos_semana = $total_uisp_semana + $total_ubb_semana;
 $etiqueta_semana = $inicio_semana->format('d/m') . ' – ' . $fin_semana->format('d/m');
 
 /* ===== CENTRO DE AUTOMATIZACIÓN ===== */
@@ -702,14 +663,10 @@ $auto_uisp = $automatizacion['pagos_uisp'] ?? null;
     </form>
 </div>
 
-<div class="resumen-ingresos-semana resumen-ingresos-doble">
-    <div class="resumen-fuente resumen-fuente-uisp">
-        <span>Histórico UISP</span>
-        <strong>$<?= number_format($total_uisp_semana, 2) ?></strong>
-    </div>
-    <div class="resumen-fuente resumen-fuente-ubb">
-        <span>Pagos nuevos UBB</span>
-        <strong>$<?= number_format($total_ubb_semana, 2) ?></strong>
+<div class="resumen-ingresos-semana resumen-ingresos-doble resumen-ingresos-unico">
+    <div class="resumen-fuente">
+        <span>Total de la semana</span>
+        <strong>$<?= number_format($total_ingresos_semana, 2) ?></strong>
     </div>
 </div>
 
@@ -722,35 +679,23 @@ $auto_uisp = $automatizacion['pagos_uisp'] ?? null;
         </div>
 
         <div class="area-barras">
-            <?php foreach ($ingresos_uisp as $fecha => $importe_uisp):
-                $importe_ubb = $ingresos_ubb[$fecha];
-
-                $altura_uisp = $maximo_eje_ingresos > 0
-                    ? (int)round($importe_uisp / $maximo_eje_ingresos * 150) : 0;
-
-                $altura_ubb = $maximo_eje_ingresos > 0
-                    ? (int)round($importe_ubb / $maximo_eje_ingresos * 150) : 0;
+            <?php foreach ($ingresos_semana as $fecha => $importe_dia):
+                $altura_dia = $maximo_eje_ingresos > 0
+                    ? (int)round($importe_dia / $maximo_eje_ingresos * 150) : 0;
 
                 $fecha_obj = new DateTimeImmutable($fecha);
                 $dias_es = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
                 $etiqueta_dia = $dias_es[(int)$fecha_obj->format('N') - 1];
 
-                $detalle = $fecha
-                    . ' | UISP: $' . number_format($importe_uisp, 2)
-                    . ' | UBB: $' . number_format($importe_ubb, 2);
+                $detalle = $fecha . ' | $' . number_format($importe_dia, 2);
             ?>
             <div class="barra-vertical grupo-barras-dia"
                  title="<?= htmlspecialchars($detalle, ENT_QUOTES, 'UTF-8') ?>">
 
                 <div class="barras-dobles">
-                    <div class="barra-fuente barra-uisp"
-                         style="height: <?= $altura_uisp ?>px !important;"
-                         title="UISP: $<?= number_format($importe_uisp, 2) ?>">
-                    </div>
-
-                    <div class="barra-fuente barra-ubb"
-                         style="height: <?= $altura_ubb ?>px !important;"
-                         title="UBB: $<?= number_format($importe_ubb, 2) ?>">
+                    <div class="barra-fuente barra-uisp barra-unica"
+                         style="height: <?= $altura_dia ?>px !important;"
+                         title="$<?= number_format($importe_dia, 2) ?>">
                     </div>
                 </div>
 
@@ -762,10 +707,6 @@ $auto_uisp = $automatizacion['pagos_uisp'] ?? null;
         </div>
     </div>
 
-    <div class="leyenda-ingresos leyenda-ingresos-doble">
-        <span class="leyenda-uisp"></span> Histórico UISP
-        <span class="leyenda-ubb"></span> Pagos nuevos UBB
-    </div>
 </div>
     </div>
 

@@ -10135,6 +10135,16 @@ body.confirmacion-pago-abierta {
     background: #35b6aa !important;
 }
 
+/* Una sola serie: total de la semana */
+.graficas-servicios .resumen-ingresos-unico {
+    grid-template-columns: minmax(0, 1fr) !important;
+}
+
+.graficas-servicios .grafica-ingresos .barra-unica {
+    flex-basis: 22px !important;
+    width: 22px !important;
+}
+
 /* Adaptación a pantallas pequeñas */
 @media (max-width: 600px) {
     .graficas-servicios .resumen-ingresos-doble {
@@ -10160,6 +10170,11 @@ body.confirmacion-pago-abierta {
 
     .graficas-servicios .leyenda-ingresos-doble {
         font-size: 10px !important;
+    }
+
+    .graficas-servicios .grafica-ingresos .barra-unica {
+        flex-basis: 16px !important;
+        width: 16px !important;
     }
 }
 
