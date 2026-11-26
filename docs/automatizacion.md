@@ -143,11 +143,30 @@ Content-Type: application/json
 
 `SUSPENDER` → `BAJA_PAGO` y `REACTIVAR` → `REACTIVACION`. La MAC se toma de Grezz. Las solicitudes `SIMULADA` no se avisan. Si el aviso falla, el corte sigue igual y el error queda en el log de PHP.
 
-Para activarlo, guardar la llave fuera del repositorio (sin ella no se envía nada):
+Para activarlo (sin la llave no se envía nada), en **dns-server**:
 
-```bash
-sudo install -m 600 /dev/null /etc/ubb-monitoreo.key && sudo nano /etc/ubb-monitoreo.key
-```
+1. Guardar la llave fuera del repositorio:
+
+   ```bash
+   sudo install -m 600 /dev/null /etc/ubb-monitoreo.key && sudo nano /etc/ubb-monitoreo.key
+   ```
+
+2. Copiarla al contenedor, que solo monta la carpeta del proyecto y no ve el `/etc` del servidor. Queda con los mismos permisos que `/etc/ubb-grezz.token` (`root:www-data`, 640):
+
+   ```bash
+   sudo docker cp /etc/ubb-monitoreo.key servidor-aviso-yomyom:/etc/ubb-monitoreo.key
+   sudo docker exec servidor-aviso-yomyom sh -c 'chown root:www-data /etc/ubb-monitoreo.key && chmod 640 /etc/ubb-monitoreo.key'
+   ```
+
+   **Si el contenedor se vuelve a crear** (por ejemplo con `docker compose up` tras un cambio), la copia se pierde, igual que los tokens de Grezz: hay que repetir este paso.
+
+3. Probar con el mismo usuario que usa la página (llega un aviso de prueba a Telegram; avisar antes a Christian). Debe responder `bool(true)`:
+
+   ```bash
+   sudo docker exec -u www-data servidor-aviso-yomyom php -r 'require "/var/www/html/pagos/api/aviso_monitoreo.php"; var_dump(avisarMonitoreo("SUSPENDER", 0, "Prueba de integración", ["mac" => "00:11:22:33:44:55"]));'
+   ```
+
+`dns-root` no está en el grupo `docker`, por eso los comandos de Docker van con `sudo` (los de `git`, no).
 
 Variables opcionales: `UBB_MONITOREO_URL` y `UBB_MONITOREO_KEY_FILE`.
 
