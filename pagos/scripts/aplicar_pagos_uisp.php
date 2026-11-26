@@ -19,7 +19,10 @@ declare(strict_types=1);
  *   - El cliente debe tener mensualidades pendientes en UN solo servicio.
  *   - Se aplica a la mensualidad más antigua y, si sobra, a las siguientes.
  *     La que llega a saldo 0 queda PAGADA. Pagos parciales sí se aplican.
- *   - Si el pago supera todo lo que debe el servicio: revisión.
+ *   - Lo que sobra después de cubrir lo que debe es SALDO A FAVOR: se abona
+ *     solo a la siguiente mensualidad del servicio (cada ejecución lo revisa).
+ *     Solo si UISP también registró ese sobrante como saldo a favor del pago;
+ *     si no, es una diferencia de precio o cargo entre UISP y UBB: revisión.
  *   - Si el servicio tiene un pago PENDIENTE en UBB (transferencia sin
  *     confirmar) o un pago PAGADO igual en ±3 días: revisión, para no contar
  *     el mismo dinero dos veces.
@@ -133,11 +136,16 @@ $contadores = [
     'historicos' => 0,
     'cortesias' => 0,
     'importe_cortesia' => 0.0,
+    'saldo_favor_generado' => 0.0,
+    'saldo_favor_aplicado' => 0.0,
+    'mensualidades_con_saldo_favor' => 0,
 ];
 $motivos = [];
 
 /** Lo aplicado durante una simulación, para que los pagos siguientes del mismo cliente lo vean. */
 $simulado = [];
+/** Saldos a favor que generaría una simulación (en confirmación se leen de la base). */
+$creditosSimulados = [];
 $mostradosAplicados = 0;
 $mostradosRevision = 0;
 
@@ -177,7 +185,7 @@ try {
         : '';
 
     $pagosUisp = $conexion->query("
-        SELECT id_importacion, uisp_payment_id, uisp_client_id, monto, moneda,
+        SELECT id_importacion, uisp_payment_id, uisp_client_id, monto, moneda, credito_uisp,
                fecha_original_uisp, metodo_original_uisp, metodo_normalizado
         FROM uisp_pagos_importacion
         WHERE uisp_payment_id IS NOT NULL
@@ -308,30 +316,50 @@ try {
                 }
             }
 
+            if ($primeraMensualidad === null) {
+                throw new RevisionPagoUisp("El cliente UBB $idCliente no tiene mensualidades registradas en UBB.");
+            }
+
             $servicios = array_values(array_unique(array_map(fn($o) => (int)$o['id_servicio'], $pendientes)));
 
-            if (count($servicios) === 0) {
-                throw new RevisionPagoUisp($primeraMensualidad === null
-                    ? "El cliente UBB $idCliente no tiene mensualidades registradas en UBB."
-                    : "El cliente UBB $idCliente no tiene mensualidades pendientes (¿pago adelantado o repetido?).");
-            }
             if (count($servicios) > 1) {
                 throw new RevisionPagoUisp(
                     "El cliente UBB $idCliente tiene adeudo en varios servicios (" . implode(', ', $servicios) .
                     '); no se sabe a cuál corresponde el pago.'
                 );
             }
-            $idServicio = $servicios[0];
 
-            // Un pago muy anterior al vencimiento más antiguo probablemente es de otro periodo.
-            $vencimiento = new DateTimeImmutable(substr((string)$pendientes[0]['fecha_vencimiento'], 0, 10));
+            if (count($servicios) === 1) {
+                $idServicio = $servicios[0];
 
-            if ($diaPago < $vencimiento->modify("-$anticipo days")) {
-                throw new RevisionPagoUisp(sprintf(
-                    'Pago hecho %d días antes del vencimiento de la mensualidad pendiente más antigua (%s); puede ser de otro periodo.',
-                    (int)$diaPago->diff($vencimiento)->days,
-                    $vencimiento->format('Y-m-d')
-                ));
+                // Un pago muy anterior al vencimiento más antiguo probablemente es de otro periodo.
+                $vencimiento = new DateTimeImmutable(substr((string)$pendientes[0]['fecha_vencimiento'], 0, 10));
+
+                if ($diaPago < $vencimiento->modify("-$anticipo days")) {
+                    throw new RevisionPagoUisp(sprintf(
+                        'Pago hecho %d días antes del vencimiento de la mensualidad pendiente más antigua (%s); puede ser de otro periodo.',
+                        (int)$diaPago->diff($vencimiento)->days,
+                        $vencimiento->format('Y-m-d')
+                    ));
+                }
+            } else {
+                // No debe nada: el pago completo puede ser saldo a favor, si se sabe de qué servicio es.
+                $stmt = $conexion->prepare("
+                    SELECT DISTINCT id_servicio FROM obligaciones_pago
+                    WHERE id_cliente = ? AND concepto = 'MENSUALIDAD'
+                ");
+                $stmt->bind_param('i', $idCliente);
+                $stmt->execute();
+                $todos = array_map(fn($f) => (int)$f[0], $stmt->get_result()->fetch_all());
+                $stmt->close();
+
+                if (count($todos) !== 1) {
+                    throw new RevisionPagoUisp(
+                        "El cliente UBB $idCliente no debe nada y tiene varios servicios (" . implode(', ', $todos) .
+                        '); no se sabe a cuál abonar el saldo a favor.'
+                    );
+                }
+                $idServicio = $todos[0];
             }
 
             // Pago PENDIENTE en UBB del mismo servicio (p. ej. transferencia sin confirmar).
@@ -374,14 +402,21 @@ try {
                 );
             }
 
-            $saldoTotal = array_sum(array_column($pendientes, 'saldo'));
+            // Lo que sobra después de cubrir lo que debe es saldo a favor para la siguiente
+            // mensualidad. Solo si UISP también lo registró como saldo a favor del pago: si no,
+            // la diferencia viene de un precio o cargo distinto entre UISP y UBB, y se revisa.
+            $saldoTotal = (int)array_sum(array_column($pendientes, 'saldo'));
+            $sobrante = max(0, $centavosPago - $saldoTotal);
+            $creditoUisp = centavos($p['credito_uisp'] ?? 0);
 
-            if ($centavosPago > $saldoTotal) {
+            if ($sobrante > 0 && $creditoUisp < $sobrante) {
                 throw new RevisionPagoUisp(sprintf(
-                    'El pago (%s) supera todo lo que debe el servicio %d (%s).',
+                    'Paga %s y en UBB debe %s, pero UISP solo registró %s de saldo a favor: '
+                        . 'posible diferencia de precio o cargo extra (servicio %d).',
                     $montoTexto,
-                    $idServicio,
-                    pesos($saldoTotal)
+                    pesos($saldoTotal),
+                    pesos($creditoUisp),
+                    $idServicio
                 ));
             }
 
@@ -403,10 +438,25 @@ try {
                 $restante -= $monto;
             }
 
-            $detalle = implode(', ', array_map(
+            $partes = array_map(
                 fn($a) => $a['periodo'] . ' $' . pesos($a['centavos']) . ($a['liquida'] ? ' (pagada)' : ' (parcial)'),
                 $aplicaciones
-            ));
+            );
+            if ($restante > 0) {
+                $partes[] = 'saldo a favor $' . pesos($restante);
+                $contadores['saldo_favor_generado'] += $restante / 100;
+
+                if (!$confirmar) {
+                    $creditosSimulados[] = [
+                        'id_pago' => null,
+                        'id_cliente' => $idCliente,
+                        'id_servicio' => $idServicio,
+                        'disponible' => $restante,
+                        'referencia' => $referencia,
+                    ];
+                }
+            }
+            $detalle = implode(', ', $partes);
 
             if ($mostradosAplicados++ < 20) {
                 echo "  ✔ UISP $idPagoUisp | $fechaPago | cliente $idCliente servicio $idServicio | "
@@ -503,6 +553,150 @@ try {
         }
     }
 
+    /* ===== Saldo a favor → siguiente mensualidad =====
+     * Lo que sobró de un pago de UISP (monto menos lo ya aplicado) se abona a las
+     * mensualidades pendientes del mismo servicio, de la más antigua a la más nueva.
+     * Corre en cada ejecución: cuando se genera la mensualidad siguiente, se abona sola
+     * y solo queda por cobrar la diferencia. Se registra como aplicación del pago original.
+     */
+    $creditos = $conexion->query("
+        SELECT p.id_pago, p.id_cliente, p.id_servicio, p.referencia,
+               p.monto - COALESCE(SUM(po.monto_aplicado), 0) AS disponible
+        FROM pagos p
+        LEFT JOIN pagos_obligaciones po ON po.id_pago = p.id_pago
+        WHERE p.estado_pago = 'PAGADO'
+          AND p.referencia LIKE 'UISP-%'
+        GROUP BY p.id_pago, p.id_cliente, p.id_servicio, p.referencia, p.monto, p.fecha_pago
+        HAVING disponible > 0
+        ORDER BY p.fecha_pago ASC, p.id_pago ASC
+    ")->fetch_all(MYSQLI_ASSOC);
+
+    foreach ($creditos as &$c) {
+        $c['disponible'] = centavos($c['disponible']);
+    }
+    unset($c);
+
+    foreach (array_merge($creditos, $creditosSimulados) as $credito) {
+        $idCliente = (int)$credito['id_cliente'];
+        $idServicio = (int)$credito['id_servicio'];
+        $disponible = (int)$credito['disponible'];
+
+        $conexion->begin_transaction();
+
+        try {
+            $stmt = $conexion->prepare("
+                SELECT id_obligacion, periodo, monto
+                FROM obligaciones_pago
+                WHERE id_cliente = ? AND id_servicio = ?
+                  AND concepto = 'MENSUALIDAD' AND estado = 'PENDIENTE'
+                  AND fecha_vencimiento IS NOT NULL
+                ORDER BY fecha_vencimiento ASC, id_obligacion ASC
+                FOR UPDATE
+            ");
+            $stmt->bind_param('ii', $idCliente, $idServicio);
+            $stmt->execute();
+            $obligaciones = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+            $stmt->close();
+
+            $aplicado = $conexion->prepare("
+                SELECT COALESCE(SUM(po.monto_aplicado), 0)
+                FROM pagos_obligaciones po
+                INNER JOIN pagos p ON p.id_pago = po.id_pago
+                WHERE po.id_obligacion = ? AND p.estado_pago = 'PAGADO'
+            ");
+
+            $abonos = [];
+            foreach ($obligaciones as $o) {
+                if ($disponible === 0) {
+                    break;
+                }
+                $idObligacion = (int)$o['id_obligacion'];
+                $aplicado->bind_param('i', $idObligacion);
+                $aplicado->execute();
+                $saldo = centavos($o['monto'])
+                    - centavos($aplicado->get_result()->fetch_row()[0])
+                    - ($simulado[$idObligacion] ?? 0);
+
+                if ($saldo <= 0) {
+                    continue;
+                }
+
+                $monto = min($disponible, $saldo);
+                $abonos[] = [
+                    'id_obligacion' => $idObligacion,
+                    'periodo' => $o['periodo'],
+                    'centavos' => $monto,
+                    'liquida' => $monto === $saldo,
+                ];
+                $disponible -= $monto;
+            }
+            $aplicado->close();
+
+            if ($abonos === []) {
+                $conexion->rollback();
+                continue;
+            }
+
+            $detalle = implode(', ', array_map(
+                fn($a) => $a['periodo'] . ' $' . pesos($a['centavos']) . ($a['liquida'] ? ' (pagada)' : ' (parcial)'),
+                $abonos
+            ));
+            echo "  ↪ Saldo a favor de {$credito['referencia']} | cliente $idCliente servicio $idServicio → $detalle\n";
+
+            foreach ($abonos as $a) {
+                $contadores['saldo_favor_aplicado'] += $a['centavos'] / 100;
+                $contadores['mensualidades_con_saldo_favor']++;
+                if ($a['liquida']) {
+                    $contadores['mensualidades_pagadas']++;
+                }
+            }
+
+            if (!$confirmar) {
+                foreach ($abonos as $a) {
+                    $simulado[$a['id_obligacion']] = ($simulado[$a['id_obligacion']] ?? 0) + $a['centavos'];
+                }
+                $conexion->rollback();
+                continue;
+            }
+
+            $idPago = (int)$credito['id_pago'];
+            $insertarAplicacion = $conexion->prepare("
+                INSERT INTO pagos_obligaciones (id_pago, id_obligacion, monto_aplicado, fecha_aplicacion)
+                VALUES (?, ?, ?, NOW())
+            ");
+            $marcarPagada = $conexion->prepare("
+                UPDATE obligaciones_pago SET estado = 'PAGADA'
+                WHERE id_obligacion = ? AND estado = 'PENDIENTE'
+            ");
+
+            foreach ($abonos as $a) {
+                $montoAplicado = pesos($a['centavos']);
+                $insertarAplicacion->bind_param('iis', $idPago, $a['id_obligacion'], $montoAplicado);
+                $insertarAplicacion->execute();
+
+                if ($a['liquida']) {
+                    $marcarPagada->bind_param('i', $a['id_obligacion']);
+                    $marcarPagada->execute();
+                }
+            }
+            $insertarAplicacion->close();
+            $marcarPagada->close();
+
+            $nota = "\nSaldo a favor aplicado el " . date('Y-m-d') . ": $detalle.";
+            $stmt = $conexion->prepare("UPDATE pagos SET observaciones = CONCAT(COALESCE(observaciones, ''), ?) WHERE id_pago = ?");
+            $stmt->bind_param('si', $nota, $idPago);
+            $stmt->execute();
+            $stmt->close();
+
+            $conexion->commit();
+        } catch (Throwable $e) {
+            $conexion->rollback();
+            throw new RuntimeException("Saldo a favor de {$credito['referencia']}: " . $e->getMessage(), 0, $e);
+        }
+    }
+
+    $contadores['saldo_favor_generado'] = round($contadores['saldo_favor_generado'], 2);
+    $contadores['saldo_favor_aplicado'] = round($contadores['saldo_favor_aplicado'], 2);
     $contadores['importe_aplicado'] = round($contadores['importe_aplicado'], 2);
 
     echo "\n===== RESUMEN =====\n";
@@ -513,6 +707,9 @@ try {
     echo "  de ellos, cortesías:  {$contadores['cortesias']} | $" . number_format($contadores['importe_cortesia'], 2)
         . " (descuentos, no son ingreso)\n";
     echo "Mensualidades pagadas:  {$contadores['mensualidades_pagadas']}\n";
+    echo "Saldo a favor nuevo:    $" . number_format($contadores['saldo_favor_generado'], 2) . " (sobrantes, para la siguiente mensualidad)\n";
+    echo "Saldo a favor abonado:  $" . number_format($contadores['saldo_favor_aplicado'], 2)
+        . " a {$contadores['mensualidades_con_saldo_favor']} mensualidades\n";
     echo "A revisión manual:      {$contadores['revision']}\n";
     echo "Históricos (no aplican): {$contadores['historicos']} (anteriores a las mensualidades de UBB)\n";
 

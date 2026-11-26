@@ -123,6 +123,25 @@ try {
     $resumen = $stmt->get_result()->fetch_assoc();
     $stmt->close();
 
+    // Saldo a favor: lo que sobró de pagos de UISP y aún no se abona a una mensualidad.
+    $stmt = $conexion->prepare("
+        SELECT COALESCE(SUM(p.monto - COALESCE(a.aplicado, 0)), 0)
+        FROM pagos p
+        LEFT JOIN (
+            SELECT id_pago, SUM(monto_aplicado) AS aplicado
+            FROM pagos_obligaciones
+            GROUP BY id_pago
+        ) a ON a.id_pago = p.id_pago
+        WHERE p.id_cliente = ?
+          AND p.estado_pago = 'PAGADO'
+          AND p.referencia LIKE 'UISP-%'
+          AND p.monto > COALESCE(a.aplicado, 0)
+    ");
+    $stmt->bind_param("i", $id_cliente);
+    $stmt->execute();
+    $saldoAFavor = (float)$stmt->get_result()->fetch_row()[0];
+    $stmt->close();
+
     // 4. HISTORIAL DE PAGOS REGISTRADOS EN UBB
     $stmt = $conexion->prepare("
         SELECT
@@ -261,7 +280,9 @@ foreach ($servicios as $servicio) {
 
         if ($pago["estado_pago"] === "PAGADO") {
             $resumenServicios[$sid]["pagos_confirmados"]++;
-            $resumenServicios[$sid]["total_pagado"] += (float)$pago["monto"];
+            if ($pago["metodo_pago"] !== "CORTESIA") {
+                $resumenServicios[$sid]["total_pagado"] += (float)$pago["monto"];
+            }
         } elseif ($pago["estado_pago"] === "PENDIENTE") {
             $resumenServicios[$sid]["pagos_pendientes"]++;
             $resumenServicios[$sid]["monto_pagos_pendientes"] += (float)$pago["monto"];
@@ -455,6 +476,10 @@ function exp_estado_clase(string $estado): string {
             <div class="exp-indicador">
                 <span>Total pagado en UBB</span>
                 <strong>$<?= number_format((float)$resumen["total_pagado"], 2) ?></strong>
+            </div>
+            <div class="exp-indicador">
+                <span>Saldo a favor</span>
+                <strong>$<?= number_format($saldoAFavor ?? 0, 2) ?></strong>
             </div>
             <div class="exp-indicador">
                 <span>Pagos históricos UISP</span>

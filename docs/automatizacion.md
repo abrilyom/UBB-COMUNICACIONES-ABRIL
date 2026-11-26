@@ -161,7 +161,9 @@ Sincronizar solo guarda el historial. Para que los módulos (pagos de hoy, próx
 |---|---|
 | Cliente UISP ligado a un solo cliente UBB (`clientes.uisp_id`) con adeudo en un solo servicio | Pago `PAGADO` (referencia `UISP-<id>`) aplicado de la mensualidad más antigua a la más nueva; la que llega a 0 queda `PAGADA` |
 | Pago parcial | Se aplica; la mensualidad sigue pendiente |
-| Pago mayor a todo el adeudo, varios servicios con adeudo, cliente sin ligar o sin mensualidades pendientes | `REVISION` |
+| Paga más de lo que debe (o no debe nada) y UISP registró ese sobrante como saldo a favor del pago | Cubre lo que debe y el resto queda como **saldo a favor**: se abona solo a la siguiente mensualidad del mismo servicio (ahí solo se cobra la diferencia). Visible en la ficha del cliente |
+| Paga más de lo que debe en UBB pero UISP no registró saldo a favor | `REVISION`: diferencia de precio o cargo extra entre UISP y UBB |
+| Varios servicios con adeudo, cliente sin ligar o sin mensualidades registradas | `REVISION` |
 | "Crédito de cortesía" (descuento, p. ej. por falla del servicio) | Se aplica con método `CORTESIA`: cubre la mensualidad, pero los totales de ingresos (panel, Pagos hoy, Historial, Reporte semanal, ficha del cliente) lo excluyen |
 | Personalizado o cheque | `REVISION` (no se sabe si es dinero) |
 | Pago anterior a la primera mensualidad del cliente en UBB (más de 20 días antes de su vencimiento) | `HISTORICO`: se guarda, no se aplica ni se revisa |
