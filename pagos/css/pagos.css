@@ -10678,3 +10678,44 @@ header.ubb-encabezado-ref .ubb-salir-visual {
     border-color: rgba(255, 255, 255, .35) !important;
     color: #fff !important;
 }
+
+
+/* UBB: sin barra superior; solo queda el logo dentro del panel lateral */
+html body header.ubb-encabezado-ref > div.barra-superior,
+html body header.ubb-encabezado-ref div.ubb-sistema-activo,
+html body header.ubb-encabezado-ref::before,
+html body header.ubb-encabezado-ref::after {
+    display: none !important;
+}
+
+header.ubb-encabezado-ref {
+    background: #ab69b8 !important;
+    box-shadow: none !important;
+}
+
+@media (min-width: 901px) {
+    /* El encabezado ocupa solo el ancho del panel y es transparente:
+       se ve el mismo degradado del panel, sin cortes */
+    header.ubb-encabezado-ref {
+        right: auto !important;
+        width: 258px !important;
+        padding-left: 22px !important;
+        padding-right: 14px !important;
+        background: transparent !important;
+    }
+
+    header.ubb-encabezado-ref > .marca {
+        max-width: 100% !important;
+        flex-basis: auto !important;
+    }
+
+    .menu-lateral-ubb {
+        top: 0 !important;
+        height: 100vh !important;
+        padding-top: 110px !important;
+    }
+
+    body {
+        padding-top: 0 !important;
+    }
+}
