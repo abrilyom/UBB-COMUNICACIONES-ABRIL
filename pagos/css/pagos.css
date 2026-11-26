@@ -10680,11 +10680,9 @@ header.ubb-encabezado-ref .ubb-salir-visual {
 }
 
 
-/* UBB: sin barra superior; solo queda el logo dentro del panel lateral */
-html body header.ubb-encabezado-ref > div.barra-superior,
-html body header.ubb-encabezado-ref div.ubb-sistema-activo,
-html body header.ubb-encabezado-ref::before,
-html body header.ubb-encabezado-ref::after {
+/* UBB: barra superior clara con iconos y ondas en morado; el panel
+   lateral morado ocupa toda la altura con el logo arriba */
+html body header.ubb-encabezado-ref div.ubb-sistema-activo {
     display: none !important;
 }
 
@@ -10694,28 +10692,55 @@ header.ubb-encabezado-ref {
 }
 
 @media (min-width: 901px) {
-    /* El encabezado ocupa solo el ancho del panel y es transparente:
-       se ve el mismo degradado del panel, sin cortes */
+    /* Izquierda: transparente para que se vea el panel.
+       Derecha: mismo fondo claro del contenido */
     header.ubb-encabezado-ref {
-        right: auto !important;
-        width: 258px !important;
-        padding-left: 22px !important;
-        padding-right: 14px !important;
-        background: transparent !important;
+        background: linear-gradient(
+            90deg,
+            transparent 0,
+            transparent 258px,
+            #f7f3f9 258px,
+            #f7f3f9 100%
+        ) !important;
+        border-bottom: 0 !important;
     }
 
-    header.ubb-encabezado-ref > .marca {
-        max-width: 100% !important;
-        flex-basis: auto !important;
+    /* Ondas decorativas en morado del panel */
+    html body header.ubb-encabezado-ref::before {
+        opacity: .9 !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='760' height='120' viewBox='0 0 760 120'%3E%3Cg fill='none' stroke='%23ab69b8' stroke-width='1.3' opacity='.55'%3E%3Cpath d='M-80 130 Q80 10 240 65 T560 35 T850 -10'/%3E%3Cpath d='M-80 140 Q80 20 240 75 T560 45 T850 0'/%3E%3Cpath d='M-80 150 Q80 30 240 85 T560 55 T850 10'/%3E%3Cpath d='M-80 160 Q80 40 240 95 T560 65 T850 20'/%3E%3Cpath d='M-80 170 Q80 50 240 105 T560 75 T850 30'/%3E%3Cpath d='M-80 180 Q80 60 240 115 T560 85 T850 40'/%3E%3Cpath d='M-80 190 Q80 70 240 125 T560 95 T850 50'/%3E%3C/g%3E%3C/svg%3E") !important;
     }
 
+    html body header.ubb-encabezado-ref::after {
+        background: radial-gradient(
+            ellipse at 85% 15%,
+            rgba(171, 105, 184, .10),
+            transparent 66%
+        ) !important;
+    }
+
+    /* Iconos, perfil y salir en morado */
+    header.ubb-encabezado-ref .ubb-icono,
+    header.ubb-encabezado-ref .administrador,
+    header.ubb-encabezado-ref .ubb-salir-visual {
+        color: #9e51ae !important;
+    }
+
+    header.ubb-encabezado-ref .ubb-icono:hover {
+        background: rgba(171, 105, 184, .12) !important;
+    }
+
+    header.ubb-encabezado-ref .ubb-avatar,
+    header.ubb-encabezado-ref .ubb-salir-visual {
+        background: #fff !important;
+        border-color: #e2c6e8 !important;
+        color: #9e51ae !important;
+    }
+
+    /* El panel empieza desde arriba con un solo degradado */
     .menu-lateral-ubb {
         top: 0 !important;
         height: 100vh !important;
         padding-top: 110px !important;
-    }
-
-    body {
-        padding-top: 0 !important;
     }
 }
