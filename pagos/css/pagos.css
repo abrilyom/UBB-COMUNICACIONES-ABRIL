@@ -5393,8 +5393,10 @@ body {
 .ubb-avisos-boton:hover {color:#5e3d66}
 .ubb-avisos-boton:focus-visible {outline:2px solid #bc90c5;outline-offset:3px}
 .ubb-avisos-boton i {min-width:15px;width:auto;padding:0 3px;box-sizing:border-box;border-radius:8px}
+/* fixed: el encabezado recorta lo que sobresale (overflow:hidden); la
+   posición exacta la pone avisos-plataforma.js junto a la campanita. */
 .ubb-avisos-panel {
-    position:absolute;right:-8px;top:calc(100% + 10px);z-index:60;
+    position:fixed;right:16px;top:90px;z-index:1100;
     width:min(360px,calc(100vw - 32px));max-height:min(440px,70vh);
     display:flex;flex-direction:column;
     background:#fff;border:1px solid #e6d9e9;border-radius:12px;

@@ -137,10 +137,22 @@
     }
   }
 
+  // El panel es position:fixed (el encabezado recorta lo que sobresale),
+  // así que se coloca debajo de la campanita según su posición en pantalla.
+  function colocarPanel() {
+    const r = boton.getBoundingClientRect();
+    panel.style.top = `${Math.round(r.bottom + 10)}px`;
+    panel.style.right = `${Math.max(16, Math.round(window.innerWidth - r.right - 8))}px`;
+  }
+
   function abrir(abierto) {
+    if (abierto) colocarPanel();
     panel.hidden = !abierto;
     boton.setAttribute('aria-expanded', String(abierto));
   }
+
+  window.addEventListener('resize', () => { if (!panel.hidden) colocarPanel(); });
+  window.addEventListener('scroll', () => { if (!panel.hidden) colocarPanel(); }, { passive: true });
 
   boton.addEventListener('click', (e) => {
     e.stopPropagation();
