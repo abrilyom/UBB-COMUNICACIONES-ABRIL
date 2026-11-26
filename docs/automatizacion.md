@@ -316,10 +316,11 @@ Regla del ingeniero (confirmada el 26/11/2026): **al reactivar se cobra el mes a
 | Mensualidad sin pagos de un mes anterior al mes actual | `CANCELADA` con `no_cobro_motivo` = `MES_DEL_CORTE` (vencía antes del corte) o `SERVICIO_CORTADO` |
 | Mensualidad anterior con pago parcial | No se toca; a revisión |
 | Mensualidad del mes actual, cliente que paga en UBB Pagos (plataforma de Jamileth) | Se le suma la reconexión (`cargo_reconexion`, $39). Si el corte sigue y cambia el mes, la reconexión pasa al mes nuevo |
-| Mensualidad del mes actual, cliente que paga en UISP | UBB no suma nada (el pago de UISP no cubriría los $39 y el servicio quedaría con adeudo vencido). Si su factura de UISP no trae reconexión, se lista para que el personal la agregue |
+| Cliente que paga en UISP, mensualidad por plan (sin factura de UISP) que vence durante el corte | `CANCELADA` (`SERVICIO_CORTADO`), aunque sea del mes actual: UISP no factura servicios suspendidos. Si UISP la factura después (el cliente regresó), `mensualidades_desde_uisp.php` la reabre y la liga a su factura |
+| Mensualidad del mes actual, cliente que paga en UISP | UBB no suma nada (el pago de UISP no cubriría los $39 y el servicio quedaría con adeudo vencido). **Al reactivarse**, si su factura de UISP no trae reconexión, se lista para que el personal la agregue; mientras sigue cortado no se avisa |
 | Mensualidad cancelada ligada a una factura | Se lista: el personal anula la factura en UISP y Jamileth la cancela en la plataforma. UBB no escribe en ninguna |
 
-`mensualidades_desde_uisp.php` y `sincronizar_facturas_plataforma.php` no reabren las mensualidades canceladas por corte, y la plataforma conserva `cargo_reconexion` sobre el total de la factura. **Acordar con Jamileth** que no agregue reconexión en su factura (UBB ya la suma) y qué hace con un pago que trae $39 más que el saldo de la factura.
+`mensualidades_desde_uisp.php` y `sincronizar_facturas_plataforma.php` no reabren las mensualidades canceladas por corte (salvo la de plan que UISP sí llegue a facturar), y la plataforma conserva `cargo_reconexion` sobre el total de la factura. **Acordar con Jamileth** que no agregue reconexión en su factura (UBB ya la suma) y qué hace con un pago que trae $39 más que el saldo de la factura.
 
 **Deshacer** un corte mal detectado: `php meses_sin_servicio.php --deshacer=<id_corte> --confirmar` regresa sus mensualidades a `PENDIENTE`, quita la reconexión y lo marca `anulado` para no volver a aplicarlo.
 

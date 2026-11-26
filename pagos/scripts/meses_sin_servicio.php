@@ -580,9 +580,12 @@ try {
         $estadoReconexion = $g['dueno']['reconexion_estado'];
         $nuevoDestino = $idConReconexion;
 
-        if ($actual === null) {
+        if (!$cobraUbb && $g['fin'] === null) {
+            // Paga en UISP y sigue cortado: la reconexión se revisa cuando regrese.
+            $nuevoEstadoReconexion = $estadoReconexion;
+        } elseif ($actual === null) {
             $nuevoEstadoReconexion = $estadoReconexion === 'CARGADA' ? 'CARGADA' : 'SIN_MENSUALIDAD';
-            if ($estadoReconexion !== 'CARGADA') {
+            if ($estadoReconexion !== 'CARGADA' && $cobraUbb) {
                 $revision[] = "$etiqueta: no tiene mensualidad de $periodoActual; la reconexión se cargará cuando exista.";
             }
         } elseif ((int)$actual['id_obligacion'] === $idConReconexion) {
@@ -641,7 +644,14 @@ try {
 
         /* --- Meses anteriores al mes actual: no se cobran --- */
         foreach ($mensualidades as $o) {
-            if ($o['estado'] !== 'PENDIENTE' || $o['periodo'] >= $periodoActual) {
+            // Paga en UISP: una mensualidad por plan (sin factura de UISP) que vence durante el corte
+            // tampoco se cobra, aunque sea del mes actual: UISP no factura servicios suspendidos.
+            // Si después UISP la factura, mensualidades_desde_uisp.php la reabre.
+            $sinFacturaUisp = !$cobraUbb && $o['uisp_invoice_id'] === null
+                && (string)$o['fecha_vencimiento'] >= $g['inicio']
+                && ($g['fin'] === null || (string)$o['fecha_vencimiento'] < $g['fin']);
+
+            if ($o['estado'] !== 'PENDIENTE' || ($o['periodo'] >= $periodoActual && !$sinFacturaUisp)) {
                 continue;
             }
 

@@ -87,6 +87,7 @@ $contadores = [
     'antes_de_desde' => 0,
     'sin_servicio_ubb' => 0,
     'no_cobradas_por_corte' => 0,
+    'reabiertas_por_factura' => 0,
     'para_revision' => 0,
 ];
 $revision = [];
@@ -274,12 +275,22 @@ try {
                 continue;
             }
 
-            if ($existente['estado'] === 'CANCELADA' && $existente['no_cobro_motivo'] !== null) {
-                $contadores['no_cobradas_por_corte']++;
-                continue;
-            }
+            // Se canceló por corte porque UISP no la había facturado; ahora sí la factura
+            // (p. ej. el cliente regresó): se reabre y se liga a su factura.
+            $reabrir = $existente['estado'] === 'CANCELADA' && $existente['no_cobro_motivo'] !== null;
 
-            if ($existente['estado'] === 'CANCELADA') {
+            if ($reabrir) {
+                $contadores['reabiertas_por_factura']++;
+                echo "  ↺ Factura $numero → reabre la mensualidad {$existente['id_obligacion']} ($periodo), cancelada por corte\n";
+                if ($confirmar) {
+                    $stmt = $conexion->prepare("
+                        UPDATE obligaciones_pago SET no_cobro_motivo = NULL, id_corte_no_cobro = NULL WHERE id_obligacion = ?
+                    ");
+                    $stmt->bind_param('i', $existente['id_obligacion']);
+                    $stmt->execute();
+                    $stmt->close();
+                }
+            } elseif ($existente['estado'] === 'CANCELADA') {
                 $revision[] = "Factura $numero (servicio $idServicio, $periodo): la mensualidad {$existente['id_obligacion']} está cancelada en UBB.";
                 continue;
             }
@@ -342,6 +353,7 @@ try {
     echo "Sin cambios:                   {$contadores['sin_cambios']}\n";
     echo "Sin servicio UBB identificable: {$contadores['sin_servicio_ubb']}\n";
     echo "No cobradas (servicio cortado): {$contadores['no_cobradas_por_corte']}\n";
+    echo "Reabiertas (UISP sí facturó):  {$contadores['reabiertas_por_factura']}\n";
 
     if ($revision) {
         echo "\nPara revisión ({$contadores['para_revision']}, primeras 30):\n";
