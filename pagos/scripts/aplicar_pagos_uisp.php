@@ -48,6 +48,12 @@ const UISP_METODO_CORTESIA = 'CORTESIA';
 const UISP_DIAS_DUPLICADO = 3;
 /** Un pago cuenta para una mensualidad si llega como mucho estos días antes de su vencimiento (un mes menos la gracia). */
 define('UISP_DIAS_ANTICIPO', max(1, (int)(getenv('UBB_UISP_DIAS_ANTICIPO') ?: 20)));
+/**
+ * Saldo a favor automático. Apagado mientras el equipo no confirme qué son los
+ * sobrantes (p. ej. los +$12 con tarjeta podrían ser comisión): cada sobrante va a
+ * revisión y el personal decide en Revisión UISP. Encender con UBB_UISP_SALDO_FAVOR=1.
+ */
+define('UISP_SALDO_FAVOR_AUTOMATICO', getenv('UBB_UISP_SALDO_FAVOR') === '1');
 
 class RevisionPagoUisp extends RuntimeException
 {
@@ -112,9 +118,10 @@ function marcarResultado(
         UPDATE uisp_pagos_importacion
         SET estado_aplicacion = ?, id_pago_ubb = ?, id_cliente_ubb = ?,
             id_servicio_ubb = ?, motivo_revision = ?, aplicado_en = NOW()
+            , decision_revision = IF(? = 'REVISION', NULL, decision_revision)
         WHERE id_importacion = ?
     ");
-    $stmt->bind_param('siiisi', $estado, $idPago, $idCliente, $idServicio, $motivo, $idImportacion);
+    $stmt->bind_param('siiissi', $estado, $idPago, $idCliente, $idServicio, $motivo, $estado, $idImportacion);
     $stmt->execute();
     $stmt->close();
 }
@@ -154,9 +161,9 @@ try {
     obtenerBloqueoScript($conexion, $nombreBloqueo);
     $bloqueo = true;
 
-    $columna = $conexion->query("SHOW COLUMNS FROM uisp_pagos_importacion LIKE 'estado_aplicacion'");
+    $columna = $conexion->query("SHOW COLUMNS FROM uisp_pagos_importacion LIKE 'decision_revision'");
     if ($columna->num_rows === 0) {
-        throw new RuntimeException('Falta aplicar db/migraciones/2026-11-28_aplicar_pagos_uisp.sql.');
+        throw new RuntimeException('Falta aplicar db/migraciones/2026-12-02_revision_uisp.sql.');
     }
 
     echo $confirmar
@@ -179,14 +186,15 @@ try {
 
     $estados = $reintentar
         ? "(estado_aplicacion IS NULL OR estado_aplicacion = 'REVISION')"
-        : 'estado_aplicacion IS NULL';
+        // Siempre incluye los que el personal ya decidió en Revisión UISP.
+        : "(estado_aplicacion IS NULL OR (estado_aplicacion = 'REVISION' AND decision_revision IS NOT NULL))";
     $filtroFecha = $desde !== null
         ? "AND LEFT(fecha_original_uisp, 10) >= '" . $conexion->real_escape_string($desde) . "'"
         : '';
 
     $pagosUisp = $conexion->query("
         SELECT id_importacion, uisp_payment_id, uisp_client_id, monto, moneda, credito_uisp,
-               fecha_original_uisp, metodo_original_uisp, metodo_normalizado
+               fecha_original_uisp, metodo_original_uisp, metodo_normalizado, decision_revision
         FROM uisp_pagos_importacion
         WHERE uisp_payment_id IS NOT NULL
           AND $estados
@@ -204,12 +212,17 @@ try {
         $centavosPago = centavos($p['monto']);
         $esCortesia = stripos((string)$p['metodo_original_uisp'], 'cortes') !== false;
         $metodo = $esCortesia ? UISP_METODO_CORTESIA : (string)$p['metodo_normalizado'];
+        $decision = $p['decision_revision'] ?? null;
         $idCliente = null;
         $idServicio = null;
 
         $conexion->begin_transaction();
 
         try {
+            if ($decision === 'HISTORICO') {
+                throw new HistoricoPagoUisp('Marcado como histórico en Revisión UISP.');
+            }
+
             if ($p['moneda'] !== 'MXN') {
                 throw new RevisionPagoUisp('La moneda no es MXN.');
             }
@@ -409,7 +422,10 @@ try {
             $sobrante = max(0, $centavosPago - $saldoTotal);
             $creditoUisp = centavos($p['credito_uisp'] ?? 0);
 
-            if ($sobrante > 0 && $creditoUisp < $sobrante) {
+            // Si el personal ya decidió en Revisión UISP que es saldo a favor, se respeta.
+            $aprobadoSaldoFavor = $decision === 'SALDO_FAVOR';
+
+            if ($sobrante > 0 && !$aprobadoSaldoFavor && $creditoUisp < $sobrante) {
                 throw new RevisionPagoUisp(sprintf(
                     'Paga %s y en UBB debe %s, pero UISP solo registró %s de saldo a favor: '
                         . 'posible diferencia de precio o cargo extra (servicio %d).',
@@ -417,6 +433,17 @@ try {
                     pesos($saldoTotal),
                     pesos($creditoUisp),
                     $idServicio
+                ));
+            }
+
+            // Mientras no se confirme la regla (UBB_UISP_SALDO_FAVOR=1), cada sobrante se revisa a mano.
+            if ($sobrante > 0 && !$aprobadoSaldoFavor && !UISP_SALDO_FAVOR_AUTOMATICO) {
+                throw new RevisionPagoUisp(sprintf(
+                    'Sobrante de %s (paga %s y en UBB debe %s; UISP también lo registró a favor): '
+                        . 'falta confirmar si se abona a la siguiente mensualidad.',
+                    pesos($sobrante),
+                    $montoTexto,
+                    pesos($saldoTotal)
                 ));
             }
 
@@ -564,8 +591,10 @@ try {
                p.monto - COALESCE(SUM(po.monto_aplicado), 0) AS disponible
         FROM pagos p
         LEFT JOIN pagos_obligaciones po ON po.id_pago = p.id_pago
+        LEFT JOIN uisp_pagos_importacion u ON u.id_pago_ubb = p.id_pago
         WHERE p.estado_pago = 'PAGADO'
           AND p.referencia LIKE 'UISP-%'
+          AND (" . (UISP_SALDO_FAVOR_AUTOMATICO ? '1' : "u.decision_revision = 'SALDO_FAVOR'") . ")
         GROUP BY p.id_pago, p.id_cliente, p.id_servicio, p.referencia, p.monto, p.fecha_pago
         HAVING disponible > 0
         ORDER BY p.fecha_pago ASC, p.id_pago ASC

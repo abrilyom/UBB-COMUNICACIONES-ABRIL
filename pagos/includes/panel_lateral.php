@@ -13,6 +13,8 @@ $opcionesMenu = [
      "icono" => '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/>'],
     ["archivo" => "conciliacion_bancaria.php", "texto" => "Conciliación bancaria",
      "icono" => '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M7 15h4"/>'],
+    ["archivo" => "revision_uisp.php", "texto" => "Revisión UISP",
+     "icono" => '<path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/>'],
     ["archivo" => "clientes.php", "texto" => "Clientes",
      "icono" => '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M16 3.2a4 4 0 0 1 0 7.6M20 21v-2a4 4 0 0 0-3-3.9"/>'],
     ["archivo" => "reporte_semanal.php", "texto" => "Reportes",

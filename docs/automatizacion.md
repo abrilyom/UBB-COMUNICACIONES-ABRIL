@@ -188,6 +188,17 @@ En el cron, después de sincronizar:
 */15 * * * *  (docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/sincronizar_pagos_uisp.php --confirmar && docker exec servidor-aviso-yomyom php /var/www/html/pagos/scripts/aplicar_pagos_uisp.php --confirmar) >> /var/log/ubb/pagos_uisp.log 2>&1
 ```
 
+**Saldo a favor: por ahora se confirma a mano.** Hasta que el equipo confirme qué son los sobrantes (los +$12 con tarjeta podrían ser comisión), `UBB_UISP_SALDO_FAVOR` está apagado: todo sobrante va a revisión con el motivo *"Sobrante de $X … falta confirmar"*. Para volverlo automático: `docker exec -e UBB_UISP_SALDO_FAVOR=1 …` en la línea del cron.
+
+**Módulo Revisión UISP** (`pagos/revision_uisp.php`, en el menú): lista los pagos en revisión agrupados por motivo (sobrante por confirmar, diferencia con UISP, cliente sin mensualidades, método no reconocido, cliente no ligado, varios servicios, pago muy adelantado, posible duplicado). El personal registra una decisión por pago:
+
+| Decisión | Disponible para | Qué hace `aplicar_pagos_uisp.php` en su siguiente corrida |
+|---|---|---|
+| Abonar como saldo a favor | Sobrante por confirmar, diferencia con UISP | Cubre lo que debe y el sobrante se abona a la siguiente mensualidad |
+| Histórico (no aplica) | Todas | Marca el pago como `HISTORICO` |
+
+La página no mueve dinero: solo guarda `decision_revision`. Si al reprocesarlo el pago vuelve a revisión por otro motivo, la decisión se borra y aparece otra vez para decidir. Requiere `db/migraciones/2026-12-02_revision_uisp.sql`.
+
 **Deshacer:** `deshacer_pagos_uisp.php` revierte la aplicación completa en una sola transacción: borra los pagos `UISP-…` y sus aplicaciones, regresa a `PENDIENTE` las mensualidades que ya no quedan cubiertas y limpia `estado_aplicacion`. No toca pagos manuales ni bancarios, ni el historial traído de UISP. Guarda un respaldo JSON en `pagos/reportes/`. Simula por defecto; `--confirmar` para deshacer.
 
 **Cuando llegue la API de BBVA:** el mismo dinero aparecería en UISP y en el banco. Antes de activar ambas fuentes hay que decidir cuál aplica los pagos, para no registrarlos dos veces.
