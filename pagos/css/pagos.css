@@ -10601,3 +10601,80 @@ body.confirmacion-pago-abierta {
 .menu-lateral-ubb .menu-pie-ubb {
     border-top-color: rgba(255, 255, 255, .25) !important;
 }
+
+
+/* UBB: encabezado en degradado orquidea (#a770b2), unido al panel lateral */
+header.ubb-encabezado-ref {
+    background: linear-gradient(
+        100deg,
+        #ab69b8 0%,
+        #a35cb2 45%,
+        #9e51ae 100%
+    ) !important;
+    background-color: #ab69b8 !important;
+    border-bottom: 0 !important;
+    box-shadow: 0 3px 14px rgba(70, 25, 80, .18) !important;
+}
+
+/* Ondas decorativas en blanco translucido */
+header.ubb-encabezado-ref::before {
+    opacity: .5 !important;
+    background-color: transparent !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='760' height='120' viewBox='0 0 760 120'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='1.3' opacity='.45'%3E%3Cpath d='M-80 130 Q80 10 240 65 T560 35 T850 -10'/%3E%3Cpath d='M-80 140 Q80 20 240 75 T560 45 T850 0'/%3E%3Cpath d='M-80 150 Q80 30 240 85 T560 55 T850 10'/%3E%3Cpath d='M-80 160 Q80 40 240 95 T560 65 T850 20'/%3E%3Cpath d='M-80 170 Q80 50 240 105 T560 75 T850 30'/%3E%3Cpath d='M-80 180 Q80 60 240 115 T560 85 T850 40'/%3E%3Cpath d='M-80 190 Q80 70 240 125 T560 95 T850 50'/%3E%3C/g%3E%3C/svg%3E") !important;
+}
+
+header.ubb-encabezado-ref::after {
+    background: radial-gradient(
+        ellipse at 85% 15%,
+        rgba(255, 255, 255, .14),
+        transparent 66%
+    ) !important;
+}
+
+/* Logo sobre una placa blanca para que conserve sus colores */
+header.ubb-encabezado-ref .marca img.logo-ubb {
+    background: #fff !important;
+    border-radius: 14px !important;
+    box-shadow: 0 3px 10px rgba(60, 20, 70, .20) !important;
+}
+
+/* Textos de la marca en blanco */
+header.ubb-encabezado-ref .marca-texto h1,
+header.ubb-encabezado-ref .marca-texto .marca-subtitulo,
+header.ubb-encabezado-ref .marca-texto p.marca-modulo {
+    color: #fff !important;
+}
+
+header.ubb-encabezado-ref .marca-texto .marca-separador {
+    background: rgba(255, 255, 255, .55) !important;
+}
+
+/* Indicador "Sistema activo" */
+header.ubb-encabezado-ref .ubb-sistema-activo {
+    background: rgba(255, 255, 255, .16) !important;
+    border-color: rgba(255, 255, 255, .35) !important;
+    color: #fff !important;
+}
+
+header.ubb-encabezado-ref .ubb-punto-activo {
+    background: #4ade80 !important;
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, .25) !important;
+}
+
+/* Iconos, perfil y salir */
+header.ubb-encabezado-ref .ubb-icono,
+header.ubb-encabezado-ref .administrador,
+header.ubb-encabezado-ref .ubb-salir-visual {
+    color: #fff !important;
+}
+
+header.ubb-encabezado-ref .ubb-icono:hover {
+    background: rgba(255, 255, 255, .16) !important;
+}
+
+header.ubb-encabezado-ref .ubb-avatar,
+header.ubb-encabezado-ref .ubb-salir-visual {
+    background: rgba(255, 255, 255, .16) !important;
+    border-color: rgba(255, 255, 255, .35) !important;
+    color: #fff !important;
+}

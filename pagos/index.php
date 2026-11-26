@@ -421,7 +421,7 @@ $auto_uisp = $automatizacion['pagos_uisp'] ?? null;
 
     <title>UBB Comunicaciones - Gestión de Pagos</title>
 
-    <link rel="stylesheet" href="css/pagos.css?v=20261125_orquidea">
+    <link rel="stylesheet" href="css/pagos.css?v=20261126_encabezado">
 </head>
 
 <body>
