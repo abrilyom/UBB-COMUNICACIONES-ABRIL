@@ -24,6 +24,7 @@ Identificadores compartidos: `id_cliente`, `id_servicio`, `id_plan`. Para UISP: 
 | API de BBVA | ⏳ Pendiente del banco | — usará el mismo proceso de conciliación |
 | Pagos registrados en UISP | ✅ Implementada (API del CRM vía NAT en MKR-FSL02, 10.0.1.6:18445); se aplica a mensualidades | `scripts/sincronizar_pagos_uisp.php` → `uisp_pagos_importacion` (ver `docs/automatizacion.md`) |
 | Aviso al monitoreo de Christian (Telegram) en cortes y reactivaciones | ✅ Instalado y probado en dns-server (26/11/2026); solo se envía con solicitudes `COMPLETADA`, así que no hay avisos reales mientras Grezz siga en simulación | `api/aviso_monitoreo.php`, `api/procesador_grezz.php` |
+| Avisos de la plataforma en la campanita (factura nueva, vencida, corte, cambios de servicio) | 🟡 Implementado; la API (192.168.100.221:8081) y la llave ya respondieron desde dns-server (26/11/2026), falta probar la campanita en el módulo | `api/cliente_avisos_plataforma.php`, `avisos_plataforma.php`, `avisos-plataforma.js`, `includes/encabezado.php` |
 | Notificaciones WhatsApp / SMS | 🟡 Implementada, sin proveedor contratado | `scripts/generar_recordatorios.php`, `scripts/enviar_notificaciones.php` |
 | `integracion_winbox` (Jamileth) | Solo consulta | No se modifica |
 

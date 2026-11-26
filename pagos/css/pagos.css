@@ -5383,6 +5383,48 @@ body {
     display:flex;align-items:center;justify-content:center;
     background:#bc90c5;color:white;font-size:9px;font-style:normal;
 }
+.ubb-icono i[hidden] {display:none}
+
+/* Campanita: avisos de la plataforma */
+.ubb-avisos {position:relative;display:flex}
+.ubb-avisos-boton {
+    border:0;background:none;padding:0;cursor:pointer;font:inherit;border-radius:6px;
+}
+.ubb-avisos-boton:hover {color:#5e3d66}
+.ubb-avisos-boton:focus-visible {outline:2px solid #bc90c5;outline-offset:3px}
+.ubb-avisos-boton i {min-width:15px;width:auto;padding:0 3px;box-sizing:border-box;border-radius:8px}
+.ubb-avisos-panel {
+    position:absolute;right:-8px;top:calc(100% + 10px);z-index:60;
+    width:min(360px,calc(100vw - 32px));max-height:min(440px,70vh);
+    display:flex;flex-direction:column;
+    background:#fff;border:1px solid #e6d9e9;border-radius:12px;
+    box-shadow:0 12px 32px rgba(60,30,70,.16);overflow:hidden;
+    color:#3b2c3f;font-size:13px;text-align:left;
+}
+.ubb-avisos-panel[hidden] {display:none}
+.ubb-avisos-cabecera {
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:12px 14px;border-bottom:1px solid #f0e8f2;
+}
+.ubb-avisos-cabecera strong {font-size:14px;color:#5e3d66}
+.ubb-avisos-refrescar,.ubb-aviso-revisar {
+    border:1px solid #d9c5de;background:#fff;color:#815c89;
+    border-radius:6px;padding:3px 9px;font:inherit;font-size:12px;cursor:pointer;white-space:nowrap;
+}
+.ubb-avisos-refrescar:hover,.ubb-aviso-revisar:hover {background:#f7f0f8}
+.ubb-avisos-refrescar:disabled,.ubb-aviso-revisar:disabled {opacity:.6;cursor:default}
+.ubb-avisos-estado {margin:0;padding:16px 14px;color:#7a6a7e}
+.ubb-avisos-estado[hidden] {display:none}
+.ubb-avisos-lista {list-style:none;margin:0;padding:0;overflow-y:auto}
+.ubb-aviso {padding:11px 14px;border-bottom:1px solid #f4eef5}
+.ubb-aviso:last-child {border-bottom:0}
+.ubb-aviso strong {display:block;color:#3b2c3f;font-size:13px}
+.ubb-aviso p {margin:3px 0 0;color:#5a4a5e;line-height:1.4;overflow-wrap:anywhere}
+.ubb-aviso-pie {
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+    margin-top:7px;color:#8a7a8e;font-size:12px;
+}
+.ubb-aviso-pie a {color:#815c89}
 .ubb-perfil {
     display:flex;align-items:center;gap:8px;
     flex:0 0 auto;padding-left:14px;border-left:1px solid #e6d8e9;

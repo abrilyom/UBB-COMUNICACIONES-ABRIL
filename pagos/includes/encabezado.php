@@ -19,9 +19,21 @@
     <div class="barra-superior">
 
         <div class="ubb-herramientas" aria-label="Herramientas">
-            <span class="ubb-icono" title="Notificaciones" aria-label="Notificaciones">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg><i>1</i>
-            </span>
+            <div class="ubb-avisos" id="ubbAvisos">
+                <button type="button" class="ubb-icono ubb-avisos-boton" id="ubbAvisosBoton"
+                        title="Avisos de la plataforma" aria-label="Avisos de la plataforma"
+                        aria-haspopup="true" aria-expanded="false" aria-controls="ubbAvisosPanel">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg><i id="ubbAvisosContador" hidden></i>
+                </button>
+                <div class="ubb-avisos-panel" id="ubbAvisosPanel" role="region" aria-label="Avisos de la plataforma" hidden>
+                    <div class="ubb-avisos-cabecera">
+                        <strong>Avisos de la plataforma</strong>
+                        <button type="button" class="ubb-avisos-refrescar" id="ubbAvisosRefrescar">Actualizar</button>
+                    </div>
+                    <p class="ubb-avisos-estado" id="ubbAvisosEstado" aria-live="polite">Cargando…</p>
+                    <ul class="ubb-avisos-lista" id="ubbAvisosLista"></ul>
+                </div>
+            </div>
             <span class="ubb-icono" title="Configuración" aria-label="Configuración">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.7a8 8 0 0 1-1.7 1l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.7-1l-1.7.7-1.4-2.4 1.4-1.1a7 7 0 0 1 0-2l-1.4-1.1 1.4-2.4 1.7.7a8 8 0 0 1 1.7-1l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.7 1l1.7-.7 1.4 2.4-1.4 1.1a7 7 0 0 1 0 2Z"/></svg>
             </span>
@@ -45,3 +57,4 @@
         </span>
     </div>
 </header>
+<script src="avisos-plataforma.js?v=<?php echo filemtime(__DIR__ . '/../avisos-plataforma.js'); ?>" defer></script>

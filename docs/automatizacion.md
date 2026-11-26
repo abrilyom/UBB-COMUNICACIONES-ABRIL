@@ -170,6 +170,26 @@ Para activarlo (sin la llave no se envía nada), en **dns-server**:
 
 Variables opcionales: `UBB_MONITOREO_URL` y `UBB_MONITOREO_KEY_FILE`.
 
+### Avisos de la plataforma en la campanita
+
+La campanita del encabezado muestra los avisos que la plataforma deja para Pagos (factura nueva, factura vencida, corte por adeudo, cambios de servicio). El contador indica cuántos hay pendientes y cada aviso tiene **Marcar revisado**.
+
+- `pagos/api/cliente_avisos_plataforma.php` consulta la API de la plataforma con la llave de Pagos: `GET …/notificaciones.php` (pendientes) y `POST …/notificaciones.php?revisada=<id>` (marcar revisado), con el encabezado `X-API-Key`.
+- `pagos/avisos_plataforma.php` es el puente que usa el navegador (`pagos/avisos-plataforma.js`): la llave nunca llega al navegador.
+- La lista se guarda 60 s en caché (también cuando la plataforma falla), para que el encabezado no haga lentas las páginas. **Actualizar** la consulta de nuevo.
+
+Para activarlo, en **dns-server** (sin la llave la campanita dice que no pudo consultar los avisos):
+
+```bash
+sudo install -m 600 /dev/null /etc/ubb-plataforma-avisos.key && sudo nano /etc/ubb-plataforma-avisos.key
+sudo docker cp /etc/ubb-plataforma-avisos.key servidor-aviso-yomyom:/etc/ubb-plataforma-avisos.key
+sudo docker exec servidor-aviso-yomyom sh -c 'chown root:www-data /etc/ubb-plataforma-avisos.key && chmod 640 /etc/ubb-plataforma-avisos.key'
+```
+
+Igual que la llave del monitoreo, la copia se pierde si el contenedor se vuelve a crear.
+
+Variables opcionales: `UBB_PLATAFORMA_AVISOS_URL` (por defecto `http://192.168.100.221:8081/api/v1/notificaciones.php`) y `UBB_PLATAFORMA_AVISOS_KEY_FILE`.
+
 ### Facturas de UISP
 
 `pagos/scripts/sincronizar_facturas_uisp.php` copia las facturas del CRM en `uisp_facturas` (solo lectura sobre UISP; no cambia pagos ni mensualidades): total, descuento, pagado, saldo, estado, periodo que cobra (leído del concepto, p. ej. *"1 Oct 2026 – 31 Oct 2026"*), conceptos (servicio, reconexión u otros cargos) y los pagos que la cubren.
