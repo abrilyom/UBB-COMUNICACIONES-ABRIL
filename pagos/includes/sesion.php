@@ -27,6 +27,13 @@ if (PHP_SAPI === 'cli') {
     return;
 }
 
+/*
+ * Los avisos y errores de PHP van al log del contenedor (docker logs), nunca
+ * a la pantalla: mostrarlos rompe redirecciones y enseña rutas internas.
+ */
+ini_set('display_errors', '0');
+ini_set('log_errors', '1');
+
 require_once __DIR__ . '/../api/cliente_avisos_plataforma.php';
 
 const UBB_ROLES_PLATAFORMA = [
