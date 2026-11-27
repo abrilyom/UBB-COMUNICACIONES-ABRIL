@@ -213,10 +213,17 @@ a.cc-pildora:hover { filter: brightness(.97); text-decoration: underline; }
     outline-offset: 2px;
 }
 
-.cc-kpi--activos { --cc-acento: #1e9a52; --cc-acento-fondo: #e4f5ea; }
-.cc-kpi--pagos { --cc-acento: #9a5aa6; --cc-acento-fondo: #f5eaf8; }
-.cc-kpi--proximos { --cc-acento: #d6930b; --cc-acento-fondo: #fff2d6; }
-.cc-kpi--suspendidos { --cc-acento: #c93434; --cc-acento-fondo: #fde7e7; }
+/* Cada indicador con su color, como las tarjetas originales del panel:
+   fondo suave del color, borde del mismo tono e ícono en círculo sólido. */
+.cc-kpi--activos { --cc-acento: #1e9a52; --cc-acento-fondo: #eefaf2; --cc-acento-borde: #cdeed8; }
+.cc-kpi--pagos { --cc-acento: #a46bb0; --cc-acento-fondo: #f8effb; --cc-acento-borde: #ead6f0; }
+.cc-kpi--proximos { --cc-acento: #e0a019; --cc-acento-fondo: #fff8e6; --cc-acento-borde: #f6e3b4; }
+.cc-kpi--suspendidos { --cc-acento: #d23c3c; --cc-acento-fondo: #fdf0f0; --cc-acento-borde: #f6d3d3; }
+
+.cc-kpi[class*="cc-kpi--"] {
+    border-color: var(--cc-acento-borde);
+    background: linear-gradient(160deg, var(--cc-acento-fondo) 0%, var(--cc-acento-fondo) 60%, #ffffff 140%);
+}
 
 .cc-kpi-cabeza {
     display: flex;
@@ -227,15 +234,16 @@ a.cc-pildora:hover { filter: brightness(.97); text-decoration: underline; }
 .cc-kpi-icono {
     display: grid;
     place-items: center;
-    flex: 0 0 38px;
-    width: 38px;
-    height: 38px;
-    border-radius: 11px;
-    background: var(--cc-acento-fondo);
-    color: var(--cc-acento);
+    flex: 0 0 46px;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: var(--cc-acento);
+    color: #fff;
+    box-shadow: 0 6px 14px color-mix(in srgb, var(--cc-acento) 30%, transparent);
 }
 
-.cc-kpi-icono svg { width: 20px; height: 20px; }
+.cc-kpi-icono svg { width: 22px; height: 22px; }
 
 .cc-kpi-nombre {
     color: var(--cc-texto);
@@ -264,6 +272,15 @@ a.cc-pildora:hover { filter: brightness(.97); text-decoration: underline; }
     padding-top: 8px;
     color: #998a9d;
     font-size: 11px;
+}
+
+.cc-kpi-fuente {
+    color: #8f7f93;
+}
+
+/* El punto "sin estado" de la leyenda va gris, igual que su tramo en la dona. */
+.cc .leyenda-ubb .punto-leyenda.cancelado {
+    background: #94a3b8 !important;
 }
 
 .cc-tendencia {
