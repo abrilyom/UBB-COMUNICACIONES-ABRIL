@@ -187,7 +187,9 @@ try {
                 nota,
                 admin_uisp,
                 numero_cheque,
-                revisado
+                revisado,
+                uisp_payment_id,
+                id_pago_ubb
             FROM uisp_pagos_importacion
             WHERE uisp_client_id = ?
             ORDER BY
@@ -302,6 +304,49 @@ foreach ($servicios as $servicio) {
     }
 }
 
+/* =========================================================
+   HISTORIAL ÚNICO DE PAGOS
+   Junta los pagos de UBB y los registros importados de UISP en una
+   sola lista por fecha. Un registro de UISP que ya se aplicó en UBB
+   (id_pago_ubb, o referencia "UISP-<id>" en el pago) no se repite.
+========================================================= */
+$historialPagos = [];
+$pagosUbbIds = [];
+$referenciasUbb = [];
+
+foreach ($pagos as $p) {
+    $pagosUbbIds[(int)$p["id_pago"]] = true;
+    if ($p["referencia"]) {
+        $referenciasUbb[(string)$p["referencia"]] = true;
+    }
+
+    $historialPagos[] = [
+        "origen" => "UBB",
+        "momento" => strtotime((string)$p["fecha_pago"]) ?: 0,
+        "pago" => $p,
+    ];
+}
+
+$uispSoloHistorico = 0;
+
+foreach ($uispPagos as $u) {
+    $yaEnUbb = (!empty($u["id_pago_ubb"]) && isset($pagosUbbIds[(int)$u["id_pago_ubb"]]))
+        || (!empty($u["uisp_payment_id"]) && isset($referenciasUbb["UISP-" . $u["uisp_payment_id"]]));
+
+    if ($yaEnUbb) {
+        continue;
+    }
+
+    $uispSoloHistorico++;
+    $historialPagos[] = [
+        "origen" => "UISP",
+        "momento" => strtotime(substr((string)$u["fecha_original_uisp"], 0, 19)) ?: 0,
+        "uisp" => $u,
+    ];
+}
+
+usort($historialPagos, fn($a, $b) => $b["momento"] <=> $a["momento"]);
+
 function exp_estado_clase(string $estado): string {
     $clases = [
         "ACTIVO" => "activo",
@@ -408,6 +453,11 @@ function exp_estado_clase(string $estado): string {
         .exp-badge.pendiente { background:var(--cc-atencion-fondo); color:var(--cc-atencion); }
         .exp-badge.suspendido,.exp-badge.baja,.exp-badge.cancelado { background:var(--cc-error-fondo); color:var(--cc-error); }
         .exp-badge.inactivo,.exp-badge.neutral { background:#eeeef2; color:#666; }
+
+        /* Origen del pago en el historial */
+        .exp-origen { display:inline-block; padding:4px 10px; border-radius:999px; font-size:11px; font-weight:800; letter-spacing:.3px; }
+        .exp-origen--ubb { background:var(--cc-morado-suave); color:var(--cc-morado); }
+        .exp-origen--uisp { background:#e8eefc; color:#3d5aa8; }
 
         @media(max-width:1200px) {
             .exp-kpis { grid-template-columns:repeat(3,minmax(0,1fr)); }
@@ -657,20 +707,24 @@ function exp_estado_clase(string $estado): string {
         </section>
 
         <section class="exp-seccion">
-            <h3>Historial de pagos registrados en UBB</h3>
+            <h3>Historial de pagos</h3>
             <div class="exp-nota">
-                Estos son los pagos registrados directamente en la plataforma UBB.
-                El total de esta sección no incluye el histórico importado de UISP.
+                Pagos registrados en UBB y registros importados de UISP, en una sola lista por fecha.
+                Los pagos de UISP que ya se aplicaron en UBB aparecen una sola vez, como pago UBB.
+                <br>
+                <strong><?= count($pagos) ?></strong> pagos en UBB
+                · <strong><?= (int)$uispSoloHistorico ?></strong> registros solo en UISP (histórico)
             </div>
 
-            <?php if (!$pagos): ?>
-                <div class="exp-vacio">Este cliente todavía no tiene pagos registrados en UBB.</div>
+            <?php if (!$historialPagos): ?>
+                <div class="exp-vacio">Este cliente todavía no tiene pagos registrados.</div>
             <?php else: ?>
                 <div class="exp-tabla-scroll">
                     <table class="exp-tabla">
                         <thead>
                             <tr>
                                 <th>Folio</th>
+                                <th>Origen</th>
                                 <th>Servicio</th>
                                 <th>Fecha</th>
                                 <th>Importe</th>
@@ -680,89 +734,75 @@ function exp_estado_clase(string $estado): string {
                             </tr>
                         </thead>
                         <tbody>
-                        <?php foreach ($pagos as $p): ?>
-                            <tr>
-                                <td>PAG-<?= str_pad((string)$p["id_pago"], 6, "0", STR_PAD_LEFT) ?></td>
-                                <td><?= $p["id_servicio"] === null ? "Sin asociar" : "#" . (int)$p["id_servicio"] ?></td>
-                                <td><?= exp_h($p["fecha_pago"]) ?></td>
-                                <td><strong>$<?= number_format((float)$p["monto"], 2) ?></strong></td>
-                                <td><?= exp_h($p["metodo_pago"]) ?></td>
-                                <td>
-                                    <span class="exp-badge <?= exp_estado_clase($p["estado_pago"]) ?>">
-                                        <?= exp_h($p["estado_pago"]) ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="exp-codigo"><?= exp_h($p["referencia"] ?: "—") ?></span>
-                                    <a class="hist-boton hist-boton--principal" style="margin-top:6px"
-                                       href="comprobante.php?id=<?= (int)$p["id_pago"] ?>"
-                                       target="_blank" rel="noopener">
-                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>
-                                        Comprobante
-                                    </a>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            <?php endif; ?>
-        </section>
-
-        <section class="exp-seccion">
-            <h3>Historial histórico importado de UISP</h3>
-            <div class="exp-nota">
-                Registros procedentes de UISP, vinculados mediante el identificador
-                original del cliente. Se muestran por separado para evitar duplicar
-                importes con los pagos registrados en UBB.
-                <br>
-                Total histórico de registros: <strong><?= (int)$totalUisp ?></strong>
-                · Importe de origen: <strong>$<?= number_format($montoUisp, 2) ?></strong>
-            </div>
-
-            <?php if (!$cliente["uisp_id"]): ?>
-                <div class="exp-vacio">Este cliente no tiene un identificador UISP vinculado.</div>
-            <?php elseif (!$uispPagos): ?>
-                <div class="exp-vacio">No se encontraron registros históricos de UISP para este identificador.</div>
-            <?php else: ?>
-                <div class="exp-tabla-scroll">
-                    <table class="exp-tabla">
-                        <thead>
-                            <tr>
-                                <th>Registro</th>
-                                <th>Fecha original</th>
-                                <th>Importe</th>
-                                <th>Método original</th>
-                                <th>Método normalizado</th>
-                                <th>Organización</th>
-                                <th>Revisión</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        <?php foreach ($uispPagos as $u): ?>
-                            <tr>
-                                <td>#<?= (int)$u["id_importacion"] ?></td>
-                                <td><?= exp_h($u["fecha_original_uisp"]) ?></td>
-                                <td>
-                                    <strong>$<?= number_format((float)$u["monto"], 2) ?></strong>
-                                    <small><?= exp_h($u["moneda"]) ?></small>
-                                </td>
-                                <td><?= exp_h($u["metodo_original_uisp"] ?: "No especificado") ?></td>
-                                <td><?= exp_h($u["metodo_normalizado"] ?: "Sin normalizar") ?></td>
-                                <td><?= exp_h($u["organizacion"] ?: "—") ?></td>
-                                <td><?= (int)$u["revisado"] === 1 ? "Revisado" : "Sin revisar" ?></td>
-                            </tr>
-                            <?php if ($u["nota"] || $u["numero_cheque"]): ?>
+                        <?php foreach ($historialPagos as $h): ?>
+                            <?php if ($h["origen"] === "UBB"): $p = $h["pago"]; ?>
                                 <tr>
-                                    <td colspan="7">
-                                        <small>
-                                            <?php if ($u["nota"]): ?>
-                                                Nota: <?= exp_h($u["nota"]) ?>
-                                            <?php endif; ?>
-                                            <?php if ($u["numero_cheque"]): ?>
-                                                · Cheque: <?= exp_h($u["numero_cheque"]) ?>
-                                            <?php endif; ?>
-                                        </small>
+                                    <td><strong>PAG-<?= str_pad((string)$p["id_pago"], 6, "0", STR_PAD_LEFT) ?></strong></td>
+                                    <td>
+                                        <span class="exp-origen exp-origen--ubb">UBB</span>
+                                        <?php if (str_starts_with((string)$p["referencia"], "UISP-")): ?>
+                                            <small>Desde UISP</small>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td><?= $p["id_servicio"] === null ? "Sin asociar" : "#" . (int)$p["id_servicio"] ?></td>
+                                    <td>
+                                        <?= $h["momento"] ? date("d/m/Y", $h["momento"]) : exp_h($p["fecha_pago"]) ?>
+                                        <?php if ($h["momento"]): ?><small><?= date("H:i", $h["momento"]) ?></small><?php endif; ?>
+                                    </td>
+                                    <td><strong>$<?= number_format((float)$p["monto"], 2) ?></strong></td>
+                                    <td><?= exp_h($p["metodo_pago"]) ?></td>
+                                    <td>
+                                        <span class="exp-badge <?= exp_estado_clase($p["estado_pago"]) ?>">
+                                            <?= exp_h($p["estado_pago"]) ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="exp-codigo"><?= exp_h($p["referencia"] ?: "—") ?></span>
+                                        <a class="hist-boton hist-boton--principal" style="margin-top:6px"
+                                           href="comprobante.php?id=<?= (int)$p["id_pago"] ?>"
+                                           target="_blank" rel="noopener">
+                                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>
+                                            Comprobante
+                                        </a>
+                                    </td>
+                                </tr>
+                            <?php else: $u = $h["uisp"]; ?>
+                                <tr>
+                                    <td>
+                                        <strong>UISP #<?= (int)$u["id_importacion"] ?></strong>
+                                        <?php if (!empty($u["uisp_payment_id"])): ?><small>Pago UISP <?= (int)$u["uisp_payment_id"] ?></small><?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <span class="exp-origen exp-origen--uisp">UISP</span>
+                                        <small>Histórico</small>
+                                    </td>
+                                    <td><span class="hist-suave">—</span></td>
+                                    <td>
+                                        <?= $h["momento"] ? date("d/m/Y", $h["momento"]) : exp_h($u["fecha_original_uisp"]) ?>
+                                        <?php if ($h["momento"]): ?><small><?= date("H:i", $h["momento"]) ?></small><?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <strong>$<?= number_format((float)$u["monto"], 2) ?></strong>
+                                        <small><?= exp_h($u["moneda"]) ?></small>
+                                    </td>
+                                    <td>
+                                        <?= exp_h($u["metodo_original_uisp"] ?: "No especificado") ?>
+                                        <?php if ($u["organizacion"]): ?><small><?= exp_h($u["organizacion"]) ?></small><?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <span class="exp-badge neutral">
+                                            <?= (int)$u["revisado"] === 1 ? "Revisado" : "Sin revisar" ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <?php if ($u["nota"] || $u["numero_cheque"]): ?>
+                                            <small>
+                                                <?php if ($u["nota"]): ?>Nota: <?= exp_h($u["nota"]) ?><?php endif; ?>
+                                                <?php if ($u["numero_cheque"]): ?> · Cheque: <?= exp_h($u["numero_cheque"]) ?><?php endif; ?>
+                                            </small>
+                                        <?php else: ?>
+                                            <span class="hist-suave">—</span>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endif; ?>
