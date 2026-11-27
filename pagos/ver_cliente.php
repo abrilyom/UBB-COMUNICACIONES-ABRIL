@@ -458,6 +458,8 @@ function exp_estado_clase(string $estado): string {
         .exp-origen { display:inline-block; padding:4px 10px; border-radius:999px; font-size:11px; font-weight:800; letter-spacing:.3px; }
         .exp-origen--ubb { background:var(--cc-morado-suave); color:var(--cc-morado); }
         .exp-origen--uisp { background:#e8eefc; color:#3d5aa8; }
+        .exp-debe { color:var(--cc-error); }
+        .exp-por-confirmar { color:var(--cc-atencion); }
 
         @media(max-width:1200px) {
             .exp-kpis { grid-template-columns:repeat(3,minmax(0,1fr)); }
@@ -618,6 +620,11 @@ function exp_estado_clase(string $estado): string {
 
         <section class="exp-seccion">
             <h3>Servicios contratados</h3>
+            <div class="exp-nota">
+                Lo pagado, lo que falta confirmar y lo que debe de cada servicio, según los pagos y
+                mensualidades registrados en UBB. Los registros viejos que solo están en UISP no se
+                cuentan aquí porque no dicen a qué servicio corresponden.
+            </div>
 
             <?php if (!$servicios): ?>
                 <div class="exp-vacio">Este cliente no tiene servicios registrados.</div>
@@ -627,77 +634,59 @@ function exp_estado_clase(string $estado): string {
                         <thead>
                             <tr>
                                 <th>Servicio</th>
-                                <th>Tecnología</th>
                                 <th>Paquete</th>
                                 <th>Estado</th>
-                                <th>Contratación</th>
                                 <th>Instalación</th>
+                                <th>Pagado</th>
+                                <th>Por confirmar</th>
+                                <th>Debe</th>
                             </tr>
                         </thead>
                         <tbody>
                         <?php foreach ($servicios as $s): ?>
+                            <?php
+                            $fin = $resumenServicios[(int)$s["id_servicio"]];
+                            $tecnologia = (string)$s["tecnologia"];
+                            $tecnologiaVisible = $tecnologia !== "" && $tecnologia !== "POR_DEFINIR";
+                            ?>
                             <tr>
                                 <td>
                                     <strong>#<?= (int)$s["id_servicio"] ?></strong>
                                     <small><?= exp_h($s["codigo_servicio"]) ?></small>
                                 </td>
-                                <td><?= exp_h($s["tecnologia"]) ?></td>
-                                <td><?= exp_h($s["paquete_referencia"] ?: "Sin paquete") ?></td>
+                                <td>
+                                    <?= exp_h($s["paquete_referencia"] ?: "Sin paquete") ?>
+                                    <?php if ($tecnologiaVisible): ?><small><?= exp_h($tecnologia) ?></small><?php endif; ?>
+                                </td>
                                 <td>
                                     <span class="exp-badge <?= exp_estado_clase($s["estado"]) ?>">
                                         <?= exp_h($s["estado"]) ?>
                                     </span>
                                 </td>
-                                <td><?= exp_fecha($s["fecha_contratacion"]) ?></td>
-                                <td><?= exp_fecha($s["fecha_instalacion"]) ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            <?php endif; ?>
-        </section>
-
-        <section class="exp-seccion">
-            <h3>Resumen financiero por servicio</h3>
-            <div class="exp-nota">
-                Los importes se calculan con pagos y obligaciones UBB asociados
-                directamente al servicio. Los registros históricos de UISP
-                permanecen separados porque no contienen una relación verificable
-                con cada servicio.
-            </div>
-
-            <?php if (!$servicios): ?>
-                <div class="exp-vacio">No hay servicios para resumir.</div>
-            <?php else: ?>
-                <div class="exp-tabla-scroll">
-                    <table class="exp-tabla">
-                        <thead>
-                            <tr>
-                                <th>Servicio</th>
-                                <th>Pagos confirmados</th>
-                                <th>Total pagado UBB</th>
-                                <th>Pagos pendientes</th>
-                                <th>Obligaciones pendientes</th>
-                                <th>Importe por obligaciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        <?php foreach ($servicios as $s): ?>
-                            <?php $fin = $resumenServicios[(int)$s["id_servicio"]]; ?>
-                            <tr>
                                 <td>
-                                    <strong>#<?= (int)$s["id_servicio"] ?></strong>
-                                    <small><?= exp_h($s["codigo_servicio"]) ?></small>
+                                    <?= exp_fecha($s["fecha_instalacion"]) ?>
+                                    <small>Contratado: <?= exp_fecha($s["fecha_contratacion"]) ?></small>
                                 </td>
-                                <td><?= (int)$fin["pagos_confirmados"] ?></td>
-                                <td><strong>$<?= number_format($fin["total_pagado"], 2) ?></strong></td>
                                 <td>
-                                    <?= (int)$fin["pagos_pendientes"] ?>
-                                    <small>$<?= number_format($fin["monto_pagos_pendientes"], 2) ?></small>
+                                    <strong>$<?= number_format($fin["total_pagado"], 2) ?></strong>
+                                    <small><?= (int)$fin["pagos_confirmados"] ?> pago<?= (int)$fin["pagos_confirmados"] === 1 ? "" : "s" ?> confirmado<?= (int)$fin["pagos_confirmados"] === 1 ? "" : "s" ?></small>
                                 </td>
-                                <td><?= (int)$fin["obligaciones_pendientes"] ?></td>
-                                <td><strong>$<?= number_format($fin["monto_obligaciones_pendientes"], 2) ?></strong></td>
+                                <td>
+                                    <?php if ((int)$fin["pagos_pendientes"] > 0): ?>
+                                        <strong class="exp-por-confirmar">$<?= number_format($fin["monto_pagos_pendientes"], 2) ?></strong>
+                                        <small><?= (int)$fin["pagos_pendientes"] ?> pago<?= (int)$fin["pagos_pendientes"] === 1 ? "" : "s" ?> sin confirmar</small>
+                                    <?php else: ?>
+                                        <span class="hist-suave">—</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php if ((int)$fin["obligaciones_pendientes"] > 0): ?>
+                                        <strong class="exp-debe">$<?= number_format($fin["monto_obligaciones_pendientes"], 2) ?></strong>
+                                        <small><?= (int)$fin["obligaciones_pendientes"] ?> mensualidad<?= (int)$fin["obligaciones_pendientes"] === 1 ? "" : "es" ?> sin pagar</small>
+                                    <?php else: ?>
+                                        <span class="exp-badge pagado">Al corriente</span>
+                                    <?php endif; ?>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                         </tbody>
