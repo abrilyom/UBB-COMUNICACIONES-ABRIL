@@ -76,7 +76,6 @@ function peticionPlanesAPI(
     $codigoHttp = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
     $errorCurl = curl_error($curl);
 
-    curl_close($curl);
 
     if ($respuesta === false) {
         return [

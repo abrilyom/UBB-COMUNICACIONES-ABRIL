@@ -108,7 +108,6 @@ function canjearPaseSso(string $pase): ?array
     $respuesta = curl_exec($ch);
     $codigo = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $error = curl_error($ch);
-    curl_close($ch);
 
     if ($respuesta === false) {
         throw new RuntimeException('La plataforma no respondió: ' . $error);
