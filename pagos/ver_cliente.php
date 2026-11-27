@@ -350,8 +350,8 @@ function exp_estado_clase(string $estado): string {
             border-radius:50%; background:var(--cc-morado-suave); color:var(--cc-morado-medio);
         }
         .exp-dato-icono svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-        .exp-dato span { display:block; color:var(--cc-texto-suave); font-size:11px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; margin-bottom:3px; }
-        .exp-dato strong { display:block; color:var(--cc-texto); font-size:14px; overflow-wrap:anywhere; }
+        .exp-dato > div > span { display:block; color:var(--cc-texto-suave); font-size:11px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; margin-bottom:3px; }
+        .exp-dato > div > strong { display:block; color:var(--cc-texto); font-size:14px; overflow-wrap:anywhere; }
 
         /* Indicadores */
         .exp-kpis { grid-template-columns:repeat(5,minmax(0,1fr)); margin-bottom:0 !important; }
@@ -460,7 +460,7 @@ function exp_estado_clase(string $estado): string {
                     <h1><?= exp_h($nombreCompleto) ?></h1>
                     <p>
                         Cliente #<?= (int)$cliente["id_cliente"] ?>
-                        · Código <?= exp_h($cliente["codigo_cliente"] ?: "Sin código") ?>
+                        · <?= $cliente["codigo_cliente"] ? "Código " . exp_h($cliente["codigo_cliente"]) : "Sin código" ?>
                         <span class="exp-badge <?= exp_estado_clase($cliente["estado"]) ?>">
                             <?= exp_h($cliente["estado"]) ?>
                         </span>
