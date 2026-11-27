@@ -425,8 +425,215 @@
     color: var(--cc-texto);
 }
 
+.adeudos .hist-acciones button.hist-boton {
+    cursor: pointer;
+    font-family: inherit;
+}
+
+/* ---------- Ventana "Detalles" ---------- */
+
+.adeudo-detalle {
+    width: min(860px, calc(100vw - 32px));
+    max-height: calc(100vh - 48px);
+    margin: auto;
+    padding: 0;
+    border: 1px solid var(--cc-borde);
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 24px 60px rgba(59, 44, 63, .22);
+    overflow: hidden;
+}
+
+.adeudo-detalle[open] {
+    display: flex;
+    flex-direction: column;
+}
+
+.adeudo-detalle::backdrop {
+    background: rgba(40, 24, 45, .45);
+}
+
+.adeudo-detalle-cabecera {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--cc-borde);
+    background: linear-gradient(160deg, var(--cc-morado-suave) 0%, #fff 100%);
+}
+
+.adeudo-detalle-etiqueta {
+    color: var(--cc-morado-medio);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+}
+
+.adeudo-detalle-cabecera h2 {
+    margin: 4px 0 2px;
+    color: var(--cc-texto);
+    font-size: 20px;
+}
+
+.adeudo-detalle-cabecera p {
+    margin: 0;
+    color: var(--cc-texto-suave);
+    font-size: 13px;
+}
+
+.adeudo-detalle-cerrar {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--cc-borde);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--cc-morado);
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.adeudo-detalle-cerrar:hover {
+    background: var(--cc-morado-suave);
+}
+
+.adeudo-detalle-cuerpo {
+    padding: 18px 24px;
+    overflow-y: auto;
+}
+
+.adeudo-detalle-resumen {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.adeudo-detalle-resumen > div {
+    padding: 12px 14px;
+    border: 1px solid var(--cc-borde);
+    border-radius: 12px;
+    background: #fcf8fd;
+}
+
+.adeudo-detalle-resumen span {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--cc-texto-suave);
+    font-size: 12px;
+}
+
+.adeudo-detalle-resumen strong {
+    color: var(--cc-texto);
+    font-size: 17px;
+}
+
+#adDetVencido {
+    color: var(--cc-error);
+}
+
+.adeudo-detalle-datos {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 24px;
+    margin: 0 0 18px;
+}
+
+.adeudo-detalle-datos dt {
+    color: var(--cc-texto-suave);
+    font-size: 12px;
+}
+
+.adeudo-detalle-datos dd {
+    margin: 2px 0 0;
+    color: var(--cc-texto);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.adeudo-detalle-ancho {
+    grid-column: 1 / -1;
+}
+
+.adeudo-detalle-cuerpo h3 {
+    margin: 0 0 8px;
+    color: var(--cc-morado);
+    font-size: 14px;
+}
+
+.adeudo-detalle-tabla {
+    width: 100%;
+    border: 1px solid var(--cc-borde);
+    border-radius: 12px;
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow: hidden;
+}
+
+.adeudo-detalle-tabla th {
+    padding: 10px 12px;
+    background: var(--cc-morado-suave);
+    color: var(--cc-morado);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .5px;
+    text-align: left;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.adeudo-detalle-tabla td {
+    padding: 10px 12px;
+    border-top: 1px solid #f3eaf5;
+    color: var(--cc-texto);
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.adeudo-detalle-tabla .hist-num {
+    text-align: right;
+}
+
+.adeudo-detalle .px-estado {
+    width: fit-content;
+}
+
+.adeudo-detalle .px-estado-futuro {
+    color: var(--cc-inactivo);
+    background: var(--cc-inactivo-fondo);
+}
+
+.adeudo-detalle-pie {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 14px 24px;
+    border-top: 1px solid var(--cc-borde);
+    background: #fcf8fd;
+}
+
+.adeudo-detalle-pie .hist-boton {
+    padding: 8px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.adeudo-detalle-pie .hist-boton[hidden] {
+    display: none;
+}
+
 @media (max-width: 1100px) {
     .adeudos-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 640px) {
+    .adeudo-detalle-resumen,
+    .adeudo-detalle-datos { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (max-width: 900px) {

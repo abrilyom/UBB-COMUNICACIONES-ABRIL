@@ -33,6 +33,8 @@ const ADEUDOS_ESTADOS_RED = [
 ];
 
 $adeudos = [];
+$detalleMensualidades = [];
+$ultimoPago = [];
 $errorCarga = null;
 $estadosRed = null;
 
@@ -102,6 +104,72 @@ try {
         $vencidasPorServicio[(int)$f["id_servicio"]] = [
             "meses" => (int)$f["meses"],
             "saldo" => (float)$f["saldo"],
+        ];
+    }
+
+    // Detalle para la ventana "Detalles": cada mensualidad con saldo, de la
+    // más antigua a la más reciente (misma regla que estado_pagos.php).
+    $hoy = new DateTimeImmutable("today");
+    $r = $conexion->query("
+        SELECT o.id_servicio,
+               o.periodo,
+               o.fecha_vencimiento,
+               o.referencia_cobro,
+               o.monto,
+               COALESCE(a.total_pagado, 0) AS pagado
+        FROM obligaciones_pago o
+        LEFT JOIN (
+            SELECT po.id_obligacion, SUM(po.monto_aplicado) AS total_pagado
+            FROM pagos_obligaciones po
+            INNER JOIN pagos p ON p.id_pago = po.id_pago
+            WHERE p.estado_pago = 'PAGADO'
+            GROUP BY po.id_obligacion
+        ) a ON a.id_obligacion = o.id_obligacion
+        WHERE o.concepto = 'MENSUALIDAD'
+          AND o.estado = 'PENDIENTE'
+          AND o.fecha_vencimiento IS NOT NULL
+          AND o.monto > COALESCE(a.total_pagado, 0)
+        ORDER BY o.fecha_vencimiento ASC, o.id_obligacion ASC
+    ");
+    while ($f = $r->fetch_assoc()) {
+        $vence = new DateTimeImmutable(substr((string)$f["fecha_vencimiento"], 0, 10));
+        $dif = (int)$hoy->diff($vence)->format("%r%a");
+        [$estadoMes, $claseMes] = match (true) {
+            $dif > UBB_DIAS_GRACIA => ["Aún no vence", "futuro"],
+            $dif > 0 => ["Por vencer", "proximo"],
+            $dif === 0 => ["Vence hoy", "hoy"],
+            -$dif <= UBB_DIAS_GRACIA => ["En gracia", "gracia"],
+            default => ["Fuera de gracia", "vencido"],
+        };
+        $detalleMensualidades[(int)$f["id_servicio"]][] = [
+            "periodo" => (string)$f["periodo"],
+            "vence" => $vence->format("d/m/Y"),
+            "monto" => (float)$f["monto"],
+            "pagado" => (float)$f["pagado"],
+            "saldo" => (float)$f["monto"] - (float)$f["pagado"],
+            "referencia" => (string)$f["referencia_cobro"],
+            "estado" => $estadoMes,
+            "clase" => $claseMes,
+        ];
+    }
+
+    // Último pago confirmado de cada servicio.
+    $r = $conexion->query("
+        SELECT p.id_servicio, p.fecha_pago, p.monto, p.metodo_pago
+        FROM pagos p
+        INNER JOIN (
+            SELECT id_servicio, MAX(fecha_pago) AS ultima
+            FROM pagos
+            WHERE estado_pago = 'PAGADO'
+            GROUP BY id_servicio
+        ) u ON u.id_servicio = p.id_servicio AND u.ultima = p.fecha_pago
+        WHERE p.estado_pago = 'PAGADO'
+    ");
+    while ($f = $r->fetch_assoc()) {
+        $ultimoPago[(int)$f["id_servicio"]] = [
+            "fecha" => date("d/m/Y", strtotime((string)$f["fecha_pago"])),
+            "monto" => (float)$f["monto"],
+            "metodo" => (string)$f["metodo_pago"],
         ];
     }
 
@@ -198,6 +266,29 @@ try {
 } catch (Throwable $e) {
     error_log("Error en módulo Adeudos: " . $e->getMessage());
     $errorCarga = "No fue posible consultar los adeudos. Intenta nuevamente más tarde.";
+}
+
+// Datos de la ventana "Detalles", por servicio.
+$datosDetalle = [];
+foreach ($adeudos as $a) {
+    $datosDetalle[$a["id_servicio"]] = [
+        "nombre" => $a["nombre"],
+        "telefono" => $a["telefono"],
+        "direccion" => $a["direccion"],
+        "id_cliente" => $a["id_cliente"],
+        "id_servicio" => $a["id_servicio"],
+        "paquete" => $a["paquete"],
+        "situacion" => $a["ciclo"]["situacion"],
+        "tipo" => $a["ciclo"]["tipo"],
+        "dias" => $a["ciclo"]["dias"],
+        "red" => ADEUDOS_ESTADOS_RED[$a["red"]],
+        "red_clase" => $a["red"],
+        "meses_vencidos" => $a["meses_vencidos"],
+        "saldo_vencido" => $a["saldo_vencido"],
+        "saldo_total" => (float)$a["ciclo"]["saldo_total"],
+        "mensualidades" => $detalleMensualidades[$a["id_servicio"]] ?? [],
+        "ultimo_pago" => $ultimoPago[$a["id_servicio"]] ?? null,
+    ];
 }
 
 $paquetes = array_values(array_unique(array_filter(array_column($adeudos, "paquete"))));
@@ -438,6 +529,10 @@ if (!isset(ADEUDOS_SITUACIONES[$situacionInicial])) {
                         </td>
                         <td>
                             <div class="hist-acciones">
+                                <button type="button" class="hist-boton hist-boton--principal" data-detalle="<?= (int)$a["id_servicio"] ?>">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    Detalles
+                                </button>
                                 <?php if ($a["id_cliente"] > 0): ?>
                                     <a class="hist-boton" href="ver_cliente.php?id=<?= (int)$a["id_cliente"] ?>">
                                         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>
@@ -467,6 +562,151 @@ if (!isset(ADEUDOS_SITUACIONES[$situacionInicial])) {
     </section>
 
 </main>
+
+
+<!-- =================================================
+     VENTANA DE DETALLES
+================================================== -->
+
+<dialog class="cc adeudo-detalle"id="adeudoDetalle" aria-labelledby="adeudoDetalleTitulo">
+    <header class="adeudo-detalle-cabecera">
+        <div>
+            <span class="adeudo-detalle-etiqueta">Detalle del adeudo</span>
+            <h2 id="adeudoDetalleTitulo"></h2>
+            <p id="adeudoDetalleSub"></p>
+        </div>
+        <button type="button" class="adeudo-detalle-cerrar" data-cerrar aria-label="Cerrar">×</button>
+    </header>
+
+    <div class="adeudo-detalle-cuerpo">
+        <div class="adeudo-detalle-resumen">
+            <div><span>Adeudo vencido</span><strong id="adDetVencido"></strong></div>
+            <div><span>Saldo pendiente total</span><strong id="adDetTotal"></strong></div>
+            <div><span>Meses vencidos</span><strong id="adDetMeses"></strong></div>
+            <div><span>Situación</span><strong id="adDetSituacion"></strong></div>
+        </div>
+
+        <dl class="adeudo-detalle-datos">
+            <div><dt>Teléfono</dt><dd id="adDetTelefono"></dd></div>
+            <div><dt>Paquete</dt><dd id="adDetPaquete"></dd></div>
+            <div><dt>Servicio (RADIUS)</dt><dd id="adDetRed"></dd></div>
+            <div><dt>Último pago</dt><dd id="adDetUltimoPago"></dd></div>
+            <div class="adeudo-detalle-ancho"><dt>Dirección</dt><dd id="adDetDireccion"></dd></div>
+        </dl>
+
+        <h3>Mensualidades pendientes</h3>
+        <div class="hist-tabla-scroll">
+            <table class="adeudo-detalle-tabla">
+                <thead>
+                    <tr>
+                        <th>Periodo</th>
+                        <th>Vence</th>
+                        <th>Estado</th>
+                        <th class="hist-num">Monto</th>
+                        <th class="hist-num">Pagado</th>
+                        <th class="hist-num">Saldo</th>
+                        <th>Referencia</th>
+                    </tr>
+                </thead>
+                <tbody id="adDetMensualidades"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <footer class="adeudo-detalle-pie">
+        <a class="hist-boton" id="adDetCliente" href="#">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>
+            Ver cliente
+        </a>
+        <a class="hist-boton" id="adDetServicio" href="#">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><path d="M12 19.5h.01"/></svg>
+            Ver servicio
+        </a>
+        <button type="button" class="hist-boton hist-boton--principal" data-cerrar>Cerrar</button>
+    </footer>
+</dialog>
+
+<script type="application/json" id="adeudosDatosDetalle"><?= json_encode($datosDetalle, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?></script>
+
+<script>
+// Ventana "Detalles": se llena con los datos ya cargados, sin otra consulta.
+(() => {
+    const ventana = document.getElementById("adeudoDetalle");
+    const fuente = document.getElementById("adeudosDatosDetalle");
+    if (!ventana || !fuente) return;
+
+    const datos = JSON.parse(fuente.textContent || "{}");
+    const dinero = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" });
+    const $ = id => document.getElementById(id);
+    const texto = (id, valor) => { $(id).textContent = valor || "—"; };
+
+    function etiqueta(textoEtiqueta, clase) {
+        const span = document.createElement("span");
+        span.className = "px-estado " + clase;
+        span.textContent = textoEtiqueta;
+        return span;
+    }
+
+    function abrir(id) {
+        const d = datos[id];
+        if (!d) return;
+
+        texto("adeudoDetalleTitulo", d.nombre);
+        texto("adeudoDetalleSub", "Servicio #" + d.id_servicio + (d.id_cliente ? " · Cliente #" + d.id_cliente : ""));
+        texto("adDetVencido", dinero.format(d.saldo_vencido));
+        texto("adDetTotal", dinero.format(d.saldo_total));
+        texto("adDetMeses", String(d.meses_vencidos));
+        $("adDetSituacion").replaceChildren(etiqueta(d.situacion, "px-estado-" + d.tipo));
+        $("adDetSituacion").title = d.dias || "";
+        texto("adDetTelefono", d.telefono);
+        texto("adDetPaquete", d.paquete);
+        $("adDetRed").replaceChildren(etiqueta(d.red, "px-red-" + d.red_clase));
+        texto("adDetUltimoPago", d.ultimo_pago
+            ? d.ultimo_pago.fecha + " · " + dinero.format(d.ultimo_pago.monto) + " · " + d.ultimo_pago.metodo
+            : "Sin pagos registrados");
+        texto("adDetDireccion", d.direccion);
+
+        const cuerpo = $("adDetMensualidades");
+        cuerpo.replaceChildren();
+        d.mensualidades.forEach(m => {
+            const fila = cuerpo.insertRow();
+            fila.insertCell().textContent = m.periodo || "—";
+            fila.insertCell().textContent = m.vence;
+            fila.insertCell().append(etiqueta(m.estado, "px-estado-" + m.clase));
+            [m.monto, m.pagado, m.saldo].forEach(v => {
+                const c = fila.insertCell();
+                c.className = "hist-num";
+                c.textContent = dinero.format(v);
+            });
+            const ref = fila.insertCell();
+            ref.className = "hist-referencia";
+            ref.textContent = m.referencia || "—";
+        });
+        if (!d.mensualidades.length) {
+            const c = cuerpo.insertRow().insertCell();
+            c.colSpan = 7;
+            c.className = "hist-vacio";
+            c.textContent = "Sin mensualidades pendientes.";
+        }
+
+        const cliente = $("adDetCliente");
+        cliente.hidden = !(d.id_cliente > 0);
+        cliente.href = "ver_cliente.php?id=" + encodeURIComponent(d.id_cliente);
+        $("adDetServicio").href = "ver_servicio.php?id=" + encodeURIComponent(d.id_servicio);
+
+        ventana.showModal();
+    }
+
+    document.addEventListener("click", e => {
+        const boton = e.target.closest("[data-detalle]");
+        if (boton) abrir(boton.dataset.detalle);
+    });
+
+    ventana.querySelectorAll("[data-cerrar]").forEach(b => b.addEventListener("click", () => ventana.close()));
+    // Cerrar al hacer clic fuera de la ventana.
+    ventana.addEventListener("click", e => { if (e.target === ventana) ventana.close(); });
+})();
+</script>
 
 <script>
 (() => {
