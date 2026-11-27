@@ -60,6 +60,13 @@ function construirHtmlTicket(array $t): string
     $codigoServicio = trim((string)($t["codigo_servicio"] ?? ""));
     $paquete = trim((string)($t["paquete"] ?? ""));
     $tecnologia = trim((string)($t["tecnologia"] ?? ""));
+
+    // Valores de relleno de la base ("POR_DEFINIR", "SIN_DATO"…) no se imprimen.
+    if (preg_match('/^(POR[_ ]DEFINIR|SIN[_ ].*|N\/?A|NINGUNA?|-+)$/i', $tecnologia)) {
+        $tecnologia = "";
+    }
+
+    $tecnologia = str_replace("_", " ", $tecnologia);
     $periodo = trim((string)($t["periodo"] ?? ""));
     $concepto = trim((string)($t["concepto"] ?? ""));
     $referencia = trim((string)($t["referencia"] ?? ""));
