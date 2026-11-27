@@ -186,18 +186,32 @@ $visibles = $filtro === ""
         .rv-aviso.err{background:var(--cc-error-fondo);color:var(--cc-error)}
 
         /* Categorías: tarjetas que filtran la tabla */
-        .rv-cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;margin-bottom:18px}
-        .rv-cat{position:relative;display:flex;flex-direction:column;gap:4px;padding:16px 18px;overflow:hidden;
-            border:1px solid var(--cc-borde);border-radius:16px;background:#fff;box-shadow:var(--cc-sombra);
+        .rv-cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:14px;margin-bottom:18px}
+        .rv-cat{--rv-acento:#a46bb0;--rv-fondo:#f8effb;--rv-borde:#ead6f0;
+            position:relative;display:flex;flex-direction:column;gap:4px;padding:16px 18px;overflow:hidden;
+            border:1px solid var(--rv-borde);border-radius:16px;
+            background:linear-gradient(160deg,var(--rv-fondo) 0%,var(--rv-fondo) 60%,#fff 140%);box-shadow:var(--cc-sombra);
             color:var(--cc-texto);text-decoration:none;transition:transform .15s ease,box-shadow .15s ease}
-        .rv-cat::before{content:"";position:absolute;inset:0 0 auto 0;height:4px;background:#dcc6e2}
+        .rv-cat::before{content:"";position:absolute;inset:0 0 auto 0;height:4px;background:var(--rv-acento)}
         .rv-cat:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(113,58,124,.12)}
         .rv-cat strong{font-size:30px;font-weight:800;line-height:1.1;color:var(--cc-texto)}
         .rv-cat span{font-size:13px;font-weight:700}
         .rv-cat small{color:var(--cc-texto-suave);font-size:12.5px}
-        .rv-cat.activa{border-color:#d9bde0;background:linear-gradient(160deg,#f8effb 0%,#f8effb 60%,#fff 140%)}
-        .rv-cat.activa::before{background:linear-gradient(90deg,#a96db5,#8a4a98)}
-        .rv-cat.activa strong{color:var(--cc-morado)}
+        /* La categoría elegida: contorno de su color */
+        .rv-cat.activa{border-color:var(--rv-acento);box-shadow:0 0 0 2px var(--rv-acento),0 10px 22px rgba(113,58,124,.12)}
+        .rv-cat.activa strong{color:var(--rv-acento)}
+
+        /* Un color pastel por categoría, como las tarjetas del Centro de control */
+        .rv-cat--sobrante{--rv-acento:#e0a019;--rv-fondo:#fff8e6;--rv-borde:#f6e3b4}
+        .rv-cat--diferencia{--rv-acento:#d23c3c;--rv-fondo:#fdf0f0;--rv-borde:#f6d3d3}
+        .rv-cat--sin_mensualidades{--rv-acento:#3d5aa8;--rv-fondo:#eef2fc;--rv-borde:#d6e0f6}
+        .rv-cat--metodo{--rv-acento:#8a8a96;--rv-fondo:#f4f4f7;--rv-borde:#e3e3ea}
+        .rv-cat--factura_plataforma{--rv-acento:#1f8a8a;--rv-fondo:#eaf7f7;--rv-borde:#cdeaea}
+        .rv-cat--sin_ligar{--rv-acento:#c2477e;--rv-fondo:#fdeef5;--rv-borde:#f4d2e2}
+        .rv-cat--varios_servicios{--rv-acento:#d9711c;--rv-fondo:#fff1e6;--rv-borde:#f7d9bf}
+        .rv-cat--adelantado{--rv-acento:#1e9a52;--rv-fondo:#eefaf2;--rv-borde:#cdeed8}
+        .rv-cat--duplicado{--rv-acento:#6b5bd2;--rv-fondo:#f1effd;--rv-borde:#dcd6f7}
+        .rv-cat--otro{--rv-acento:#8a8a96;--rv-fondo:#f4f4f7;--rv-borde:#e3e3ea}
 
         /* "N por decidir" a la derecha del título */
         .rv-page .cc-cabecera{flex-wrap:nowrap}
@@ -269,7 +283,7 @@ $visibles = $filtro === ""
         </a>
         <?php foreach (CATEGORIAS_REVISION as $clave => [$titulo, $descripcion]): ?>
             <?php if ($conteo[$clave] === 0) continue; ?>
-            <a class="rv-cat <?= $filtro === $clave ? "activa" : "" ?>" href="?categoria=<?= h($clave) ?>"
+            <a class="rv-cat rv-cat--<?= h(strtolower($clave)) ?> <?= $filtro === $clave ? "activa" : "" ?>" href="?categoria=<?= h($clave) ?>"
                title="<?= h($descripcion) ?>">
                 <span><?= h($titulo) ?></span>
                 <strong><?= $conteo[$clave] ?></strong>
