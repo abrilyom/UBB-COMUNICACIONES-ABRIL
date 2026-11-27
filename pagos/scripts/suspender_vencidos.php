@@ -11,6 +11,8 @@ declare(strict_types=1);
  *   - que la mensualidad siga con saldo (puede haberse pagado hoy),
  *   - que no haya abonos bancarios sin conciliar con su referencia,
  *   - que el servicio no esté ya suspendido en Grezz,
+ *   - que sea de un tipo habilitado (UBB_TIPOS_AUTOMATICOS: por ahora solo
+ *     DHCP; los PPPoE vencidos se listan para corte manual),
  *   - que no exista otra solicitud pendiente para el servicio.
  *
  * Frenos de seguridad:
@@ -232,11 +234,21 @@ try {
             $contadores['no_gestionados']++;
 
             if ($estadoActual === 'DESCONOCIDO') {
-                echo "  · Grezz no reporta este servicio (posiblemente PPPoE, aún no disponible en su API). "
-                    . "Requiere corte manual.\n\n";
+                echo "  · Grezz no reporta este servicio. Requiere corte manual.\n\n";
             } else {
                 echo "  · Grezz no puede gestionarlo ($estadoActual). Requiere revisión manual.\n\n";
             }
+            continue;
+        }
+
+        // Solo se corta automáticamente el tipo habilitado (DHCP). PPPoE va a
+        // corte manual hasta que se pruebe su suspensión en Grezz.
+        $tipoGrezz = tipoServicioGrezz($redGrezz[$idServicio] ?? []);
+
+        if (!tipoGestionableAutomaticamente($tipoGrezz)) {
+            $contadores['no_gestionados']++;
+            echo "  · Servicio " . ($tipoGrezz ?? 'sin tipo') . ": el corte automático solo aplica a "
+                . implode(', ', UBB_TIPOS_AUTOMATICOS) . ". Requiere corte manual.\n\n";
             continue;
         }
 

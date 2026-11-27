@@ -171,11 +171,23 @@ try {
                         $resultado['id_obligacion']
                     )
                 ) {
-                    $estadoGrezz = estadoServicioEnGrezz($resultado['id_servicio']);
+                    $datosGrezz = datosServicioEnGrezz($resultado['id_servicio']);
+                    $estadoGrezz = is_string($datosGrezz['estado_actual'] ?? null)
+                        ? strtoupper($datosGrezz['estado_actual'])
+                        : null;
+                    $tipoGrezz = $datosGrezz === null ? null : tipoServicioGrezz($datosGrezz);
 
-                    // Si Grezz no responde, se envía igual: para un servicio activo
-                    // Grezz responde SIN_CAMBIOS y no afecta al cliente.
-                    if ($estadoGrezz === null || $estadoGrezz === 'SUSPENDIDO') {
+                    // PPPoE (u otro tipo no habilitado): la reactivación es manual
+                    // hasta que se pruebe en Grezz.
+                    if ($tipoGrezz !== null && !tipoGestionableAutomaticamente($tipoGrezz)) {
+                        if ($estadoGrezz === 'SUSPENDIDO') {
+                            echo "  · Servicio $tipoGrezz suspendido: reactivar a mano "
+                                . "(la reactivación automática solo aplica a "
+                                . implode(', ', UBB_TIPOS_AUTOMATICOS) . ").\n";
+                        }
+                    } elseif ($estadoGrezz === null || $estadoGrezz === 'SUSPENDIDO') {
+                        // Si Grezz no responde, se envía igual: para un servicio activo
+                        // Grezz responde SIN_CAMBIOS y no afecta al cliente.
                         $solicitud = solicitarCambioServicio(
                             $conexion,
                             $resultado['id_cliente'],

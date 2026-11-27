@@ -297,7 +297,9 @@ Si las reglas se borran o cambia la IP de dns-server, la sincronización falla c
 
 ## Alcance actual de Grezz
 
-La API de Grezz (RADIUS) por ahora solo expone los **servicios DHCP con equipo relacionado** (344 en la revisión del 25/11/2026: 302 activos, 9 suspendidos y 33 que no pudo resolver, con un campo `error` como `SIN_RELACION`). Los servicios **PPPoE**, que son la mayoría de fibra, todavía no aparecen.
+Desde el 26/11/2026 la API de Grezz (RADIUS) expone servicios **DHCP y PPPoE**, con el campo `tipo`. Revisión del 27/11/2026: **926 servicios** (484 PPPoE, 287 DHCP y 155 que no pudo resolver, con `error = SIN_RELACION` y sin estado); por estado, 755 activos y 16 suspendidos. Antes (25/11) solo devolvía 344 servicios DHCP.
+
+El tablero ya cuenta los dos tipos. La automatización todavía **solo corta y reactiva DHCP** (`UBB_TIPOS_AUTOMATICOS` en `includes/automatizacion_servicios.php`): los PPPoE vencidos se listan para corte manual, y si un PPPoE suspendido paga, la conciliación avisa que hay que reactivarlo a mano. Para habilitar PPPoE, una vez probado en Grezz, se agrega `'PPPOE'` a esa constante.
 
 ### Verificación de identidad del servicio
 
@@ -305,7 +307,7 @@ La API de Grezz (RADIUS) por ahora solo expone los **servicios DHCP con equipo r
 
 Hallazgo para UBB: la mayoría de los servicios tiene un perfil técnico de velocidad distinto al paquete contratado (por ejemplo, paquete de 25 Mbps con perfil `20M`). No afecta los pagos, pero conviene revisarlo.
 
-Por eso la suspensión automática **solo actúa sobre servicios que Grezz reporta como `ACTIVO`**. Los demás se listan como "no gestionables" para corte manual. Cuando Grezz exponga PPPoE, se incluirán sin cambiar el código de UBB Pagos.
+Por eso la suspensión automática **solo actúa sobre servicios DHCP que Grezz reporta como `ACTIVO`**. Los demás se listan como "no gestionables" para corte manual.
 
 ## Pendiente
 
@@ -417,5 +419,5 @@ Variables opcionales: `UBB_CARGO_RECONEXION` (39) y `UBB_CORTES_DIAS` (62, días
 ## Respuestas de Grezz (26/11/2026)
 
 - Modo real: `resultado = "APLICADO"` (ya quedó hecho) o `"SIN_CAMBIOS"` (ya estaba así): las dos son `COMPLETADA`. El POST ejecuta antes de responder. `procesador_grezz.php` ya lo interpreta; el modo sigue en simulación (`GREZZ_SIMULAR` en `api/cliente_grezz.php`).
-- PPPoE: la consulta (GET) se publica el 26/11; suspender/reactivar PPPoE se habilita después de probarlo.
+- PPPoE: la consulta (GET) ya está publicada (confirmado el 27/11: 484 servicios PPPoE); suspender/reactivar PPPoE se habilita después de probarlo.
 - Fechas de corte: su API solo guarda cortes desde el 24/11 hechos por su panel o API. **La fuente más completa del historial de suspensiones es UISP** (estado de cada servicio en el CRM: 745 activos, 231 suspendidos, 105 terminados el 26/11). Usarla para la regla de "no cobrar meses sin servicio".

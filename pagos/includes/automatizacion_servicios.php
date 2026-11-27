@@ -24,10 +24,33 @@ function servicioProtegido(int $idServicio): bool
 }
 
 /**
- * Estado actual del servicio según Grezz (ACTIVO, SUSPENDIDO, ...) o null
+ * Tipos de servicio que la automatización puede suspender o reactivar.
+ * Grezz ya reporta PPPoE (desde el 26/11/2026), pero su corte y su
+ * reactivación se habilitan solo después de probarlos: hasta entonces los
+ * PPPoE se atienden a mano. Para habilitarlos, agregar 'PPPOE' aquí.
+ */
+const UBB_TIPOS_AUTOMATICOS = ['DHCP'];
+
+/**
+ * Tipo del servicio según Grezz (DHCP, PPPOE) o null si no lo reporta.
+ */
+function tipoServicioGrezz(array $servicioGrezz): ?string
+{
+    $tipo = strtoupper(trim((string)($servicioGrezz['tipo'] ?? '')));
+
+    return $tipo !== '' ? $tipo : null;
+}
+
+function tipoGestionableAutomaticamente(?string $tipo): bool
+{
+    return $tipo !== null && in_array($tipo, UBB_TIPOS_AUTOMATICOS, true);
+}
+
+/**
+ * Datos del servicio según Grezz (estado_actual, tipo, ip, mac, ...) o null
  * si no se pudo consultar.
  */
-function estadoServicioEnGrezz(int $idServicio): ?string
+function datosServicioEnGrezz(int $idServicio): ?array
 {
     try {
         $resultado = consultarServicioGrezz($idServicio);
@@ -42,7 +65,17 @@ function estadoServicioEnGrezz(int $idServicio): ?string
     $datos = $resultado['respuesta'] ?? [];
     // La respuesta puede venir directa o dentro de "servicio" / "data".
     $servicio = $datos['servicio'] ?? $datos['data'] ?? $datos;
-    $estado = $servicio['estado_actual'] ?? null;
+
+    return is_array($servicio) ? $servicio : null;
+}
+
+/**
+ * Estado actual del servicio según Grezz (ACTIVO, SUSPENDIDO, ...) o null
+ * si no se pudo consultar.
+ */
+function estadoServicioEnGrezz(int $idServicio): ?string
+{
+    $estado = datosServicioEnGrezz($idServicio)['estado_actual'] ?? null;
 
     return is_string($estado) ? strtoupper($estado) : null;
 }
@@ -137,8 +170,8 @@ function redCoincideConPlataforma(array $servicioGrezz, array $huellasServicio):
  * Si Grezz no pudo resolver un servicio, el valor es "ERROR_<código>"
  * (por ejemplo ERROR_SIN_RELACION).
  *
- * Nota: por ahora la API de Grezz solo expone servicios DHCP con equipo
- * relacionado; los servicios PPPoE todavía no aparecen.
+ * Incluye servicios DHCP y PPPoE (campo "tipo"); los que Grezz no relaciona
+ * con un equipo llegan sin estado y con error SIN_RELACION.
  *
  * Devuelve null si Grezz no respondió correctamente.
  */

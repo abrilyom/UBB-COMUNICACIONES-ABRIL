@@ -9,6 +9,8 @@ declare(strict_types=1);
  * indicador queda en null y el resto del panel sigue funcionando.
  */
 
+require_once __DIR__ . '/automatizacion_servicios.php';
+
 function consultaEscalarSegura(mysqli $conexion, string $sql): ?array
 {
     try {
@@ -98,11 +100,13 @@ function resumenAutomatizacion(mysqli $conexion, array $estadoPagos, ?array $ser
 
     // Servicios fuera de gracia y cuántos puede suspender Grezz.
     $estadosGrezz = [];
+    $tiposGrezz = [];
 
     foreach ($serviciosGrezz ?? [] as $servicio) {
         $id = filter_var($servicio['id_servicio'] ?? null, FILTER_VALIDATE_INT);
         if ($id) {
             $estadosGrezz[(int)$id] = strtoupper((string)($servicio['estado_actual'] ?? ''));
+            $tiposGrezz[(int)$id] = tipoServicioGrezz($servicio);
         }
     }
 
@@ -118,7 +122,8 @@ function resumenAutomatizacion(mysqli $conexion, array $estadoPagos, ?array $ser
             $fueraGracia++;
             $estadoGrezz = $estadosGrezz[$idServicio] ?? '';
 
-            if ($estadoGrezz === 'ACTIVO') {
+            // Gestionables: activos de un tipo con corte automático (DHCP).
+            if ($estadoGrezz === 'ACTIVO' && tipoGestionableAutomaticamente($tiposGrezz[$idServicio] ?? null)) {
                 $gestionables++;
             } elseif ($estadoGrezz === 'SUSPENDIDO') {
                 $cortados++;
@@ -150,8 +155,9 @@ function resumenAutomatizacion(mysqli $conexion, array $estadoPagos, ?array $ser
         'fuera_gracia' => $fueraGracia,
     ];
 
-    // Manuales: Grezz no los reconoce (PPPoE u otro error), ni activos ni
-    // cortados. Los ya cortados se cuentan aparte.
+    // Manuales: activos PPPoE (corte automático aún no habilitado) o servicios
+    // que Grezz no reconoce (SIN_RELACION u otro error). Los ya cortados se
+    // cuentan aparte.
     $r['cortes'] = [
         'fuera_gracia' => $fueraGracia,
         'gestionables' => $serviciosGrezz === null ? null : $gestionables,

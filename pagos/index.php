@@ -533,8 +533,8 @@ function e_tablero($valor): string
                     <span class="cc-kpi-nombre">Servicios activos</span>
                 </div>
                 <strong class="cc-kpi-numero"><?= $servicios_activos !== null ? number_format($servicios_activos) : '—' ?></strong>
-                <span class="cc-kpi-detalle"><?= $error_servicios ? 'RADIUS no respondió: no se puede confirmar' : 'Servicios DHCP conectados' ?></span>
-                <span class="cc-kpi-fuente">Fuente: servicios (RADIUS) · no incluye PPPoE</span>
+                <span class="cc-kpi-detalle"><?= $error_servicios ? 'RADIUS no respondió: no se puede confirmar' : 'Servicios conectados (DHCP y PPPoE)' ?></span>
+                <span class="cc-kpi-fuente">Fuente: servicios (RADIUS)</span>
             </a>
 
             <a class="cc-kpi cc-kpi--pagos" href="pagos_hoy.php">
@@ -565,8 +565,8 @@ function e_tablero($valor): string
                     <span class="cc-kpi-nombre">Servicios suspendidos</span>
                 </div>
                 <strong class="cc-kpi-numero"><?= $servicios_suspendidos !== null ? number_format($servicios_suspendidos) : '—' ?></strong>
-                <span class="cc-kpi-detalle"><?= $error_servicios ? 'RADIUS no respondió: no se puede confirmar' : 'Servicios DHCP cortados' ?></span>
-                <span class="cc-kpi-fuente">Fuente: servicios (RADIUS) · no incluye PPPoE</span>
+                <span class="cc-kpi-detalle"><?= $error_servicios ? 'RADIUS no respondió: no se puede confirmar' : 'Servicios cortados (DHCP y PPPoE)' ?></span>
+                <span class="cc-kpi-fuente">Fuente: servicios (RADIUS)</span>
             </a>
 
         </div>
@@ -657,7 +657,7 @@ function e_tablero($valor): string
                 </div>
             </div>
 
-            <!-- Distribución de servicios DHCP según Grezz -->
+            <!-- Distribución de servicios (DHCP y PPPoE) según Grezz -->
             <div class="panel cc-panel">
                 <div class="panel-titulo titulo-estados-pago">
                     <span class="icono-circular-ingresos" aria-hidden="true">
@@ -667,7 +667,7 @@ function e_tablero($valor): string
                             <path d="m8 16 2 2 5-5"></path>
                         </svg>
                     </span>
-                    <h3>Distribución de servicios DHCP</h3>
+                    <h3>Distribución de servicios</h3>
                 </div>
 
                 <?php if ($error_grafica_servicios): ?>
@@ -676,7 +676,7 @@ function e_tablero($valor): string
                 <div class="grafica-circular dona-ubb">
                     <div class="dona-ubb-visual"
                          role="img"
-                         aria-label="Distribución de <?= $total_estados ?> servicios DHCP: <?= $servicios_estado["ACTIVO"] ?> activos, <?= $servicios_estado["SUSPENDIDO"] ?> suspendidos y <?= $servicios_estado["SIN_DATOS"] ?> sin estado."
+                         aria-label="Distribución de <?= $total_estados ?> servicios DHCP y PPPoE: <?= $servicios_estado["ACTIVO"] ?> activos, <?= $servicios_estado["SUSPENDIDO"] ?> suspendidos y <?= $servicios_estado["SIN_DATOS"] ?> sin estado."
                          style="background: conic-gradient(
                             #16a34a 0% <?= number_format($porcentaje_activo, 2, '.', '') ?>%,
                             #f0b429 <?= number_format($porcentaje_activo, 2, '.', '') ?>% <?= number_format($porcentaje_acumulado, 2, '.', '') ?>%,
@@ -789,11 +789,11 @@ function e_tablero($valor): string
                 </header>
                 <div class="cc-proceso-cifra">
                     <strong><?= numeroAuto($auto_cortes['gestionables']) ?></strong>
-                    <span>fuera de gracia y con servicio DHCP: corte automático</span>
+                    <span>fuera de gracia y con servicio DHCP: corte automático (PPPoE aún manual)</span>
                 </div>
                 <dl class="cc-filas">
-                    <div><dt>Fuera de gracia ya cortados (DHCP)</dt><dd><?= numeroAuto($auto_cortes['cortados']) ?></dd></div>
-                    <div class="<?= (int)($auto_cortes['manuales'] ?? 0) > 0 ? 'cc-fila--alerta' : '' ?>"><dt>Fuera de gracia sin RADIUS: corte manual (PPPoE u otros)</dt><dd><?= numeroAuto($auto_cortes['manuales']) ?></dd></div>
+                    <div><dt>Fuera de gracia ya cortados</dt><dd><?= numeroAuto($auto_cortes['cortados']) ?></dd></div>
+                    <div class="<?= (int)($auto_cortes['manuales'] ?? 0) > 0 ? 'cc-fila--alerta' : '' ?>"><dt>Fuera de gracia con corte manual (PPPoE o sin relación en RADIUS)</dt><dd><?= numeroAuto($auto_cortes['manuales']) ?></dd></div>
                     <div><dt>Suspensiones solicitadas hoy</dt><dd><?= numeroAuto($auto_sol === null ? null : (int)($auto_sol['suspensiones_hoy'] ?? 0)) ?></dd></div>
                     <div><dt>Reactivaciones solicitadas hoy</dt><dd><?= numeroAuto($auto_sol === null ? null : (int)($auto_sol['reactivaciones_hoy'] ?? 0)) ?></dd></div>
                     <div><dt><a href="suspendidos.php?adeudo=sin">Cortados sin adeudo (sin datos del cliente u otro motivo)</a></dt><dd><?= numeroAuto($auto_cortes['suspendidos_sin_adeudo'] ?? null) ?></dd></div>
@@ -822,7 +822,7 @@ function e_tablero($valor): string
                     <div><dt>Completadas · simuladas (7 días)</dt><dd><?= numeroAuto($grezz_semana === null ? null : (int)($grezz_semana['completadas'] ?? 0)) ?> · <?= numeroAuto($grezz_semana === null ? null : (int)($grezz_semana['simuladas'] ?? 0)) ?></dd></div>
                     <div class="<?= $grezz_rechazadas > 0 ? 'cc-fila--alerta' : '' ?>"><dt>Rechazadas por RADIUS (7 días)</dt><dd><?= numeroAuto($grezz_semana === null ? null : $grezz_rechazadas) ?></dd></div>
                     <div class="<?= $grezz_pendientes > 0 ? 'cc-fila--alerta' : '' ?>"><dt>Sin confirmar por RADIUS</dt><dd><?= numeroAuto($auto_sol === null ? null : $grezz_pendientes) ?></dd></div>
-                    <div><dt>Servicios DHCP reportados</dt><dd><?= $error_servicios ? '—' : number_format($total_estados) ?></dd></div>
+                    <div><dt>Servicios reportados (DHCP y PPPoE)</dt><dd><?= $error_servicios ? '—' : number_format($total_estados) ?></dd></div>
                 </dl>
                 <footer class="cc-proceso-pie">
                     <span>Última solicitud: <?= e_tablero(fechaRelativaTablero($grezz_semana['ultima'] ?? null)) ?></span>

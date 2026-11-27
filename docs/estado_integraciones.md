@@ -34,7 +34,7 @@ Identificadores compartidos: `id_cliente`, `id_servicio`, `id_plan`. Para UISP: 
 |---|---|---|
 | Endpoint | `POST /api/v1/solicitudes/estado-servicio` | `POST /api-radius/v1/servicios/{id}/suspender` o `/reactivar` |
 | Estados | `PENDIENTE`, `COMPLETADA`, `ERROR` | `PENDIENTE`, `SIMULADA`, `RECHAZADA` |
-| PPPoE | Incluido | La API de Grezz solo expone DHCP con equipo relacionado |
+| PPPoE | Incluido | La consulta de Grezz ya incluye PPPoE (27/11/2026); el corte y la reactivación automáticos siguen solo para DHCP hasta probarlos |
 
 Falta que Grezz confirme qué valor de `resultado` devuelve al ejecutar con `"simular": false`, para registrar el estado real (`COMPLETADA`).
 
