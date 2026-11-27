@@ -302,6 +302,8 @@ $faltantesSinCorte = count(array_filter($faltantes, fn($f) => !$f["cortado"]));
     <title>Mensualidades - UBB Comunicaciones</title>
     <link rel="stylesheet" href="css/pagos.css?v=<?php echo filemtime(__DIR__ . '/css/pagos.css'); ?>">
     <link rel="stylesheet" href="css/vencidos.css?v=<?php echo filemtime(__DIR__ . '/css/vencidos.css'); ?>">
+    <link rel="stylesheet" href="css/tablero.css?v=<?php echo filemtime(__DIR__ . '/css/tablero.css'); ?>">
+    <link rel="stylesheet" href="css/listados.css?v=<?php echo filemtime(__DIR__ . '/css/listados.css'); ?>">
 </head>
 
 <body>
@@ -309,27 +311,25 @@ $faltantesSinCorte = count(array_filter($faltantes, fn($f) => !$f["cortado"]));
 <?php require __DIR__ . "/includes/encabezado.php"; ?>
 <?php require __DIR__ . "/includes/panel_lateral.php"; ?>
 
-<main class="contenedor proximos-page">
-    <section class="px-panel">
-        <header class="px-encabezado">
-            <div class="px-titulo">
-                <div class="px-icono" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                         stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h3M8 18h6"/>
-                    </svg>
-                </div>
-                <div>
-                    <span class="px-etiqueta">COBRANZA</span>
-                    <h1>Mensualidades de <?= escMens(mb_strtolower($nombreMes, "UTF-8")) ?></h1>
-                    <p>Todas las mensualidades del mes y los servicios que no tienen una. Se generan solas desde las facturas de UISP y de la plataforma; las de precio del plan, a mano.</p>
-                </div>
-            </div>
-            <a href="index.php" class="px-regresar">← Regresar al centro de control</a>
-        </header>
+<main class="contenedor cc hist mensualidades">
 
-        <form class="px-mes" method="get">
-            <label for="mes">Mes</label>
+    <!-- =================================================
+         CABECERA (con selector de mes)
+    ================================================== -->
+
+    <header class="cc-cabecera">
+        <div class="cc-cabecera-texto">
+            <span class="cc-cabecera-icono" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h3M8 18h6"/></svg>
+            </span>
+            <div>
+                <h1>Mensualidades de <?= escMens(mb_strtolower($nombreMes, "UTF-8")) ?></h1>
+                <p>Todas las mensualidades del mes y los servicios que no tienen una. Se generan solas desde las facturas de UISP y de la plataforma; las de precio del plan, a mano.</p>
+            </div>
+        </div>
+
+        <form class="hist-campo mens-mes" method="get">
+            <span>Mes</span>
             <select id="mes" name="mes" onchange="this.form.submit()">
                 <?php foreach ($opcionesMes as $clave => $texto): ?>
                     <option value="<?= escMens($clave) ?>" <?= $clave === $mesElegido ? "selected" : "" ?>><?= escMens($texto) ?></option>
@@ -337,87 +337,145 @@ $faltantesSinCorte = count(array_filter($faltantes, fn($f) => !$f["cortado"]));
             </select>
             <noscript><button type="submit">Ver</button></noscript>
         </form>
+    </header>
 
-        <div class="px-resumen">
-            <div class="px-indicador">
-                <span>Mensualidades generadas</span>
-                <strong><?= $errorCarga ? "—" : number_format($totales["generadas"]) ?></strong>
-                <?php if (!$errorCarga && $totales["canceladas"]): ?><small class="px-subtexto">y <?= number_format($totales["canceladas"]) ?> canceladas por corte</small><?php endif; ?>
+
+    <!-- =================================================
+         RESUMEN
+    ================================================== -->
+
+    <div class="cc-kpis hist-kpis mens-kpis">
+
+        <div class="cc-kpi cc-kpi--pagos">
+            <div class="cc-kpi-cabeza">
+                <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>
+                <span class="cc-kpi-nombre">Generadas</span>
             </div>
-            <div class="px-indicador px-indicador-info">
-                <span>Importe del mes</span>
-                <strong><?= $errorCarga ? "—" : "$" . number_format($totales["importe"], 2) ?></strong>
-            </div>
-            <div class="px-indicador px-indicador-red-con_servicio">
-                <span>Cobrado</span>
-                <strong><?= $errorCarga ? "—" : "$" . number_format($totales["cobrado"], 2) ?></strong>
-            </div>
-            <div class="px-indicador px-indicador-red-cortado">
-                <span>Por cobrar</span>
-                <strong><?= $errorCarga ? "—" : "$" . number_format($totales["por_cobrar"], 2) ?></strong>
-            </div>
-            <a class="px-indicador <?= $faltantesSinCorte ? "px-indicador-red-cortado" : "px-indicador-red-con_servicio" ?>" href="#faltantes">
-                <span>Servicios sin mensualidad</span>
-                <strong><?= $errorCarga ? "—" : number_format(count($faltantes)) ?></strong>
-                <?php if (!$errorCarga && count($faltantes) > $faltantesSinCorte): ?><small class="px-subtexto"><?= number_format(count($faltantes) - $faltantesSinCorte) ?> están cortados</small><?php endif; ?>
-            </a>
+            <strong class="cc-kpi-numero"><?= $errorCarga ? "—" : number_format($totales["generadas"]) ?></strong>
+            <span class="cc-kpi-detalle">
+                <?php if (!$errorCarga && $totales["canceladas"]): ?>
+                    Y <?= number_format($totales["canceladas"]) ?> canceladas por corte
+                <?php else: ?>
+                    Mensualidades del mes
+                <?php endif; ?>
+            </span>
         </div>
 
-        <div class="px-filtros">
-            <label class="px-busqueda">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                    <circle cx="11" cy="11" r="7"/>
-                    <path d="m20 20-4-4"/>
-                </svg>
-                <input type="search" id="buscarMensualidad"
-                       placeholder="Buscar cliente, teléfono, servicio, paquete o referencia..."
-                       autocomplete="off">
-            </label>
-
-            <div class="px-filtros-secundarios">
-                <select id="filtroEstado" aria-label="Filtrar por estado">
-                    <option value="">Todos los estados (<?= number_format(count($mensualidades)) ?>)</option>
-                    <?php foreach (MENS_ESTADOS as $clave => $texto): ?>
-                        <option value="<?= $clave ?>"><?= escMens($texto) ?> (<?= number_format($conteoEstado[$clave]) ?>)</option>
-                    <?php endforeach; ?>
-                </select>
-
-                <select id="filtroOrigen" aria-label="Filtrar por origen">
-                    <option value="">Todos los orígenes</option>
-                    <?php foreach (MENS_ORIGENES as $clave => $texto): ?>
-                        <option value="<?= $clave ?>"><?= escMens($texto) ?> (<?= number_format($conteoOrigen[$clave]) ?>)</option>
-                    <?php endforeach; ?>
-                </select>
-
-                <button type="button" class="px-btn-exportar" id="exportarMensualidades">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>
-                    Exportar a Excel
-                </button>
+        <div class="cc-kpi hist-kpi--confirmados">
+            <div class="cc-kpi-cabeza">
+                <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>
+                <span class="cc-kpi-nombre">Importe del mes</span>
             </div>
-            <span class="px-ayuda">Los filtros se aplican al momento y la exportación descarga solo lo que ves.</span>
+            <strong class="cc-kpi-numero"><?= $errorCarga ? "—" : "$" . number_format($totales["importe"], 2) ?></strong>
+            <span class="cc-kpi-detalle">Total de las mensualidades</span>
         </div>
 
-        <div class="px-tabla-contenedor">
-            <table class="px-tabla" id="tablaMensualidades">
+        <div class="cc-kpi cc-kpi--activos">
+            <div class="cc-kpi-cabeza">
+                <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg></span>
+                <span class="cc-kpi-nombre">Cobrado</span>
+            </div>
+            <strong class="cc-kpi-numero"><?= $errorCarga ? "—" : "$" . number_format($totales["cobrado"], 2) ?></strong>
+            <span class="cc-kpi-detalle">Pagos aplicados a este mes</span>
+        </div>
+
+        <div class="cc-kpi cc-kpi--suspendidos">
+            <div class="cc-kpi-cabeza">
+                <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+                <span class="cc-kpi-nombre">Por cobrar</span>
+            </div>
+            <strong class="cc-kpi-numero"><?= $errorCarga ? "—" : "$" . number_format($totales["por_cobrar"], 2) ?></strong>
+            <span class="cc-kpi-detalle">Saldo pendiente del mes</span>
+        </div>
+
+        <a class="cc-kpi mens-kpi-enlace <?= $faltantesSinCorte ? "cc-kpi--proximos" : "cc-kpi--activos" ?>" href="#faltantes">
+            <div class="cc-kpi-cabeza">
+                <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10.3 3.9 2.5 17.4A2 2 0 0 0 4.2 20h15.6a2 2 0 0 0 1.7-2.6L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg></span>
+                <span class="cc-kpi-nombre">Sin mensualidad</span>
+            </div>
+            <strong class="cc-kpi-numero"><?= $errorCarga ? "—" : number_format(count($faltantes)) ?></strong>
+            <span class="cc-kpi-detalle">
+                <?php if (!$errorCarga && count($faltantes) > $faltantesSinCorte): ?>
+                    <?= number_format(count($faltantes) - $faltantesSinCorte) ?> están cortados · Ver lista
+                <?php else: ?>
+                    Servicios sin mensualidad · Ver lista
+                <?php endif; ?>
+            </span>
+        </a>
+
+    </div>
+
+
+    <!-- =================================================
+         FILTROS (se aplican al momento, sin recargar)
+    ================================================== -->
+
+    <div class="cc-panel hist-filtros">
+
+        <div class="hist-buscador adeudos-buscador">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <input type="search" id="buscarMensualidad"
+                   placeholder="Buscar cliente, teléfono, servicio, paquete o referencia..."
+                   aria-label="Buscar mensualidad"
+                   autocomplete="off">
+        </div>
+
+        <label class="hist-campo">
+            <span>Estado</span>
+            <select id="filtroEstado">
+                <option value="">Todos los estados (<?= number_format(count($mensualidades)) ?>)</option>
+                <?php foreach (MENS_ESTADOS as $clave => $texto): ?>
+                    <option value="<?= $clave ?>"><?= escMens($texto) ?> (<?= number_format($conteoEstado[$clave]) ?>)</option>
+                <?php endforeach; ?>
+            </select>
+        </label>
+
+        <label class="hist-campo">
+            <span>Origen</span>
+            <select id="filtroOrigen">
+                <option value="">Todos los orígenes</option>
+                <?php foreach (MENS_ORIGENES as $clave => $texto): ?>
+                    <option value="<?= $clave ?>"><?= escMens($texto) ?> (<?= number_format($conteoOrigen[$clave]) ?>)</option>
+                <?php endforeach; ?>
+            </select>
+        </label>
+
+        <button type="button" class="hist-boton adeudos-exportar" id="exportarMensualidades">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>
+            Exportar a Excel
+        </button>
+
+        <span class="adeudos-ayuda">Los filtros se aplican al momento y la exportación descarga solo lo que ves.</span>
+
+    </div>
+
+
+    <!-- =================================================
+         TABLA DE MENSUALIDADES
+    ================================================== -->
+
+    <section class="cc-panel hist-tabla">
+
+        <div class="hist-tabla-scroll">
+            <table id="tablaMensualidades">
                 <thead>
                     <tr>
-                        <th>CLIENTE</th>
-                        <th>SERVICIO</th>
-                        <th>ESTADO</th>
-                        <th>VENCE</th>
-                        <th>IMPORTE</th>
-                        <th>PAGADO</th>
-                        <th>SALDO</th>
-                        <th>ORIGEN</th>
-                        <th>REFERENCIA</th>
-                        <th>ACCIONES</th>
+                        <th class="mens-col-cliente">Cliente</th>
+                        <th>Servicio</th>
+                        <th>Estado</th>
+                        <th>Vence</th>
+                        <th class="hist-num">Importe</th>
+                        <th class="hist-num">Pagado</th>
+                        <th class="hist-num">Saldo</th>
+                        <th>Origen</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                 <?php if ($errorCarga): ?>
-                    <tr><td colspan="10" class="px-vacio"><?= escMens($errorCarga) ?></td></tr>
+                    <tr><td colspan="9" class="hist-vacio"><?= escMens($errorCarga) ?></td></tr>
                 <?php elseif (!$mensualidades): ?>
-                    <tr><td colspan="10" class="px-vacio">No hay mensualidades generadas para <?= escMens(mb_strtolower($nombreMes, "UTF-8")) ?>.</td></tr>
+                    <tr><td colspan="9" class="hist-vacio">No hay mensualidades generadas para <?= escMens(mb_strtolower($nombreMes, "UTF-8")) ?>.</td></tr>
                 <?php else: ?>
                     <?php foreach ($mensualidades as $m):
                         $vence = $m["vencimiento"] ? $m["vencimiento"]->format("d/m/Y") : "—";
@@ -442,107 +500,127 @@ $faltantesSinCorte = count(array_filter($faltantes, fn($f) => !$f["cortado"]));
                             number_format($m["saldo"], 2, ".", ""),
                             MENS_ORIGENES[$m["origen"]], $m["referencia"], $m["nota"],
                         ], JSON_UNESCAPED_UNICODE)) ?>">
-                        <td>
-                            <strong class="px-nombre"><?= escMens($m["nombre"]) ?></strong>
-                            <?php if ($m["telefono"]): ?><small class="px-subtexto"><?= escMens($m["telefono"]) ?></small><?php endif; ?>
+                        <td class="hist-cliente mens-col-cliente">
+                            <strong><?= escMens($m["nombre"]) ?></strong>
+                            <?php if ($m["telefono"]): ?><span><?= escMens($m["telefono"]) ?></span><?php endif; ?>
                         </td>
-                        <td>
-                            <?= (int)$m["id_servicio"] ?>
-                            <?php if ($m["paquete"]): ?><small class="px-subtexto"><?= escMens($m["paquete"]) ?></small><?php endif; ?>
+                        <td class="hist-cliente">
+                            <strong>#<?= (int)$m["id_servicio"] ?></strong>
+                            <?php if ($m["paquete"]): ?><span><?= escMens($m["paquete"]) ?></span><?php endif; ?>
+                            <?php if ($m["referencia"]): ?><span class="mens-ref"><?= escMens($m["referencia"]) ?></span><?php endif; ?>
                         </td>
                         <td>
                             <span class="px-estado <?= $claseEstado ?>"><?= escMens(MENS_ESTADOS[$m["estado"]]) ?></span>
                             <?php if ($m["nota"]): ?><small class="px-subtexto"><?= escMens($m["nota"]) ?></small><?php endif; ?>
                         </td>
-                        <td><?= escMens($vence) ?></td>
-                        <td>$<?= number_format($m["monto"], 2) ?></td>
-                        <td>$<?= number_format($m["pagado"], 2) ?></td>
-                        <td><strong class="<?= $m["saldo"] > 0 ? "px-importe-vencido" : "px-importe-por-vencer" ?>">$<?= number_format($m["saldo"], 2) ?></strong></td>
-                        <td><?= escMens(MENS_ORIGENES[$m["origen"]]) ?></td>
-                        <td><code class="px-referencia"><?= escMens($m["referencia"] ?: "—") ?></code></td>
+                        <td class="hist-fecha"><?= escMens($vence) ?></td>
+                        <td class="hist-num">$<?= number_format($m["monto"], 2) ?></td>
+                        <td class="hist-num">$<?= number_format($m["pagado"], 2) ?></td>
+                        <td class="hist-num"><strong class="<?= $m["saldo"] > 0 ? "px-importe-vencido" : "px-importe-por-vencer" ?>">$<?= number_format($m["saldo"], 2) ?></strong></td>
+                        <td><span class="hist-pildora hist-pildora--metodo"><?= escMens(MENS_ORIGENES[$m["origen"]]) ?></span></td>
                         <td>
-                            <?php if ($m["id_cliente"] > 0): ?>
-                                <a class="px-btn-ver" href="ver_cliente.php?id=<?= (int)$m["id_cliente"] ?>">Ver cliente</a>
-                            <?php else: ?>
-                                <a class="px-btn-ver" href="ver_servicio.php?id=<?= (int)$m["id_servicio"] ?>">Ver servicio</a>
-                            <?php endif; ?>
+                            <div class="hist-acciones">
+                                <?php if ($m["id_cliente"] > 0): ?>
+                                    <a class="hist-boton" href="ver_cliente.php?id=<?= (int)$m["id_cliente"] ?>">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>
+                                        Cliente
+                                    </a>
+                                <?php else: ?>
+                                    <a class="hist-boton" href="ver_servicio.php?id=<?= (int)$m["id_servicio"] ?>">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><path d="M12 19.5h.01"/></svg>
+                                        Servicio
+                                    </a>
+                                <?php endif; ?>
+                            </div>
                         </td>
                     </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>
                 </tbody>
             </table>
-            <p class="px-vacio" id="mensualidadesSinResultados" hidden>Ninguna mensualidad coincide con los filtros.</p>
+            <p class="hist-vacio" id="mensualidadesSinResultados" hidden>Ninguna mensualidad coincide con los filtros.</p>
         </div>
 
-        <div class="px-pie">
+        <div class="adeudos-pie">
             Mostrando <strong id="mensualidadesVisibles"><?= count($mensualidades) ?></strong> de <?= count($mensualidades) ?> mensualidades
             · Saldo de lo mostrado: <strong id="mensualidadesSaldoVisible">—</strong>
         </div>
+
     </section>
 
-    <section class="px-panel px-panel-faltantes" id="faltantes">
-        <header class="px-encabezado">
-            <div class="px-titulo">
-                <div>
-                    <span class="px-etiqueta">REVISIÓN</span>
-                    <h1>Servicios sin mensualidad en <?= escMens(mb_strtolower($nombreMes, "UTF-8")) ?></h1>
-                    <p>Servicios que no son baja, instalados a más tardar el <?= $finMes->format("d/m/Y") ?>, sin ninguna mensualidad del mes (ni pagada, ni pendiente, ni cancelada). Mientras no la tengan, no aparecen en Adeudos.</p>
-                </div>
+
+    <!-- =================================================
+         SERVICIOS SIN MENSUALIDAD
+    ================================================== -->
+
+    <section class="cc-panel hist-tabla mens-faltantes" id="faltantes">
+
+        <div class="mens-faltantes-cabecera">
+            <div>
+                <h2>Servicios sin mensualidad en <?= escMens(mb_strtolower($nombreMes, "UTF-8")) ?></h2>
+                <p>Servicios que no son baja, instalados a más tardar el <?= $finMes->format("d/m/Y") ?>, sin ninguna mensualidad del mes (ni pagada, ni pendiente, ni cancelada). Mientras no la tengan, no aparecen en Adeudos.</p>
             </div>
             <?php if ($faltantes): ?>
-                <button type="button" class="px-btn-exportar" id="exportarFaltantes">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>
+                <button type="button" class="hist-boton adeudos-exportar" id="exportarFaltantes">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>
                     Exportar a Excel
                 </button>
             <?php endif; ?>
-        </header>
+        </div>
 
-        <div class="px-tabla-contenedor">
-            <table class="px-tabla" id="tablaFaltantes">
+        <div class="hist-tabla-scroll">
+            <table id="tablaFaltantes">
                 <thead>
                     <tr>
-                        <th>CLIENTE</th>
-                        <th>SERVICIO</th>
-                        <th>ESTADO EN PLATAFORMA</th>
-                        <th>SE ESPERA DE</th>
-                        <th>POSIBLE CAUSA</th>
-                        <th>ACCIONES</th>
+                        <th class="mens-col-cliente">Cliente</th>
+                        <th>Servicio</th>
+                        <th>Estado en plataforma</th>
+                        <th>Se espera de</th>
+                        <th>Posible causa</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                 <?php if ($errorCarga): ?>
-                    <tr><td colspan="6" class="px-vacio"><?= escMens($errorCarga) ?></td></tr>
+                    <tr><td colspan="6" class="hist-vacio"><?= escMens($errorCarga) ?></td></tr>
                 <?php elseif (!$faltantes): ?>
-                    <tr><td colspan="6" class="px-vacio">Todos los servicios tienen su mensualidad de <?= escMens(mb_strtolower($nombreMes, "UTF-8")) ?>. ✔</td></tr>
+                    <tr><td colspan="6" class="hist-vacio">Todos los servicios tienen su mensualidad de <?= escMens(mb_strtolower($nombreMes, "UTF-8")) ?>. ✔</td></tr>
                 <?php else: ?>
                     <?php foreach ($faltantes as $f): ?>
                     <tr data-exportar="<?= escMens(json_encode([
                             $f["nombre"], $f["telefono"], $f["id_cliente"], $f["id_servicio"], $f["paquete"],
                             $f["estado_servicio"], MENS_ORIGENES[$f["esperado"]], $f["uisp_id"], $f["pista"],
                         ], JSON_UNESCAPED_UNICODE)) ?>">
-                        <td>
-                            <strong class="px-nombre"><?= escMens($f["nombre"]) ?></strong>
-                            <?php if ($f["telefono"]): ?><small class="px-subtexto"><?= escMens($f["telefono"]) ?></small><?php endif; ?>
+                        <td class="hist-cliente mens-col-cliente">
+                            <strong><?= escMens($f["nombre"]) ?></strong>
+                            <?php if ($f["telefono"]): ?><span><?= escMens($f["telefono"]) ?></span><?php endif; ?>
                         </td>
-                        <td>
-                            <?= (int)$f["id_servicio"] ?>
-                            <?php if ($f["paquete"]): ?><small class="px-subtexto"><?= escMens($f["paquete"]) ?></small><?php endif; ?>
+                        <td class="hist-cliente">
+                            <strong>#<?= (int)$f["id_servicio"] ?></strong>
+                            <?php if ($f["paquete"]): ?><span><?= escMens($f["paquete"]) ?></span><?php endif; ?>
                         </td>
                         <td>
                             <span class="px-estado <?= $f["cortado"] ? "px-red-cortado" : "px-estado-revisar" ?>"><?= escMens($f["cortado"] ? "Cortado" : $f["estado_servicio"]) ?></span>
                         </td>
-                        <td>
-                            <?= escMens(MENS_ORIGENES[$f["esperado"]]) ?>
-                            <?php if ($f["uisp_id"] !== ""): ?><small class="px-subtexto">Cliente UISP <?= escMens($f["uisp_id"]) ?></small><?php endif; ?>
+                        <td class="hist-cliente">
+                            <strong><?= escMens(MENS_ORIGENES[$f["esperado"]]) ?></strong>
+                            <?php if ($f["uisp_id"] !== ""): ?><span>Cliente UISP <?= escMens($f["uisp_id"]) ?></span><?php endif; ?>
                         </td>
-                        <td><?= escMens($f["pista"]) ?></td>
+                        <td class="mens-pista"><?= escMens($f["pista"]) ?></td>
                         <td>
-                            <?php if ($f["id_cliente"] > 0): ?>
-                                <a class="px-btn-ver" href="ver_cliente.php?id=<?= (int)$f["id_cliente"] ?>">Ver cliente</a>
-                            <?php else: ?>
-                                <a class="px-btn-ver" href="ver_servicio.php?id=<?= (int)$f["id_servicio"] ?>">Ver servicio</a>
-                            <?php endif; ?>
+                            <div class="hist-acciones">
+                                <?php if ($f["id_cliente"] > 0): ?>
+                                    <a class="hist-boton" href="ver_cliente.php?id=<?= (int)$f["id_cliente"] ?>">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>
+                                        Cliente
+                                    </a>
+                                <?php else: ?>
+                                    <a class="hist-boton" href="ver_servicio.php?id=<?= (int)$f["id_servicio"] ?>">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><path d="M12 19.5h.01"/></svg>
+                                        Servicio
+                                    </a>
+                                <?php endif; ?>
+                            </div>
                         </td>
                     </tr>
                     <?php endforeach; ?>
@@ -550,7 +628,9 @@ $faltantesSinCorte = count(array_filter($faltantes, fn($f) => !$f["cortado"]));
                 </tbody>
             </table>
         </div>
+
     </section>
+
 </main>
 
 <script>
