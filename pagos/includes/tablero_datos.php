@@ -10,6 +10,8 @@ declare(strict_types=1);
  * sigue funcionando.
  */
 
+require_once __DIR__ . '/automatizacion_servicios.php';
+
 /**
  * Estado de un proceso automático a partir de su última ejecución.
  *
@@ -90,6 +92,8 @@ function ultimaEjecucionTablero(?array $ejecucion): string
  * Solicitudes a Grezz de los últimos 7 días por resultado (para el proceso
  * de integración). null si la tabla no está disponible.
  */
+
+require_once __DIR__ . '/automatizacion_servicios.php';
 function solicitudesGrezzSemana(mysqli $conexion): ?array
 {
     try {
@@ -353,4 +357,164 @@ function actividadRecienteTablero(mysqli $conexion, ?mysqli $plataforma, int $li
     unset($evento);
 
     return $eventos;
+}
+
+/**
+ * Servicios que deberían tener internet y siguen cortados: la reactivación
+ * automática no se hizo o falló. Debe quedar vacía cuando todo funciona.
+ *
+ * Junta dos casos:
+ *   - RADIUS (Grezz) los reporta SUSPENDIDO, no tienen mensualidad fuera de
+ *     gracia y tienen al menos un pago registrado. Se exige el pago para no
+ *     incluir los que se cortan a propósito por falta de datos del cliente.
+ *   - La última solicitud a Grezz del servicio es una REACTIVAR de los
+ *     últimos 7 días que Grezz rechazó o no confirmó en una hora (por
+ *     ejemplo, servicios con varios equipos: SIN_RELACION).
+ *
+ * Cada elemento sale de la lista solo: cuando Grezz reporta el servicio
+ * ACTIVO, cuando vuelve a deber (corte correcto) o cuando una nueva
+ * solicitud lo resuelve.
+ *
+ * @param array|null $estadoPagos    estadoPagosPorServicio(), o null si no se pudo calcular
+ * @param array|null $serviciosGrezz servicios de Grezz, o null si no respondió
+ * @return array{elementos: array<int, array>, completo: bool}
+ */
+function reactivacionesFallidasTablero(
+    mysqli $conexion,
+    ?mysqli $plataforma,
+    ?array $estadoPagos,
+    ?array $serviciosGrezz
+): array {
+    $elementos = [];
+    $completo = $estadoPagos !== null && $serviciosGrezz !== null;
+    $vencido = fn(int $id) => ($estadoPagos[$id]['tipo'] ?? '') === 'vencido';
+
+    // Estado y tipo según Grezz.
+    $grezz = [];
+    foreach ($serviciosGrezz ?? [] as $s) {
+        $id = filter_var($s['id_servicio'] ?? null, FILTER_VALIDATE_INT);
+        if ($id) {
+            $grezz[(int)$id] = [
+                'estado' => strtoupper((string)($s['estado_actual'] ?? '')),
+                'tipo' => tipoServicioGrezz($s),
+            ];
+        }
+    }
+
+    // 1. Cortados en RADIUS sin adeudo vencido y con pagos registrados.
+    if ($completo) {
+        $candidatos = [];
+        foreach ($grezz as $id => $g) {
+            if ($g['estado'] === 'SUSPENDIDO' && !$vencido($id)) {
+                $candidatos[] = $id;
+            }
+        }
+
+        if ($candidatos) {
+            try {
+                $r = $conexion->query("
+                    SELECT id_servicio, MAX(id_cliente) AS id_cliente, MAX(fecha_pago) AS ultimo_pago
+                    FROM pagos
+                    WHERE estado_pago = 'PAGADO'
+                      AND metodo_pago <> 'CORTESIA'
+                      AND id_servicio IN (" . implode(',', $candidatos) . ")
+                    GROUP BY id_servicio
+                ");
+
+                while ($f = $r->fetch_assoc()) {
+                    $id = (int)$f['id_servicio'];
+                    $situacion = $estadoPagos[$id]['situacion'] ?? null;
+
+                    $elementos[$id] = [
+                        'id_servicio' => $id,
+                        'id_cliente' => (int)$f['id_cliente'],
+                        'tipo' => $grezz[$id]['tipo'],
+                        'motivo' => $situacion === null
+                            ? 'Está al corriente y RADIUS lo reporta cortado'
+                            : "Su mensualidad no está fuera de gracia ($situacion) y RADIUS lo reporta cortado",
+                        'etiqueta' => 'Cortado sin adeudo',
+                        'fecha' => (string)$f['ultimo_pago'],
+                        'texto_fecha' => 'último pago',
+                    ];
+                }
+            } catch (Throwable $e) {
+                $completo = false;
+                error_log('Centro de control (reactivaciones: pagos): ' . $e->getMessage());
+            }
+        }
+    }
+
+    // 2. Reactivaciones que Grezz rechazó o no confirmó.
+    try {
+        $r = $conexion->query("
+            SELECT s.id_servicio, s.id_cliente, s.tipo_servicio, s.estado,
+                   s.fecha_solicitud, s.mensaje_respuesta
+            FROM solicitudes_estado_servicio s
+            INNER JOIN (
+                SELECT id_servicio, MAX(fecha_solicitud) AS ultima
+                FROM solicitudes_estado_servicio
+                GROUP BY id_servicio
+            ) u ON u.id_servicio = s.id_servicio AND u.ultima = s.fecha_solicitud
+            WHERE s.accion = 'REACTIVAR'
+              AND s.fecha_solicitud >= NOW() - INTERVAL 7 DAY
+              AND (s.estado = 'RECHAZADA'
+                   OR (s.estado = 'PENDIENTE' AND s.fecha_solicitud < NOW() - INTERVAL 1 HOUR))
+        ");
+
+        while ($f = $r->fetch_assoc()) {
+            $id = (int)$f['id_servicio'];
+
+            if (isset($elementos[$id]) || ($grezz[$id]['estado'] ?? '') === 'ACTIVO' || $vencido($id)) {
+                continue;
+            }
+
+            $rechazada = $f['estado'] === 'RECHAZADA';
+            $respuesta = trim((string)($f['mensaje_respuesta'] ?? ''));
+
+            $elementos[$id] = [
+                'id_servicio' => $id,
+                'id_cliente' => (int)$f['id_cliente'],
+                'tipo' => $grezz[$id]['tipo'] ?? ($f['tipo_servicio'] ? strtoupper((string)$f['tipo_servicio']) : null),
+                'motivo' => ($rechazada ? 'Grezz rechazó la reactivación' : 'Grezz no confirmó la reactivación')
+                    . ($respuesta !== '' ? ": $respuesta" : ''),
+                'etiqueta' => $rechazada ? 'Reactivación rechazada' : 'Sin confirmar',
+                'fecha' => (string)$f['fecha_solicitud'],
+                'texto_fecha' => 'solicitada',
+            ];
+        }
+    } catch (Throwable $e) {
+        $completo = false;
+        error_log('Centro de control (reactivaciones: solicitudes): ' . $e->getMessage());
+    }
+
+    // Nombre de los clientes (plataforma, solo lectura).
+    $ids = array_values(array_unique(array_filter(array_column($elementos, 'id_cliente'))));
+    $nombres = [];
+
+    if ($plataforma !== null && $ids) {
+        try {
+            $r = $plataforma->query("
+                SELECT id_cliente, CONCAT_WS(' ', nombre, apellido_paterno, apellido_materno) AS nombre
+                FROM clientes
+                WHERE id_cliente IN (" . implode(',', array_map('intval', $ids)) . ")
+            ");
+
+            while ($f = $r->fetch_assoc()) {
+                $nombres[(int)$f['id_cliente']] = trim((string)$f['nombre']);
+            }
+        } catch (Throwable $e) {
+            error_log('Centro de control (reactivaciones: clientes): ' . $e->getMessage());
+        }
+    }
+
+    foreach ($elementos as &$e) {
+        $e['cliente'] = $e['id_cliente'] ? ($nombres[$e['id_cliente']] ?? 'Cliente ' . $e['id_cliente']) : null;
+        $e['protegido'] = servicioProtegido($e['id_servicio']);
+    }
+    unset($e);
+
+    // Los pagos más antiguos primero: son los que llevan más tiempo sin servicio.
+    usort($elementos, fn($a, $b) => strcmp($a['fecha'], $b['fecha']));
+
+    return ['elementos' => $elementos, 'completo' => $completo];
 }

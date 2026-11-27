@@ -309,6 +309,17 @@ Hallazgo para UBB: la mayoría de los servicios tiene un perfil técnico de velo
 
 Por eso la suspensión automática **solo actúa sobre servicios DHCP que Grezz reporta como `ACTIVO`**. Los demás se listan como "no gestionables" para corte manual.
 
+### Alerta "Pagaron y siguen cortados"
+
+El tablero (`index.php`, sección `#cc-reactivar`, función `reactivacionesFallidasTablero()` en `includes/tablero_datos.php`) lista los servicios que deberían tener internet y siguen cortados. Debe quedar vacía cuando la reactivación automática funciona; si tiene casos, el proceso "Suspensiones y reactivaciones" pasa a *Requiere atención*.
+
+- **Cortado sin adeudo:** Grezz lo reporta `SUSPENDIDO`, no tiene mensualidad fuera de gracia y tiene al menos un pago registrado (así no entran los que se cortan a propósito por falta de datos del cliente).
+- **Reactivación rechazada / sin confirmar:** su última solicitud a Grezz es una `REACTIVAR` de los últimos 7 días que Grezz rechazó o no confirmó en una hora.
+
+Cada caso sale solo de la lista cuando Grezz lo reporta `ACTIVO`, cuando vuelve a deber o cuando una nueva solicitud lo resuelve.
+
+Límite conocido (27/11/2026): los servicios con `SIN_RELACION` llegan sin estado, así que si se pagaron por UISP o a mano (sin solicitud de reactivación) no aparecen. Para cubrirlos, Grezz tiene que incluir `estado_actual` también en esos servicios.
+
 ## Pendiente
 
 - **Grezz en modo real:** `cliente_grezz.php` envía `simular: true`. Para operar en real hay que acordar con la plataforma de Grezz qué valor devuelve `resultado` cuando ejecuta la acción, y aceptarlo en `procesador_grezz.php`.

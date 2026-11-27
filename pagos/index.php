@@ -377,6 +377,16 @@ $importe_pagos_hoy = importePagosHoy($conexion);
 $grezz_semana = solicitudesGrezzSemana($conexion);
 $actividad = actividadRecienteTablero($conexion, $conexion_plataforma ?? null, 25);
 
+// Pagaron (o se pidió reactivar) y siguen cortados: la reactivación automática
+// no se hizo o falló. Debe quedar vacía cuando todo funciona.
+$reactivar = reactivacionesFallidasTablero(
+    $conexion,
+    $conexion_plataforma ?? null,
+    $error_proximos ? null : ($estado_pagos_todos ?? null),
+    $error_servicios ? null : ($consultaGrezz["respuesta"]["servicios"] ?? null)
+);
+$total_reactivar = count($reactivar['elementos']);
+
 // Última ejecución de cada proceso (o null).
 $ejec = fn(string $proceso) => $auto_ejec[$proceso] ?? null;
 
@@ -414,8 +424,9 @@ $proc_venc = estadoProcesoTablero(
 // 3. Suspensiones y reactivaciones.
 $proc_susp_ejec = $ultimaDe(['SUSPENSION']);
 // Los cortados sin adeudo no son alerta: se cortan a propósito los servicios
-// sin datos del cliente para que el cliente llame y los proporcione.
-$proc_susp = estadoProcesoTablero($proc_susp_ejec, 0, $error_proximos);
+// sin datos del cliente para que el cliente llame y los proporcione. Sí lo
+// son los que pagaron y siguen cortados (reactivaciones fallidas).
+$proc_susp = estadoProcesoTablero($proc_susp_ejec, $total_reactivar, $error_proximos);
 
 // 4. Integración con Grezz.
 $grezz_simulacion = defined('GREZZ_SIMULAR') && GREZZ_SIMULAR;
@@ -796,6 +807,7 @@ function e_tablero($valor): string
                     <div class="<?= (int)($auto_cortes['manuales'] ?? 0) > 0 ? 'cc-fila--alerta' : '' ?>"><dt>Fuera de gracia con corte manual (PPPoE o sin relación en RADIUS)</dt><dd><?= numeroAuto($auto_cortes['manuales']) ?></dd></div>
                     <div><dt>Suspensiones solicitadas hoy</dt><dd><?= numeroAuto($auto_sol === null ? null : (int)($auto_sol['suspensiones_hoy'] ?? 0)) ?></dd></div>
                     <div><dt>Reactivaciones solicitadas hoy</dt><dd><?= numeroAuto($auto_sol === null ? null : (int)($auto_sol['reactivaciones_hoy'] ?? 0)) ?></dd></div>
+                    <div class="<?= $total_reactivar > 0 ? 'cc-fila--alerta' : '' ?>"><dt><?php if ($total_reactivar > 0): ?><a href="#cc-reactivar">Pagaron y siguen cortados</a><?php else: ?>Pagaron y siguen cortados<?php endif; ?></dt><dd><?= $total_reactivar === 0 && !$reactivar['completo'] ? '—' : number_format($total_reactivar) ?></dd></div>
                     <div><dt><a href="suspendidos.php?adeudo=sin">Cortados sin adeudo (sin datos del cliente u otro motivo)</a></dt><dd><?= numeroAuto($auto_cortes['suspendidos_sin_adeudo'] ?? null) ?></dd></div>
                 </dl>
                 <footer class="cc-proceso-pie">
@@ -854,6 +866,48 @@ function e_tablero($valor): string
 
         </div>
     </section>
+
+
+    <!-- =====================================================
+         PAGARON Y SIGUEN CORTADOS (reactivaciones fallidas)
+         Solo aparece si hay casos: debe quedar vacía cuando la
+         reactivación automática funciona.
+    ====================================================== -->
+    <?php if ($total_reactivar > 0): ?>
+    <section class="cc-seccion" id="cc-reactivar" aria-labelledby="cc-titulo-reactivar">
+        <div class="cc-seccion-titulo">
+            <h2 id="cc-titulo-reactivar">Pagaron y siguen cortados (<?= number_format($total_reactivar) ?>)</h2>
+            <p>La reactivación automática no se hizo o falló. Pide a Grezz que los reactive; cada uno sale de la lista cuando RADIUS lo reporte activo.</p>
+        </div>
+
+        <div class="cc-panel cc-actividad">
+            <ol class="cc-linea">
+                <?php foreach ($reactivar['elementos'] as $fallo): ?>
+                    <li class="cc-evento cc-evento--reactivacion">
+                        <span class="cc-evento-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15.5-6.3L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.3L3 16"/></svg></span>
+                        <div class="cc-evento-cuerpo">
+                            <div class="cc-evento-linea1">
+                                <strong>Servicio <?= (int)$fallo['id_servicio'] ?><?= $fallo['tipo'] ? ' · ' . e_tablero(str_replace('PPPOE', 'PPPoE', $fallo['tipo'])) : '' ?></strong>
+                                <span class="cc-estado cc-estado--error"><?= e_tablero($fallo['etiqueta']) ?></span>
+                                <?php if ($fallo['protegido']): ?><span class="cc-estado cc-estado--atencion">Protegido: validar antes</span><?php endif; ?>
+                            </div>
+                            <div class="cc-evento-linea2">
+                                <?php if ($fallo['cliente']): ?>
+                                    <a href="ver_cliente.php?id=<?= (int)$fallo['id_cliente'] ?>"><?= e_tablero($fallo['cliente']) ?></a> ·
+                                <?php endif; ?>
+                                <span class="cc-evento-detalle"><?= e_tablero($fallo['motivo']) ?></span>
+                            </div>
+                        </div>
+                        <time class="cc-evento-fecha" datetime="<?= e_tablero($fallo['fecha']) ?>"><?= e_tablero($fallo['texto_fecha']) ?> <?= e_tablero(fechaRelativaTablero($fallo['fecha'], $fallo['texto_fecha'] === 'último pago')) ?></time>
+                    </li>
+                <?php endforeach; ?>
+            </ol>
+            <?php if (!$reactivar['completo']): ?>
+                <p class="cc-vacio">La lista puede estar incompleta: no se pudo consultar RADIUS o la situación de pagos.</p>
+            <?php endif; ?>
+        </div>
+    </section>
+    <?php endif; ?>
 
 
     <!-- =====================================================
