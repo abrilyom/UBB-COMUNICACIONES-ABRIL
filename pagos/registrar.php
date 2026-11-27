@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . "/includes/sesion.php";
 
 require_once "conexion.php";
 require_once __DIR__ . "/../vendor/autoload.php";
@@ -795,6 +796,40 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             }
 
             /*
+             * Quién registró el pago (sesión de la plataforma). Si todavía no se
+             * aplicó la migración 2026-12-06_pagos_registrado_por.sql, o no hay
+             * sesión, el pago se registra igual sin este dato.
+             */
+            $usuarioRegistro = usuarioSesion();
+
+            if ($usuarioRegistro !== null) {
+                try {
+                    $columnasRegistro = $conexion->query(
+                        "SHOW COLUMNS FROM pagos LIKE 'registrado_por'"
+                    );
+
+                    if ($columnasRegistro && $columnasRegistro->num_rows > 0) {
+                        $idUsuarioRegistro = (int)$usuarioRegistro["id_usuario"];
+                        $textoRegistro = textoUsuarioSesion();
+
+                        $stmtRegistro = $conexion->prepare(
+                            "UPDATE pagos
+                             SET id_usuario_registro = ?, registrado_por = ?
+                             WHERE id_pago = ?"
+                        );
+
+                        if ($stmtRegistro) {
+                            $stmtRegistro->bind_param("isi", $idUsuarioRegistro, $textoRegistro, $id_pago);
+                            $stmtRegistro->execute();
+                            $stmtRegistro->close();
+                        }
+                    }
+                } catch (Throwable $errorRegistro) {
+                    error_log("No se guardó quién registró el pago: " . $errorRegistro->getMessage());
+                }
+            }
+
+            /*
              * Aplicar el pago a la mensualidad seleccionada.
              */
             if ($id_obligacion !== "") {
@@ -942,6 +977,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         "metodo_pago" => $metodo_pago,
                         "fecha_pago" => $fecha_pago,
                         "ruta_logo" => __DIR__ . "/../assets/img/globo-ubb-transparente.png",
+                        "atendio" => textoUsuarioSesion(),
                     ]);
 
                     $pdf_ticket = generarPdfTicket($html);

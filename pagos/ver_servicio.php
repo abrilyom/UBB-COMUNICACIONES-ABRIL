@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . "/includes/sesion.php";
 require_once "conexion.php";
 
 $id_servicio = filter_input(INPUT_GET, "id", FILTER_VALIDATE_INT);

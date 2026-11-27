@@ -1,5 +1,17 @@
 <?php
 // Encabezado compartido de UBB Comunicaciones.
+
+// Usuario que entró desde la plataforma (includes/sesion.php).
+$usuarioEncabezado = function_exists('usuarioSesion') ? usuarioSesion() : null;
+$nombreEncabezado = $usuarioEncabezado
+    ? htmlspecialchars((string)$usuarioEncabezado['nombre'], ENT_QUOTES, 'UTF-8')
+    : 'Sin sesión';
+$rolEncabezado = $usuarioEncabezado
+    ? htmlspecialchars(UBB_ROLES_PLATAFORMA[$usuarioEncabezado['rol']] ?? (string)$usuarioEncabezado['rol'], ENT_QUOTES, 'UTF-8')
+    : 'Entra desde la plataforma';
+$urlPlataformaEncabezado = function_exists('urlPlataformaNavegador')
+    ? htmlspecialchars(urlPlataformaNavegador(), ENT_QUOTES, 'UTF-8')
+    : '#';
 ?>
 <header class="encabezado ubb-encabezado-ref">
     <div class="marca">
@@ -46,15 +58,24 @@
         </div>
 
         <div class="ubb-perfil">
-            <span class="ubb-avatar" aria-label="Administrador">
+            <span class="ubb-avatar" aria-hidden="true">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>
-                <span class="ubb-avatar-activo"></span>
+                <?php if ($usuarioEncabezado): ?><span class="ubb-avatar-activo"></span><?php endif; ?>
             </span>
-            <span class="administrador">Administrador <span>▾</span></span>
+            <span class="administrador ubb-usuario-sesion">
+                <span class="ubb-usuario-nombre"><?php echo $nombreEncabezado; ?></span>
+                <small class="ubb-usuario-rol"><?php echo $rolEncabezado; ?></small>
+            </span>
         </div>
-        <span class="ubb-salir-visual" title="Salir" aria-label="Salir">
+        <?php if ($usuarioEncabezado): ?>
+        <a class="ubb-salir-visual" href="?salir=1" title="Salir" aria-label="Salir">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3"/><path d="M13 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6"/></svg>
-        </span>
+        </a>
+        <?php else: ?>
+        <a class="ubb-salir-visual" href="<?php echo $urlPlataformaEncabezado; ?>" title="Entrar desde la plataforma" aria-label="Entrar desde la plataforma">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 17l5-5-5-5M19 12H7"/><path d="M11 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6"/></svg>
+        </a>
+        <?php endif; ?>
     </div>
 </header>
 <script src="avisos-plataforma.js?v=<?php echo filemtime(__DIR__ . '/../avisos-plataforma.js'); ?>" defer></script>

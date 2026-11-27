@@ -10804,3 +10804,20 @@ header.ubb-encabezado-ref {
         padding-top: 110px !important;
     }
 }
+
+/* Usuario de la sesión de la plataforma en el encabezado */
+header.ubb-encabezado-ref .ubb-usuario-sesion {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 1px !important;
+    line-height: 1.15 !important;
+}
+header.ubb-encabezado-ref .ubb-usuario-rol {
+    color: #9a86a0;
+    font-size: 11px;
+    font-weight: 500;
+}
+header.ubb-encabezado-ref a.ubb-salir-visual {
+    text-decoration: none;
+}

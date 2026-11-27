@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . "/includes/sesion.php";
 /*
  * REVISIÓN DE PAGOS UISP
  *
