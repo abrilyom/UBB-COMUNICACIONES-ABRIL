@@ -548,6 +548,7 @@ $auto_uisp = $automatizacion['pagos_uisp'] ?? null;
                 </div>
                 <ul>
                     <li><?= numeroAuto($auto_cortes['gestionables']) ?> se cortan automáticamente</li>
+                    <li><?= numeroAuto($auto_cortes['cortados']) ?> ya están cortados</li>
                     <li><?= numeroAuto($auto_cortes['manuales']) ?> requieren corte manual (PPPoE)</li>
                     <li><?= numeroAuto($auto_cortes['en_gracia']) ?> en periodo de gracia</li>
                 </ul>

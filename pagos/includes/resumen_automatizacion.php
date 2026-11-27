@@ -108,23 +108,31 @@ function resumenAutomatizacion(mysqli $conexion, array $estadoPagos, ?array $ser
 
     $fueraGracia = 0;
     $gestionables = 0;
+    $cortados = 0;
     $enGracia = 0;
 
     foreach ($estadoPagos as $idServicio => $situacion) {
         if ($situacion['tipo'] === 'vencido') {
             $fueraGracia++;
-            if (($estadosGrezz[$idServicio] ?? '') === 'ACTIVO') {
+            $estadoGrezz = $estadosGrezz[$idServicio] ?? '';
+
+            if ($estadoGrezz === 'ACTIVO') {
                 $gestionables++;
+            } elseif ($estadoGrezz === 'SUSPENDIDO') {
+                $cortados++;
             }
         } elseif ($situacion['tipo'] === 'gracia') {
             $enGracia++;
         }
     }
 
+    // Manuales: Grezz no los reconoce (PPPoE u otro error), ni activos ni
+    // cortados. Los ya cortados se cuentan aparte.
     $r['cortes'] = [
         'fuera_gracia' => $fueraGracia,
         'gestionables' => $serviciosGrezz === null ? null : $gestionables,
-        'manuales' => $serviciosGrezz === null ? null : $fueraGracia - $gestionables,
+        'cortados' => $serviciosGrezz === null ? null : $cortados,
+        'manuales' => $serviciosGrezz === null ? null : $fueraGracia - $gestionables - $cortados,
         'en_gracia' => $enGracia,
     ];
 
