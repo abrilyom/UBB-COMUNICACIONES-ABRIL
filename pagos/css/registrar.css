@@ -1,0 +1,249 @@
+/* =========================================================
+   REGISTRAR PAGO (registrar.php)
+   Mismo estilo del Centro de control y de Historial. Se apoya en
+   tablero.css (.cc, .cc-cabecera, .cc-pildora). Va con "main.reg"
+   delante porque pagos.css usa !important en el formulario.
+========================================================= */
+
+/* ---------- Contenedor: sin la tarjeta grande alrededor ---------- */
+
+main.reg .tarjeta-formulario.registro-ui {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+main.reg .tarjeta-formulario.registro-ui::before,
+main.reg .tarjeta-formulario.registro-ui::after {
+    display: none !important;
+}
+
+/* ---------- Pasos ---------- */
+
+main.reg .tarjeta-formulario.registro-ui .registro-ui__pasos {
+    margin-bottom: 18px !important;
+    padding: 16px 22px !important;
+    border: 1px solid var(--cc-borde) !important;
+    border-radius: 16px !important;
+    background: #fff !important;
+    box-shadow: var(--cc-sombra) !important;
+}
+
+/* ---------- Método de pago ---------- */
+
+main.reg .tarjeta-formulario.registro-ui .registro-ui__metodos legend {
+    color: var(--cc-texto-suave) !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    letter-spacing: .4px !important;
+    text-transform: uppercase !important;
+}
+
+main.reg .tarjeta-formulario.registro-ui .registro-ui__metodo-opcion {
+    border: 1px solid var(--cc-borde) !important;
+    border-radius: 12px !important;
+    background: #fff !important;
+    color: var(--cc-morado) !important;
+    box-shadow: var(--cc-sombra) !important;
+    font-weight: 700 !important;
+}
+
+main.reg .tarjeta-formulario.registro-ui .registro-ui__metodo-opcion:hover {
+    border-color: #dcc0e2 !important;
+    background: var(--cc-morado-suave) !important;
+}
+
+main.reg .tarjeta-formulario.registro-ui .registro-ui__metodo-opcion:has(input:checked) {
+    border-color: transparent !important;
+    background: linear-gradient(135deg, #a96db5, #8a4a98) !important;
+    color: #fff !important;
+    box-shadow: 0 8px 18px rgba(138, 74, 152, .28) !important;
+}
+
+/* Iconos de línea en lugar de los símbolos ✓ ⇄ ▣ ▱ */
+main.reg .registro-ui__metodo-opcion > span,
+main.reg .registro-ui__avatar,
+main.reg .registro-ui__seleccionado-avatar,
+main.reg .registro-ui__resultado-avatar,
+main.reg .registro-ui__auto-icono {
+    font-size: 0 !important;
+}
+
+main.reg .registro-ui__metodo-opcion > span {
+    display: inline-block !important;
+    width: 18px !important;
+    height: 18px !important;
+    background-color: currentColor !important;
+    -webkit-mask: var(--reg-icono) center / contain no-repeat;
+    mask: var(--reg-icono) center / contain no-repeat;
+}
+
+main.reg .registro-ui__metodo-opcion:has(input[value="EFECTIVO"]) > span {
+    --reg-icono: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2.5' y='6' width='19' height='12' rx='2'/%3E%3Ccircle cx='12' cy='12' r='2.5'/%3E%3Cpath d='M6 10v4M18 10v4'/%3E%3C/svg%3E");
+}
+
+main.reg .registro-ui__metodo-opcion:has(input[value="TRANSFERENCIA"]) > span {
+    --reg-icono: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 8h14l-3-3M20 16H6l3 3'/%3E%3C/svg%3E");
+}
+
+main.reg .registro-ui__metodo-opcion:has(input[value="DEPOSITO"]) > span {
+    --reg-icono: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 10 12 4l9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18'/%3E%3C/svg%3E");
+}
+
+main.reg .registro-ui__metodo-opcion:has(input[value="TARJETA"]) > span {
+    --reg-icono: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2.5' y='5' width='19' height='14' rx='2'/%3E%3Cpath d='M2.5 10h19M6 15h4'/%3E%3C/svg%3E");
+}
+
+/* Avatares del cliente (♙): ícono de persona */
+main.reg .registro-ui__avatar,
+main.reg .registro-ui__seleccionado-avatar,
+main.reg .registro-ui__resultado-avatar {
+    position: relative !important;
+    background: var(--cc-morado-suave) !important;
+    color: var(--cc-morado-medio) !important;
+}
+
+main.reg .registro-ui__avatar::after,
+main.reg .registro-ui__seleccionado-avatar::after,
+main.reg .registro-ui__resultado-avatar::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 55%;
+    height: 55%;
+    background-color: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='8' r='3.5'/%3E%3Cpath d='M5 20a7 7 0 0 1 14 0'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='8' r='3.5'/%3E%3Cpath d='M5 20a7 7 0 0 1 14 0'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+/* ---------- Secciones (01 y 02): tarjetas blancas ---------- */
+
+main.reg .tarjeta-formulario.registro-ui .registro-ui__seccion {
+    border: 1px solid var(--cc-borde) !important;
+    border-radius: 16px !important;
+    background: #fff !important;
+    box-shadow: var(--cc-sombra) !important;
+}
+
+main.reg .tarjeta-formulario.registro-ui .registro-ui__numero {
+    background: linear-gradient(135deg, #9a5aa6, #7d3f8c) !important;
+    color: #fff !important;
+    box-shadow: 0 6px 14px rgba(125, 63, 140, .22) !important;
+}
+
+/* Tarjetas internas más planas */
+main.reg .tarjeta-formulario.registro-ui .registro-ui__cliente-seleccionado,
+main.reg .tarjeta-formulario.registro-ui .registro-ui__cliente-vacio,
+main.reg .tarjeta-formulario.registro-ui .registro-ui__ids-editables .campo,
+main.reg .tarjeta-formulario.registro-ui #contenedorObligaciones {
+    border-color: #f0e4f3 !important;
+    background: #fcf8fd !important;
+    box-shadow: none !important;
+}
+
+main.reg .tarjeta-formulario.registro-ui .registro-ui__busqueda {
+    border: 1px solid var(--cc-borde) !important;
+    border-radius: 11px !important;
+    background: #fff !important;
+}
+
+main.reg .tarjeta-formulario.registro-ui .registro-ui__busqueda:focus-within {
+    border-color: var(--cc-morado-medio) !important;
+    box-shadow: 0 0 0 3px rgba(154, 90, 166, .15) !important;
+}
+
+/* ---------- Campos ---------- */
+
+main.reg .tarjeta-formulario.registro-ui input:not([type="radio"]),
+main.reg .tarjeta-formulario.registro-ui select,
+main.reg .tarjeta-formulario.registro-ui textarea {
+    border-color: var(--cc-borde) !important;
+    border-radius: 11px !important;
+    background-color: #fff !important;
+    color: var(--cc-texto) !important;
+}
+
+main.reg .tarjeta-formulario.registro-ui .registro-ui__busqueda input {
+    border: 0 !important;
+    background: transparent !important;
+}
+
+main.reg .tarjeta-formulario.registro-ui input:not([type="radio"]):focus,
+main.reg .tarjeta-formulario.registro-ui select:focus,
+main.reg .tarjeta-formulario.registro-ui textarea:focus {
+    outline: none !important;
+    border-color: var(--cc-morado-medio) !important;
+    box-shadow: 0 0 0 3px rgba(154, 90, 166, .15) !important;
+}
+
+main.reg .tarjeta-formulario.registro-ui .registro-ui__busqueda input:focus {
+    box-shadow: none !important;
+}
+
+/* ---------- Automatizaciones ---------- */
+
+main.reg .tarjeta-formulario.registro-ui .registro-ui__automatizaciones {
+    border: 1px solid #f0e4f3 !important;
+    background: #fcf8fd !important;
+}
+
+main.reg .registro-ui__auto-icono {
+    position: relative !important;
+    background: var(--cc-morado-suave) !important;
+    color: var(--cc-morado-medio) !important;
+}
+
+main.reg .registro-ui__auto-icono::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 55%;
+    height: 55%;
+    background-color: currentColor;
+    -webkit-mask: var(--reg-icono) center / contain no-repeat;
+    mask: var(--reg-icono) center / contain no-repeat;
+}
+
+/* Primera: reactivación (flechas circulares). Segunda: comprobante (documento) */
+main.reg .registro-ui__automatizacion:nth-of-type(1) .registro-ui__auto-icono {
+    --reg-icono: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 11a8 8 0 0 0-14.8-4M4 4v4h4M4 13a8 8 0 0 0 14.8 4M20 20v-4h-4'/%3E%3C/svg%3E");
+}
+
+main.reg .registro-ui__automatizacion:nth-of-type(2) .registro-ui__auto-icono {
+    --reg-icono: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z'/%3E%3Cpath d='M14 3v5h5M9 13h6M9 17h4'/%3E%3C/svg%3E");
+}
+
+/* ---------- Botones ---------- */
+
+main.reg .tarjeta-formulario.registro-ui .registro-ui__acciones {
+    border-top: 0 !important;
+}
+
+main.reg .tarjeta-formulario.registro-ui .registro-ui__acciones .registro-ui__confirmar {
+    border: 0 !important;
+    border-radius: 12px !important;
+    background: linear-gradient(135deg, #a96db5, #8a4a98) !important;
+    color: #fff !important;
+    box-shadow: 0 8px 18px rgba(138, 74, 152, .28) !important;
+}
+
+main.reg .tarjeta-formulario.registro-ui .registro-ui__acciones .registro-ui__confirmar:hover {
+    filter: brightness(1.06);
+}
+
+main.reg .tarjeta-formulario.registro-ui .registro-ui__cancelar {
+    border: 1px solid var(--cc-borde) !important;
+    border-radius: 12px !important;
+    background: #fff !important;
+    color: var(--cc-morado) !important;
+}
+
+main.reg .tarjeta-formulario.registro-ui .registro-ui__cancelar:hover {
+    background: var(--cc-morado-suave) !important;
+}

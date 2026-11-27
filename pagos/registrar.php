@@ -974,6 +974,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <title>Registrar pago - UBB Comunicaciones</title>
 
     <link rel="stylesheet" href="css/pagos.css?v=<?php echo filemtime(__DIR__ . '/css/pagos.css'); ?>">
+    <link rel="stylesheet" href="css/tablero.css?v=<?php echo filemtime(__DIR__ . '/css/tablero.css'); ?>">
+    <link rel="stylesheet" href="css/registrar.css?v=<?php echo filemtime(__DIR__ . '/css/registrar.css'); ?>">
 
 </head>
 
@@ -984,7 +986,20 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     <?php require __DIR__ . "/includes/panel_lateral.php"; ?>
 
-<main class="contenedor registro-contenedor-tec">
+<main class="contenedor registro-contenedor-tec cc reg">
+
+    <header class="cc-cabecera">
+        <div class="cc-cabecera-texto">
+            <span class="cc-cabecera-icono" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+            </span>
+            <div>
+                <h1>Registrar pago</h1>
+                <p>Identifica al cliente, captura el pago y confirma el registro</p>
+            </div>
+        </div>
+        <span class="cc-pildora cc-pildora--ok"><span class="cc-punto"></span>Nuevo registro</span>
+    </header>
 
 
 
@@ -1077,15 +1092,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 
         <section class="tarjeta-formulario registro-ui" id="formularioRegistro">
-
-    <div class="registro-ui__intro registro-ui__intro-redisenado">
-        <div>
-            <span class="registro-ui__eyebrow">UBB COMUNICACIONES · GESTIÓN DE COBROS</span>
-            <h3>Registrar pago</h3>
-            <p>Identifica al cliente, captura el pago y confirma el registro.</p>
-        </div>
-        <span class="registro-ui__estado"><span></span> Nuevo registro</span>
-    </div>
 
     <form class="formulario registro-ui__form" method="POST">
 
