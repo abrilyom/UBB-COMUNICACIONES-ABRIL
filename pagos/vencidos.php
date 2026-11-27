@@ -18,7 +18,7 @@ $totalVencidos = 0;
 const VENCIDOS_ESTADOS_RED = [
     "con_servicio" => "Con servicio",
     "cortado" => "Cortado",
-    "sin_dato" => "Sin dato en Grezz",
+    "sin_dato" => "Sin dato en RADIUS",
 ];
 $estadosGrezz = null;
 $conteoRed = array_fill_keys(array_keys(VENCIDOS_ESTADOS_RED), 0);
@@ -206,7 +206,7 @@ $paquetesDisponibles = array_values($paquetesDisponibles);
                     <?php endforeach; ?>
                 </select>
 
-                <select id="filtroRed" aria-label="Filtrar por estado del servicio en Grezz">
+                <select id="filtroRed" aria-label="Filtrar por estado del servicio en RADIUS">
                     <option value="">Todos los estados del servicio</option>
                     <?php foreach (VENCIDOS_ESTADOS_RED as $clave => $texto): ?>
                         <option value="<?= $clave ?>">
@@ -226,7 +226,7 @@ $paquetesDisponibles = array_values($paquetesDisponibles);
 
         <?php if ($estadosGrezz === null && !$errorCarga): ?>
             <p class="px-aviso-grezz" role="status">
-                No se pudo consultar a Grezz: no se sabe cuáles de estos servicios ya están cortados.
+                No se pudo consultar RADIUS: no se sabe cuáles de estos servicios ya están cortados.
                 Los vencidos se calculan igual con los pagos registrados.
             </p>
         <?php endif; ?>
@@ -374,7 +374,7 @@ $paquetesDisponibles = array_values($paquetesDisponibles);
                 <div class="px-dato"><span>Adeudo</span><strong id="pxAdeudo"></strong></div>
                 <div class="px-dato"><span>Referencia de pago</span><strong id="pxReferencia"></strong></div>
                 <div class="px-dato"><span>Situación</span><strong id="pxSituacion"></strong></div>
-                <div class="px-dato"><span>Servicio (Grezz)</span><strong id="pxRed"></strong></div>
+                <div class="px-dato"><span>Servicio (RADIUS)</span><strong id="pxRed"></strong></div>
             </div>
             <footer class="px-modal-pie">
                 <button type="button" class="px-modal-cerrar" data-cerrar-modal>Cerrar</button>

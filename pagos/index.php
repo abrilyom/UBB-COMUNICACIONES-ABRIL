@@ -534,8 +534,8 @@ function e_tablero($valor): string
                     <span class="cc-kpi-nombre">Servicios activos</span>
                 </div>
                 <strong class="cc-kpi-numero"><?= $servicios_activos !== null ? number_format($servicios_activos) : '—' ?></strong>
-                <span class="cc-kpi-detalle"><?= $error_servicios ? 'Grezz no respondió: no se puede confirmar' : 'Servicios DHCP conectados' ?></span>
-                <span class="cc-kpi-fuente">Fuente: Grezz · no incluye PPPoE</span>
+                <span class="cc-kpi-detalle"><?= $error_servicios ? 'RADIUS no respondió: no se puede confirmar' : 'Servicios DHCP conectados' ?></span>
+                <span class="cc-kpi-fuente">Fuente: servicios (RADIUS) · no incluye PPPoE</span>
             </a>
 
             <a class="cc-kpi cc-kpi--pagos" href="pagos_hoy.php">
@@ -566,8 +566,8 @@ function e_tablero($valor): string
                     <span class="cc-kpi-nombre">Servicios suspendidos</span>
                 </div>
                 <strong class="cc-kpi-numero"><?= $servicios_suspendidos !== null ? number_format($servicios_suspendidos) : '—' ?></strong>
-                <span class="cc-kpi-detalle"><?= $error_servicios ? 'Grezz no respondió: no se puede confirmar' : 'Servicios DHCP cortados' ?></span>
-                <span class="cc-kpi-fuente">Fuente: Grezz · no incluye PPPoE</span>
+                <span class="cc-kpi-detalle"><?= $error_servicios ? 'RADIUS no respondió: no se puede confirmar' : 'Servicios DHCP cortados' ?></span>
+                <span class="cc-kpi-fuente">Fuente: servicios (RADIUS) · no incluye PPPoE</span>
             </a>
 
         </div>
@@ -672,7 +672,7 @@ function e_tablero($valor): string
                 </div>
 
                 <?php if ($error_grafica_servicios): ?>
-                    <p class="cc-vacio">Grezz no respondió: no se puede mostrar la distribución.</p>
+                    <p class="cc-vacio">RADIUS no respondió: no se puede mostrar la distribución.</p>
                 <?php else: ?>
                 <div class="grafica-circular dona-ubb">
                     <div class="dona-ubb-visual"
@@ -685,7 +685,7 @@ function e_tablero($valor): string
                          );">
                         <div class="dona-ubb-centro">
                             <strong><?= number_format($total_estados) ?></strong>
-                            <span>Servicios en Grezz</span>
+                            <span>Servicios en RADIUS</span>
                         </div>
                     </div>
 
@@ -708,7 +708,7 @@ function e_tablero($valor): string
                         <div class="item-leyenda item-leyenda-ubb">
                             <span class="punto-leyenda cancelado"></span>
                             <div class="detalle-leyenda-ubb">
-                                <span class="nombre-estado-ubb">Sin estado en Grezz</span>
+                                <span class="nombre-estado-ubb">Sin estado en RADIUS</span>
                                 <strong><?= number_format($porcentaje_sin_datos, 1) ?>%</strong>
                                 <small><?= number_format($servicios_estado["SIN_DATOS"]) ?> servicios</small>
                             </div>
@@ -794,7 +794,7 @@ function e_tablero($valor): string
                 </div>
                 <dl class="cc-filas">
                     <div><dt>Fuera de gracia ya cortados (DHCP)</dt><dd><?= numeroAuto($auto_cortes['cortados']) ?></dd></div>
-                    <div class="<?= (int)($auto_cortes['manuales'] ?? 0) > 0 ? 'cc-fila--alerta' : '' ?>"><dt>Fuera de gracia sin Grezz: corte manual (PPPoE u otros)</dt><dd><?= numeroAuto($auto_cortes['manuales']) ?></dd></div>
+                    <div class="<?= (int)($auto_cortes['manuales'] ?? 0) > 0 ? 'cc-fila--alerta' : '' ?>"><dt>Fuera de gracia sin RADIUS: corte manual (PPPoE u otros)</dt><dd><?= numeroAuto($auto_cortes['manuales']) ?></dd></div>
                     <div><dt>Suspensiones solicitadas hoy</dt><dd><?= numeroAuto($auto_sol === null ? null : (int)($auto_sol['suspensiones_hoy'] ?? 0)) ?></dd></div>
                     <div><dt>Reactivaciones solicitadas hoy</dt><dd><?= numeroAuto($auto_sol === null ? null : (int)($auto_sol['reactivaciones_hoy'] ?? 0)) ?></dd></div>
                     <div class="<?= (int)($auto_cortes['suspendidos_sin_adeudo'] ?? 0) > 0 ? 'cc-fila--alerta' : '' ?>"><dt>Cortados sin adeudo vencido: revisar reactivación</dt><dd><?= numeroAuto($auto_cortes['suspendidos_sin_adeudo'] ?? null) ?></dd></div>
@@ -809,7 +809,7 @@ function e_tablero($valor): string
             <article class="cc-proceso cc-proceso--<?= $proc_grezz['clase'] ?>">
                 <header class="cc-proceso-cabeza">
                     <span class="cc-proceso-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg></span>
-                    <h3>Integración con Grezz</h3>
+                    <h3>Integración con servicios (RADIUS)</h3>
                     <span class="cc-estado cc-estado--<?= $proc_grezz['clase'] ?>"><?= e_tablero($proc_grezz['texto']) ?></span>
                 </header>
                 <div class="cc-proceso-cifra">
@@ -821,8 +821,8 @@ function e_tablero($valor): string
                 <dl class="cc-filas">
                     <div><dt>Modo de operación</dt><dd><?= $grezz_simulacion ? 'Simulación (no corta)' : 'Real' ?></dd></div>
                     <div><dt>Completadas · simuladas (7 días)</dt><dd><?= numeroAuto($grezz_semana === null ? null : (int)($grezz_semana['completadas'] ?? 0)) ?> · <?= numeroAuto($grezz_semana === null ? null : (int)($grezz_semana['simuladas'] ?? 0)) ?></dd></div>
-                    <div class="<?= $grezz_rechazadas > 0 ? 'cc-fila--alerta' : '' ?>"><dt>Rechazadas por Grezz (7 días)</dt><dd><?= numeroAuto($grezz_semana === null ? null : $grezz_rechazadas) ?></dd></div>
-                    <div class="<?= $grezz_pendientes > 0 ? 'cc-fila--alerta' : '' ?>"><dt>Sin confirmar por Grezz</dt><dd><?= numeroAuto($auto_sol === null ? null : $grezz_pendientes) ?></dd></div>
+                    <div class="<?= $grezz_rechazadas > 0 ? 'cc-fila--alerta' : '' ?>"><dt>Rechazadas por RADIUS (7 días)</dt><dd><?= numeroAuto($grezz_semana === null ? null : $grezz_rechazadas) ?></dd></div>
+                    <div class="<?= $grezz_pendientes > 0 ? 'cc-fila--alerta' : '' ?>"><dt>Sin confirmar por RADIUS</dt><dd><?= numeroAuto($auto_sol === null ? null : $grezz_pendientes) ?></dd></div>
                     <div><dt>Servicios DHCP reportados</dt><dd><?= $error_servicios ? '—' : number_format($total_estados) ?></dd></div>
                 </dl>
                 <footer class="cc-proceso-pie">

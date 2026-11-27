@@ -239,7 +239,7 @@ function actividadRecienteTablero(mysqli $conexion, ?mysqli $plataforma, int $li
 
             $eventos[] = [
                 'tipo' => $suspender ? 'suspension' : 'reactivacion',
-                'titulo' => ($suspender ? 'Suspensión solicitada a Grezz' : 'Reactivación solicitada a Grezz') . $tipoServicio,
+                'titulo' => ($suspender ? 'Suspensión solicitada a servicios (RADIUS)' : 'Reactivación solicitada a servicios (RADIUS)') . $tipoServicio,
                 'detalle' => (string)($f['mensaje_respuesta'] ?: $f['motivo']),
                 'fecha' => (string)$f['fecha_solicitud'],
                 'solo_fecha' => false,
