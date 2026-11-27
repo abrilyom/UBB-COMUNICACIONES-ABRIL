@@ -425,6 +425,36 @@
     color: var(--cc-texto);
 }
 
+/* Tabla: más espacio para el nombre del cliente */
+
+.adeudos .adeudos-col-cliente {
+    min-width: 220px;
+}
+
+.adeudos td.adeudos-col-cliente strong {
+    font-size: 15px;
+}
+
+.adeudos .adeudos-col-servicio {
+    min-width: 170px;
+}
+
+.adeudos .hist-cliente .adeudos-ref {
+    margin-top: 4px;
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: 11.5px;
+    white-space: nowrap;
+}
+
+.adeudos-acciones {
+    flex-direction: column;
+    flex-wrap: nowrap;
+}
+
+.adeudos-acciones .hist-boton {
+    justify-content: center;
+}
+
 .adeudos .hist-acciones button.hist-boton {
     cursor: pointer;
     font-family: inherit;

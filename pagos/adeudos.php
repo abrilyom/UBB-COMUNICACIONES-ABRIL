@@ -463,22 +463,21 @@ if (!isset(ADEUDOS_SITUACIONES[$situacionInicial])) {
             <table id="tablaAdeudos">
                 <thead>
                     <tr>
-                        <th>Cliente</th>
-                        <th>Servicio</th>
+                        <th class="adeudos-col-cliente">Cliente</th>
+                        <th class="adeudos-col-servicio">Servicio</th>
                         <th>Situación</th>
                         <th>Desde</th>
                         <th class="px-centro">Meses vencidos</th>
                         <th class="hist-num">Adeudo</th>
-                        <th>Referencia</th>
                         <th>Servicio (RADIUS)</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                 <?php if ($errorCarga): ?>
-                    <tr><td colspan="9" class="hist-vacio"><?= escAdeudo($errorCarga) ?></td></tr>
+                    <tr><td colspan="8" class="hist-vacio"><?= escAdeudo($errorCarga) ?></td></tr>
                 <?php elseif (!$adeudos): ?>
-                    <tr><td colspan="9" class="hist-vacio">No hay servicios con mensualidades pendientes.</td></tr>
+                    <tr><td colspan="8" class="hist-vacio">No hay servicios con mensualidades pendientes.</td></tr>
                 <?php else: ?>
                     <?php foreach ($adeudos as $a):
                         $ciclo = $a["ciclo"];
@@ -502,13 +501,14 @@ if (!isset(ADEUDOS_SITUACIONES[$situacionInicial])) {
                             number_format((float)$ciclo["saldo_total"], 2, ".", ""),
                             $ciclo["referencia"], ADEUDOS_ESTADOS_RED[$a["red"]], $a["direccion"],
                         ], JSON_UNESCAPED_UNICODE)) ?>">
-                        <td class="hist-cliente">
+                        <td class="hist-cliente adeudos-col-cliente">
                             <strong><?= escAdeudo($a["nombre"]) ?></strong>
                             <?php if ($a["telefono"]): ?><span><?= escAdeudo($a["telefono"]) ?></span><?php endif; ?>
                         </td>
                         <td class="hist-cliente">
                             <strong>#<?= (int)$a["id_servicio"] ?></strong>
                             <?php if ($a["paquete"]): ?><span><?= escAdeudo($a["paquete"]) ?></span><?php endif; ?>
+                            <?php if ($ciclo["referencia"]): ?><span class="adeudos-ref" title="Referencia de pago"><?= escAdeudo($ciclo["referencia"]) ?></span><?php endif; ?>
                         </td>
                         <td>
                             <span class="px-estado px-estado-<?= escAdeudo($ciclo["tipo"]) ?>"><?= escAdeudo($ciclo["situacion"]) ?></span>
@@ -523,12 +523,11 @@ if (!isset(ADEUDOS_SITUACIONES[$situacionInicial])) {
                             <?php endif; ?>
                         </td>
                         <td class="hist-num"><strong class="<?= $a["saldo_vencido"] > 0 ? "px-importe-vencido" : "px-importe-por-vencer" ?>"><?= escAdeudo($importe) ?></strong></td>
-                        <td class="hist-referencia"><?= escAdeudo($ciclo["referencia"] ?: "—") ?></td>
                         <td>
                             <span class="px-estado px-red-<?= escAdeudo($a["red"]) ?>"><?= escAdeudo(ADEUDOS_ESTADOS_RED[$a["red"]]) ?></span>
                         </td>
                         <td>
-                            <div class="hist-acciones">
+                            <div class="hist-acciones adeudos-acciones">
                                 <button type="button" class="hist-boton hist-boton--principal" data-detalle="<?= (int)$a["id_servicio"] ?>">
                                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
                                     Detalles
