@@ -7,6 +7,8 @@ $opcionesMenu = [
      "icono" => '<path d="m3 10 9-7 9 7"/><path d="M5 9v12h14V9M9 21v-7h6v7"/>'],
     ["archivo" => "registrar.php", "texto" => "Registrar pago",
      "icono" => '<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>'],
+    ["archivo" => "adeudos.php", "texto" => "Adeudos",
+     "icono" => '<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'],
     ["archivo" => "historial.php", "texto" => "Historial",
      "icono" => '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>'],
     ["archivo" => "notificaciones.php", "texto" => "Notificaciones",

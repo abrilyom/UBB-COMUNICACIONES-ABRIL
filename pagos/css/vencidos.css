@@ -67,6 +67,26 @@ body > .contenedor.proximos-page {
 .px-estado-vencido { color:#a32929; background:#fde8e8; }
 .px-estado-revisar { color:#666; background:#eee; }
 
+/* Adeudos (adeudos.php usa esta hoja) */
+.px-subtexto { display:block; margin-top:3px; color:#9a8b9e; font-size:11px; font-weight:500; }
+.px-centro { text-align:center; }
+.px-meses { display:inline-grid; place-items:center; min-width:26px; height:26px; padding:0 6px; border-radius:13px; background:#fff3cf; color:#765000; font-weight:800; }
+.px-meses-alto { background:#fde8e8; color:#a32929; }
+.px-importe-vencido { color:#a32929; }
+.px-importe-por-vencer { color:#7a6a7e; font-weight:600; }
+.px-referencia { padding:3px 6px; border-radius:6px; background:#f6eff8; color:#6d4a75; font-size:11px; }
+a.px-btn-ver { text-decoration:none; white-space:nowrap; }
+.px-btn-exportar {
+    display:inline-flex; align-items:center; gap:8px; height:46px; padding:0 16px;
+    border:0; border-radius:11px; background:#1e7a45; color:#fff;
+    font:inherit; font-size:13px; font-weight:700; cursor:pointer;
+}
+.px-btn-exportar svg { width:17px; height:17px; }
+.px-btn-exportar:hover { background:#17663a; }
+.px-btn-exportar:focus-visible { outline:3px solid #9fd8b5; outline-offset:2px; }
+.px-filtros-secundarios select { min-width:190px; }
+.px-filtros { flex-wrap:wrap; }
+
 /* Estado real del servicio según Grezz */
 .px-red-con_servicio { color:#1e6b3a; background:#e3f5e9; }
 .px-red-cortado { color:#a32929; background:#fde8e8; }

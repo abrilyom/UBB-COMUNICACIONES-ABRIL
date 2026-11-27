@@ -112,7 +112,7 @@ try {
 
 
 // =====================================================
-// PRÓXIMOS VENCIMIENTOS: MISMA REGLA QUE proximos.php
+// SITUACIÓN DE PAGOS: MISMA REGLA QUE adeudos.php
 // Consulta exclusivamente de lectura a ubb_plataforma.
 // =====================================================
 
@@ -202,7 +202,7 @@ try {
 
     // Base única para todas las cifras de cobranza del tablero: servicios que
     // existen en la plataforma y no están dados de baja (mismo criterio que
-    // vencidos.php). El estado ACTIVO de la plataforma no se usa porque no se
+    // adeudos.php). El estado ACTIVO de la plataforma no se usa porque no se
     // actualiza al cortar; el estado real del servicio lo da Grezz.
     $resultado_servicios = $conexion_plataforma->query("
         SELECT id_servicio
@@ -548,7 +548,7 @@ function e_tablero($valor): string
                 <span class="cc-kpi-fuente cc-tendencia <?= e_tablero($clase_tendencia_pagos) ?>"><?= e_tablero($texto_tendencia_pagos) ?></span>
             </a>
 
-            <a class="cc-kpi cc-kpi--proximos" href="proximos.php">
+            <a class="cc-kpi cc-kpi--proximos" href="adeudos.php?situacion=por_vencer">
                 <div class="cc-kpi-cabeza">
                     <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M12 13v3l2 1"/></svg></span>
                     <span class="cc-kpi-nombre">Próximas a vencer</span>
@@ -775,7 +775,7 @@ function e_tablero($valor): string
                 </dl>
                 <footer class="cc-proceso-pie">
                     <span>Mensualidades: <?= e_tablero(fechaRelativaTablero($proc_venc_ejec['fecha_fin'] ?? null)) ?></span>
-                    <span class="cc-enlaces"><a href="proximos.php">Próximos</a><a href="vencidos.php">Vencidos</a></span>
+                    <span class="cc-enlaces"><a href="adeudos.php?situacion=gracia">En gracia</a><a href="adeudos.php?situacion=vencido">Fuera de gracia</a></span>
                 </footer>
             </article>
 
@@ -799,7 +799,7 @@ function e_tablero($valor): string
                 </dl>
                 <footer class="cc-proceso-pie">
                     <span><?= e_tablero(ultimaEjecucionTablero($proc_susp_ejec)) ?></span>
-                    <span class="cc-enlaces"><a href="vencidos.php">Vencidos</a><a href="suspendidos.php">Suspendidos</a></span>
+                    <span class="cc-enlaces"><a href="adeudos.php?situacion=vencido">Adeudos</a><a href="suspendidos.php">Suspendidos</a></span>
                 </footer>
             </article>
 
