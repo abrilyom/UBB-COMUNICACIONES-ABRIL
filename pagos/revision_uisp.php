@@ -177,28 +177,47 @@ $visibles = $filtro === ""
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Revisión de pagos UISP | UBB Comunicaciones</title>
     <link rel="stylesheet" href="css/pagos.css?v=<?php echo filemtime(__DIR__ . '/css/pagos.css'); ?>">
+    <link rel="stylesheet" href="css/tablero.css?v=<?php echo filemtime(__DIR__ . '/css/tablero.css'); ?>">
+    <link rel="stylesheet" href="css/listados.css?v=<?php echo filemtime(__DIR__ . '/css/listados.css'); ?>">
     <style>
-        .rv-page h1{margin:0 0 6px;color:#3d1d5c}
-        .rv-page .rv-sub{margin:0 0 20px;color:#6f6680;line-height:1.5}
-        .rv-aviso{padding:12px 16px;border-radius:10px;margin-bottom:16px;font-size:14px}
-        .rv-aviso.ok{background:#e3f4e8;color:#1f7a3d}
-        .rv-aviso.err{background:#fdecea;color:#b3261e}
-        .rv-cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-bottom:20px}
-        .rv-cat{display:block;padding:14px;border:1px solid #e5e1ee;border-radius:12px;background:#fff;text-decoration:none;color:#29233d}
-        .rv-cat.activa{border-color:#5b2a86;box-shadow:0 0 0 2px #5b2a8633}
-        .rv-cat strong{display:block;font-size:24px;color:#5b2a86}
-        .rv-cat span{font-size:13px;font-weight:bold}
-        .rv-cat small{display:block;color:#706780;margin-top:4px}
-        .rv-tabla{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;font-size:13px}
-        .rv-tabla th,.rv-tabla td{padding:10px;border-bottom:1px solid #eee9f3;text-align:left;vertical-align:top}
-        .rv-tabla th{background:#f7f4fa;color:#5b2a86}
-        .rv-tabla td.num{text-align:right;white-space:nowrap}
-        .rv-motivo{color:#4d4560;max-width:420px}
-        .rv-acciones form{display:inline-block;margin:0 4px 4px 0}
-        .rv-acciones button{padding:6px 10px;border-radius:8px;border:1px solid #d8d0e2;background:#fff;cursor:pointer;font-size:12px}
-        .rv-acciones button.favor{background:#5b2a86;color:#fff;border-color:#5b2a86}
-        .rv-decision{display:inline-block;padding:3px 8px;border-radius:10px;font-size:11px;font-weight:bold;background:#fff4d6;color:#8a5a00}
-        .rv-vacio{padding:30px;text-align:center;color:#706780;background:#fff;border-radius:12px}
+        /* Avisos de resultado */
+        .rv-aviso{padding:13px 18px;border-radius:12px;margin-bottom:16px;font-size:14px;font-weight:600}
+        .rv-aviso.ok{background:var(--cc-ok-fondo);color:var(--cc-ok)}
+        .rv-aviso.err{background:var(--cc-error-fondo);color:var(--cc-error)}
+
+        /* Categorías: tarjetas que filtran la tabla */
+        .rv-cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;margin-bottom:18px}
+        .rv-cat{position:relative;display:flex;flex-direction:column;gap:4px;padding:16px 18px;overflow:hidden;
+            border:1px solid var(--cc-borde);border-radius:16px;background:#fff;box-shadow:var(--cc-sombra);
+            color:var(--cc-texto);text-decoration:none;transition:transform .15s ease,box-shadow .15s ease}
+        .rv-cat::before{content:"";position:absolute;inset:0 0 auto 0;height:4px;background:#dcc6e2}
+        .rv-cat:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(113,58,124,.12)}
+        .rv-cat strong{font-size:30px;font-weight:800;line-height:1.1;color:var(--cc-texto)}
+        .rv-cat span{font-size:13px;font-weight:700}
+        .rv-cat small{color:var(--cc-texto-suave);font-size:12.5px}
+        .rv-cat.activa{border-color:#d9bde0;background:linear-gradient(160deg,#f8effb 0%,#f8effb 60%,#fff 140%)}
+        .rv-cat.activa::before{background:linear-gradient(90deg,#a96db5,#8a4a98)}
+        .rv-cat.activa strong{color:var(--cc-morado)}
+
+        /* "N por decidir" a la derecha del título */
+        .rv-page .cc-cabecera{flex-wrap:nowrap}
+        .rv-page .cc-cabecera-texto{flex:1 1 auto}
+        .rv-page .cc-cabecera .cc-pildora{flex:0 0 auto}
+        @media (max-width:900px){.rv-page .cc-cabecera{flex-wrap:wrap}}
+
+        .rv-descripcion{margin:-4px 0 18px;color:var(--cc-texto-suave);font-size:13.5px;line-height:1.5}
+
+        /* Tabla */
+        .rv-page .hist-tabla td{vertical-align:top}
+        .rv-page .hist-tabla td small{display:block;margin-top:3px;color:var(--cc-texto-suave);font-size:12px}
+        .rv-page .hist-tabla td small a{color:var(--cc-morado);font-weight:700}
+        .rv-motivo{max-width:420px;color:var(--cc-texto-suave);line-height:1.45}
+        .rv-motivo strong{display:block;margin-bottom:2px;color:var(--cc-texto)}
+        .rv-acciones form{display:inline-block;margin:0 6px 6px 0}
+        .rv-acciones button{cursor:pointer;font-family:inherit}
+        .rv-decision{display:inline-block;margin-bottom:6px;padding:5px 11px;border-radius:999px;font-size:11px;font-weight:800;
+            background:var(--cc-atencion-fondo);color:var(--cc-atencion)}
+        .rv-vacio{padding:36px;text-align:center;color:var(--cc-texto-suave)}
     </style>
 </head>
 <body>
@@ -206,13 +225,30 @@ $visibles = $filtro === ""
 <?php require __DIR__ . "/includes/encabezado.php"; ?>
 <?php require __DIR__ . "/includes/panel_lateral.php"; ?>
 
-<main class="contenedor rv-page">
-    <h1>Revisión de pagos UISP</h1>
-    <p class="rv-sub">
-        Pagos registrados en UISP que no se aplicaron solos porque había dudas.
-        Aquí solo se guarda la decisión; el proceso automático la aplica en máximo 15 minutos
-        con las reglas de siempre. <strong><?= (int)$porDecidir ?></strong> por decidir.
-    </p>
+<main class="contenedor cc hist rv-page">
+
+    <!-- =================================================
+         CABECERA
+    ================================================== -->
+
+    <header class="cc-cabecera">
+        <div class="cc-cabecera-texto">
+            <span class="cc-cabecera-icono" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>
+            </span>
+            <div>
+                <h1>Revisión de pagos UISP</h1>
+                <p>
+                    Pagos registrados en UISP que no se aplicaron solos porque había dudas.
+                    Aquí solo se guarda la decisión; el proceso automático la aplica en máximo 15 minutos
+                    con las reglas de siempre.
+                </p>
+            </div>
+        </div>
+        <span class="cc-pildora <?= $porDecidir > 0 ? "cc-pildora--atencion" : "cc-pildora--ok" ?>">
+            <span class="cc-punto"></span><?= (int)$porDecidir ?> por decidir
+        </span>
+    </header>
 
     <?php if ($mensaje): ?><div class="rv-aviso ok"><?= h($mensaje) ?></div><?php endif; ?>
     <?php if ($error): ?><div class="rv-aviso err"><?= h($error) ?></div><?php endif; ?>
@@ -220,36 +256,48 @@ $visibles = $filtro === ""
         <div class="rv-aviso err">Falta aplicar la migración 2026-12-02_revision_uisp.sql para poder registrar decisiones.</div>
     <?php endif; ?>
 
+
+    <!-- =================================================
+         CATEGORÍAS (filtran la tabla)
+    ================================================== -->
+
     <section class="rv-cats">
         <a class="rv-cat <?= $filtro === "" ? "activa" : "" ?>" href="revision_uisp.php">
-            <strong><?= count($pagos) ?></strong>
             <span>Todos</span>
+            <strong><?= count($pagos) ?></strong>
+            <small>Pagos en revisión</small>
         </a>
         <?php foreach (CATEGORIAS_REVISION as $clave => [$titulo, $descripcion]): ?>
             <?php if ($conteo[$clave] === 0) continue; ?>
             <a class="rv-cat <?= $filtro === $clave ? "activa" : "" ?>" href="?categoria=<?= h($clave) ?>"
                title="<?= h($descripcion) ?>">
-                <strong><?= $conteo[$clave] ?></strong>
                 <span><?= h($titulo) ?></span>
+                <strong><?= $conteo[$clave] ?></strong>
                 <small>$<?= number_format($importe[$clave], 2) ?></small>
             </a>
         <?php endforeach; ?>
     </section>
 
     <?php if ($filtro !== "" && CATEGORIAS_REVISION[$filtro][1] !== ""): ?>
-        <p class="rv-sub"><?= h(CATEGORIAS_REVISION[$filtro][1]) ?></p>
+        <p class="rv-descripcion"><?= h(CATEGORIAS_REVISION[$filtro][1]) ?></p>
     <?php endif; ?>
 
+
+    <!-- =================================================
+         TABLA
+    ================================================== -->
+
+    <section class="cc-panel hist-tabla">
     <?php if (!$visibles): ?>
         <div class="rv-vacio">No hay pagos en revisión<?= $filtro !== "" ? " en esta categoría" : "" ?>.</div>
     <?php else: ?>
-        <div style="overflow-x:auto">
-        <table class="rv-tabla">
+        <div class="hist-tabla-scroll">
+        <table>
             <thead>
                 <tr>
                     <th>Fecha</th>
-                    <th>Cliente</th>
-                    <th style="text-align:right">Monto</th>
+                    <th class="mens-col-cliente">Cliente</th>
+                    <th class="hist-num">Monto</th>
                     <th>Método</th>
                     <th>Motivo</th>
                     <th>Decisión</th>
@@ -258,23 +306,26 @@ $visibles = $filtro === ""
             <tbody>
             <?php foreach ($visibles as $p): ?>
                 <tr>
-                    <td><?= h(substr((string)$p["fecha_original_uisp"], 0, 16)) ?><br>
-                        <small>Pago UISP <?= (int)$p["uisp_payment_id"] ?></small></td>
-                    <td>
-                        <?= h($p["cliente_nombre_uisp"]) ?><br>
+                    <td class="hist-fecha">
+                        <?= h(substr((string)$p["fecha_original_uisp"], 0, 10)) ?>
+                        <span><?= h(substr((string)$p["fecha_original_uisp"], 11, 5)) ?></span>
+                        <small>Pago UISP <?= (int)$p["uisp_payment_id"] ?></small>
+                    </td>
+                    <td class="mens-col-cliente">
+                        <strong><?= h($p["cliente_nombre_uisp"]) ?></strong>
                         <small>UISP <?= h($p["uisp_client_id"]) ?>
                         <?php if ($p["id_cliente_ubb"]): ?>
                             · <a href="ver_cliente.php?id=<?= (int)$p["id_cliente_ubb"] ?>">UBB <?= (int)$p["id_cliente_ubb"] ?></a>
                         <?php endif; ?></small>
                     </td>
-                    <td class="num">$<?= number_format((float)$p["monto"], 2) ?>
+                    <td class="hist-num"><strong>$<?= number_format((float)$p["monto"], 2) ?></strong>
                         <?php if ((float)$p["credito_uisp"] > 0): ?>
-                            <br><small>UISP a favor: $<?= number_format((float)$p["credito_uisp"], 2) ?></small>
+                            <small>UISP a favor: $<?= number_format((float)$p["credito_uisp"], 2) ?></small>
                         <?php endif; ?>
                     </td>
-                    <td><?= h($p["metodo_original_uisp"]) ?></td>
+                    <td><span class="hist-pildora hist-pildora--metodo"><?= h($p["metodo_original_uisp"]) ?></span></td>
                     <td class="rv-motivo">
-                        <strong><?= h(CATEGORIAS_REVISION[$p["categoria"]][0]) ?></strong><br>
+                        <strong><?= h(CATEGORIAS_REVISION[$p["categoria"]][0]) ?></strong>
                         <?= h($p["motivo_revision"]) ?>
                     </td>
                     <td class="rv-acciones">
@@ -293,7 +344,7 @@ $visibles = $filtro === ""
                             </span>
                             <form method="post">
                                 <input type="hidden" name="id_importacion" value="<?= (int)$p["id_importacion"] ?>">
-                                <button name="accion" value="QUITAR">Quitar decisión</button>
+                                <button name="accion" value="QUITAR" class="hist-boton">Quitar decisión</button>
                             </form>
                         <?php elseif ($tieneDecision): ?>
                             <?php foreach (decisionesPermitidas($p["categoria"], (string)$p["estado_aplicacion"]) as $d): ?>
@@ -302,7 +353,7 @@ $visibles = $filtro === ""
                                           ? "¿Abonar este pago a lo que debe y dejar el sobrante como saldo a favor para su siguiente mensualidad?"
                                           : "¿Marcar este pago como histórico? No se aplicará a ninguna mensualidad." ?>');">
                                     <input type="hidden" name="id_importacion" value="<?= (int)$p["id_importacion"] ?>">
-                                    <button name="accion" value="<?= h($d) ?>" class="<?= $d === "SALDO_FAVOR" ? "favor" : "" ?>">
+                                    <button name="accion" value="<?= h($d) ?>" class="hist-boton <?= $d === "SALDO_FAVOR" ? "hist-boton--principal" : "" ?>">
                                         <?= $d === "SALDO_FAVOR" ? "Abonar como saldo a favor" : "Histórico (no aplica)" ?>
                                     </button>
                                 </form>
@@ -315,6 +366,8 @@ $visibles = $filtro === ""
         </table>
         </div>
     <?php endif; ?>
+    </section>
+
 </main>
 
 </body>
