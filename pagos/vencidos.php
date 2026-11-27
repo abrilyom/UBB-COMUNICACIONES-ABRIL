@@ -10,7 +10,45 @@ $serviciosVencidos = [];
 $errorCarga = null;
 $totalVencidos = 0;
 
+/*
+ * Estado real del servicio según Grezz (quien corta y reconecta):
+ * con_servicio, cortado o sin_dato. Si Grezz no responde, la lista de
+ * vencidos se muestra igual y todos quedan "sin_dato".
+ */
+const VENCIDOS_ESTADOS_RED = [
+    "con_servicio" => "Con servicio",
+    "cortado" => "Cortado",
+    "sin_dato" => "Sin dato en Grezz",
+];
+$estadosGrezz = null;
+$conteoRed = array_fill_keys(array_keys(VENCIDOS_ESTADOS_RED), 0);
+
 require_once __DIR__ . "/includes/estado_pagos.php";
+
+try {
+    require_once __DIR__ . "/api/cliente_grezz.php";
+    $consultaGrezz = listarServiciosGrezz();
+
+    if (
+        !empty($consultaGrezz["transporte_ok"]) &&
+        (int)($consultaGrezz["codigo_http"] ?? 0) === 200 &&
+        is_array($consultaGrezz["respuesta"]["servicios"] ?? null)
+    ) {
+        $estadosGrezz = [];
+
+        foreach ($consultaGrezz["respuesta"]["servicios"] as $servicioGrezz) {
+            $id = filter_var($servicioGrezz["id_servicio"] ?? null, FILTER_VALIDATE_INT);
+
+            if ($id && is_string($servicioGrezz["estado_actual"] ?? null)) {
+                $estadosGrezz[(int)$id] = strtoupper($servicioGrezz["estado_actual"]);
+            }
+        }
+    } else {
+        error_log("Vencidos: Grezz no respondió: " . ($consultaGrezz["error"] ?? "respuesta inválida"));
+    }
+} catch (Throwable $e) {
+    error_log("Vencidos: no se pudo consultar Grezz: " . $e->getMessage());
+}
 
 try {
     $conexion_plataforma = require __DIR__ . "/conexion_plataforma.php";
@@ -42,7 +80,9 @@ try {
         LEFT JOIN direcciones_servicio d
             ON d.id_direccion = s.id_direccion
            AND d.id_cliente = s.id_cliente
-        WHERE s.estado = 'ACTIVO'
+        -- El estado de la plataforma no se actualiza al cortar, así que solo
+        -- se excluyen las bajas; el estado real lo da Grezz.
+        WHERE COALESCE(s.estado, '') <> 'BAJA'
         ORDER BY c.nombre, c.apellido_paterno, s.id_servicio
     ";
 
@@ -62,6 +102,14 @@ try {
             ($fila["apellido_materno"] ?? "")
         );
 
+        $estadoGrezz = $estadosGrezz[(int)$fila["id_servicio"]] ?? null;
+        $fila["estado_red"] = match ($estadoGrezz) {
+            "ACTIVO" => "con_servicio",
+            "SUSPENDIDO" => "cortado",
+            default => "sin_dato",
+        };
+        $conteoRed[$fila["estado_red"]]++;
+
         $fila["ciclo"] = $ciclo;
         $serviciosVencidos[] = $fila;
     }
@@ -69,7 +117,7 @@ try {
     $totalVencidos = count($serviciosVencidos);
 
 } catch (Throwable $e) {
-    error_log("Error en módulo Próximos a vencer: " . $e->getMessage());
+    error_log("Error en módulo Vencidos: " . $e->getMessage());
     $errorCarga = "No fue posible consultar los servicios. Intenta nuevamente más tarde.";
 }
 
@@ -122,6 +170,14 @@ $paquetesDisponibles = array_values($paquetesDisponibles);
                 <span>Servicios con plazo vencido</span>
                 <strong><?= number_format($totalVencidos) ?></strong>
             </div>
+            <div class="px-indicador px-indicador-red-con_servicio">
+                <span>Siguen con servicio</span>
+                <strong><?= $estadosGrezz === null ? "—" : number_format($conteoRed["con_servicio"]) ?></strong>
+            </div>
+            <div class="px-indicador px-indicador-red-cortado">
+                <span>Ya cortados</span>
+                <strong><?= $estadosGrezz === null ? "—" : number_format($conteoRed["cortado"]) ?></strong>
+            </div>
             <div class="px-indicador px-indicador-info">
                 <span>Fecha de consulta</span>
                 <strong><?= (new DateTimeImmutable("today"))->format("d/m/Y") ?></strong>
@@ -150,6 +206,15 @@ $paquetesDisponibles = array_values($paquetesDisponibles);
                     <?php endforeach; ?>
                 </select>
 
+                <select id="filtroRed" aria-label="Filtrar por estado del servicio en Grezz">
+                    <option value="">Todos los estados del servicio</option>
+                    <?php foreach (VENCIDOS_ESTADOS_RED as $clave => $texto): ?>
+                        <option value="<?= $clave ?>">
+                            <?= escaparProximo($texto) ?> (<?= number_format($conteoRed[$clave]) ?>)
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+
                 <select id="ordenarProximo" aria-label="Ordenar servicios">
                     <option value="urgencia">Ordenar: Mayor urgencia</option>
                     <option value="alfabetico">Ordenar: Alfabético (A–Z)</option>
@@ -158,6 +223,13 @@ $paquetesDisponibles = array_values($paquetesDisponibles);
             </div>
             <span class="px-ayuda">La búsqueda y los filtros se aplican automáticamente</span>
         </div>
+
+        <?php if ($estadosGrezz === null && !$errorCarga): ?>
+            <p class="px-aviso-grezz" role="status">
+                No se pudo consultar a Grezz: no se sabe cuáles de estos servicios ya están cortados.
+                Los vencidos se calculan igual con los pagos registrados.
+            </p>
+        <?php endif; ?>
 
         <div class="px-tabla-contenedor">
             <table class="px-tabla" id="tablaProximos">
@@ -171,14 +243,15 @@ $paquetesDisponibles = array_values($paquetesDisponibles);
                         <th>DÍAS</th>
                         <th>ADEUDO</th>
                         <th>SITUACIÓN</th>
+                        <th>SERVICIO</th>
                         <th>ACCIONES</th>
                     </tr>
                 </thead>
                 <tbody>
                 <?php if ($errorCarga): ?>
-                    <tr><td colspan="9" class="px-vacio"><?= escaparProximo($errorCarga) ?></td></tr>
+                    <tr><td colspan="10" class="px-vacio"><?= escaparProximo($errorCarga) ?></td></tr>
                 <?php elseif (!$serviciosVencidos): ?>
-                    <tr><td colspan="9" class="px-vacio">No hay servicios que mostrar en este periodo.</td></tr>
+                    <tr><td colspan="10" class="px-vacio">No hay servicios que mostrar en este periodo.</td></tr>
                 <?php else: ?>
                     <?php foreach ($serviciosVencidos as $fila): ?>
                         <?php
@@ -225,6 +298,7 @@ $paquetesDisponibles = array_values($paquetesDisponibles);
                         <tr data-registro="1"
                             data-busqueda="<?= escaparProximo($textoBusqueda) ?>"
                             data-paquete="<?= escaparProximo($fila["paquete_referencia"] ?? "") ?>"
+                            data-red="<?= escaparProximo($fila["estado_red"]) ?>"
                             data-nombre="<?= escaparProximo($fila["nombre_completo"]) ?>"
                             data-fecha="<?= escaparProximo($fechaOrden) ?>"
                             data-urgencia="<?= $urgencias[$ciclo["tipo"]] ?? 5 ?>">
@@ -241,6 +315,11 @@ $paquetesDisponibles = array_values($paquetesDisponibles);
                                 </span>
                             </td>
                             <td>
+                                <span class="px-estado px-red-<?= escaparProximo($fila["estado_red"]) ?>">
+                                    <?= escaparProximo(VENCIDOS_ESTADOS_RED[$fila["estado_red"]]) ?>
+                                </span>
+                            </td>
+                            <td>
                                 <button type="button" class="px-btn-ver"
                                     data-nombre="<?= escaparProximo($fila["nombre_completo"]) ?>"
                                     data-telefono="<?= escaparProximo($fila["telefono"] ?: "Sin información") ?>"
@@ -254,7 +333,8 @@ $paquetesDisponibles = array_values($paquetesDisponibles);
                                     data-dias="<?= escaparProximo($ciclo["dias"]) ?>"
                                     data-adeudo="<?= escaparProximo(textoAdeudo($ciclo)) ?>"
                                     data-referencia="<?= escaparProximo($ciclo["referencia"]) ?>"
-                                    data-situacion="<?= escaparProximo($ciclo["situacion"]) ?>">
+                                    data-situacion="<?= escaparProximo($ciclo["situacion"]) ?>"
+                                    data-red="<?= escaparProximo(VENCIDOS_ESTADOS_RED[$fila["estado_red"]]) ?>">
                                     Ver detalles
                                 </button>
                             </td>
@@ -293,7 +373,8 @@ $paquetesDisponibles = array_values($paquetesDisponibles);
                 <div class="px-dato"><span>Días</span><strong id="pxDias"></strong></div>
                 <div class="px-dato"><span>Adeudo</span><strong id="pxAdeudo"></strong></div>
                 <div class="px-dato"><span>Referencia de pago</span><strong id="pxReferencia"></strong></div>
-                <div class="px-dato px-dato-ancho"><span>Situación</span><strong id="pxSituacion"></strong></div>
+                <div class="px-dato"><span>Situación</span><strong id="pxSituacion"></strong></div>
+                <div class="px-dato"><span>Servicio (Grezz)</span><strong id="pxRed"></strong></div>
             </div>
             <footer class="px-modal-pie">
                 <button type="button" class="px-modal-cerrar" data-cerrar-modal>Cerrar</button>
@@ -306,6 +387,7 @@ $paquetesDisponibles = array_values($paquetesDisponibles);
 (() => {
     const buscador = document.getElementById("buscarProximo");
     const filtroPaquete = document.getElementById("filtroPaquete");
+    const filtroRed = document.getElementById("filtroRed");
     const ordenar = document.getElementById("ordenarProximo");
     const tabla = document.getElementById("tablaProximos");
     const contador = document.getElementById("pxFilasVisibles");
@@ -318,16 +400,18 @@ $paquetesDisponibles = array_values($paquetesDisponibles);
     function aplicarFiltros() {
         const texto = (buscador?.value || "").toLocaleLowerCase("es").trim();
         const paquete = filtroPaquete?.value || "";
+        const red = filtroRed?.value || "";
         const criterio = ordenar?.value || "urgencia";
 
         let visibles = filas.filter(fila => {
             const busqueda = (fila.dataset.busqueda || "")
                 .toLocaleLowerCase("es");
-            const coincideTexto = busqueda.includes(texto);
-            const coincidePaquete = !paquete || fila.dataset.paquete === paquete;
+            const coincide = busqueda.includes(texto)
+                && (!paquete || fila.dataset.paquete === paquete)
+                && (!red || fila.dataset.red === red);
 
-            fila.hidden = !(coincideTexto && coincidePaquete);
-            return coincideTexto && coincidePaquete;
+            fila.hidden = !coincide;
+            return coincide;
         });
 
         visibles.sort((a, b) => {
@@ -352,6 +436,7 @@ $paquetesDisponibles = array_values($paquetesDisponibles);
 
     buscador?.addEventListener("input", aplicarFiltros);
     filtroPaquete?.addEventListener("change", aplicarFiltros);
+    filtroRed?.addEventListener("change", aplicarFiltros);
     ordenar?.addEventListener("change", aplicarFiltros);
 
     aplicarFiltros();
@@ -365,7 +450,7 @@ $paquetesDisponibles = array_values($paquetesDisponibles);
         idServicio: "pxIdServicio", paquete: "pxPaquete",
         instalacion: "pxInstalacion", pago: "pxPago",
         limite: "pxLimite", dias: "pxDias", situacion: "pxSituacion",
-        adeudo: "pxAdeudo", referencia: "pxReferencia"
+        adeudo: "pxAdeudo", referencia: "pxReferencia", red: "pxRed"
     };
 
     let botonAnterior = null;

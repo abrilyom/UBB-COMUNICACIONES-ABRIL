@@ -35,7 +35,7 @@ body > .contenedor.proximos-page {
     transition:background .2s, transform .2s;
 }
 .px-regresar:hover { background:#a861b6; transform:translateY(-1px); }
-.px-resumen { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:22px; }
+.px-resumen { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:16px; margin-bottom:22px; }
 .px-indicador {
     display:flex; flex-direction:column; gap:9px; min-height:100px;
     padding:18px 21px; border:1px solid #f1def5; border-radius:15px;
@@ -66,6 +66,17 @@ body > .contenedor.proximos-page {
 .px-estado-gracia { color:#245d91; background:#e5f1fc; }
 .px-estado-vencido { color:#a32929; background:#fde8e8; }
 .px-estado-revisar { color:#666; background:#eee; }
+
+/* Estado real del servicio según Grezz */
+.px-red-con_servicio { color:#1e6b3a; background:#e3f5e9; }
+.px-red-cortado { color:#a32929; background:#fde8e8; }
+.px-red-sin_dato { color:#666; background:#eee; }
+.px-indicador-red-con_servicio strong { color:#1e6b3a; }
+.px-indicador-red-cortado strong { color:#a32929; }
+.px-aviso-grezz {
+    margin:0 0 17px; padding:11px 14px; border:1px solid #f3d9a8; border-radius:11px;
+    background:#fff8e8; color:#7a5200; font-size:12px;
+}
 .px-btn-ver {
     display:inline-flex; align-items:center; gap:7px; padding:8px 11px;
     border:1px solid #efd3f5; border-radius:9px; background:#fbeefe;
