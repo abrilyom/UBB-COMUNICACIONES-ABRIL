@@ -616,15 +616,13 @@ function exp_estado_clase(string $estado): string {
                                 </td>
                                 <td>
                                     <?= exp_h($p["referencia"] ?: "—") ?>
-                                    <?php if (!empty($p["comprobante"])): ?>
-                                        <small>
-                                            <a class="exp-enlace"
-                                               href="<?= exp_h($p["comprobante"]) ?>"
-                                               target="_blank" rel="noopener">
-                                                Ver comprobante
-                                            </a>
-                                        </small>
-                                    <?php endif; ?>
+                                    <small>
+                                        <a class="exp-enlace"
+                                           href="comprobante.php?id=<?= (int)$p["id_pago"] ?>"
+                                           target="_blank" rel="noopener">
+                                            Ver comprobante
+                                        </a>
+                                    </small>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

@@ -304,7 +304,7 @@ th{background:#f9f5fa;color:#785d7e}
 <td><?= h($m['metodo_pago']) ?></td>
 <td><span class="estado <?= h($m['estado_pago']) ?>"><?= h($m['estado_pago']) ?></span></td>
 <td><?= h($m['referencia'] ?: '—') ?></td>
-<td><?php if (!empty($m['comprobante'])): ?><a href="<?= h($m['comprobante']) ?>" target="_blank" rel="noopener">Ver</a><?php else: ?>—<?php endif; ?></td>
+<td><a href="comprobante.php?id=<?= (int)$m['id_pago'] ?>" target="_blank" rel="noopener">Ver</a></td>
 </tr>
 <?php endforeach; endif; ?>
 </tbody></table></div>

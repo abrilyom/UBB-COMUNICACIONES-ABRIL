@@ -42,7 +42,10 @@ function textoPeriodoTicket(string $periodo): string
  *   nombre, codigo_cliente, codigo_servicio, paquete, tecnologia,
  *   periodo, concepto, saldo_restante_centavos, monto (texto "289.00"),
  *   referencia, metodo_pago, fecha_pago ("Y-m-d H:i:s"), ruta_logo,
- *   atendio (opcional, p. ej. "Ana López · Operador")
+ *   atendio (opcional, p. ej. "Ana López · Operador"),
+ *   conceptos (opcional, lista de [periodo, concepto, monto] si cubre varios meses),
+ *   origen (opcional, p. ej. "UISP" o "Conciliación bancaria")
+ * estado_pago también acepta CANCELADO.
  */
 function construirHtmlTicket(array $t): string
 {
@@ -96,17 +99,41 @@ function construirHtmlTicket(array $t): string
             : "";
     }
 
-    /* Concepto: mensualidad y periodo pagado, si se eligió uno. */
-    if ($periodo !== "") {
-        $conceptoBase = ($concepto !== "" && strtoupper($concepto) !== "MENSUALIDAD")
+    /* "MENSUALIDAD" + "202611" → "Mensualidad Noviembre 2026". */
+    $nombreConcepto = static function (string $concepto, string $periodo): string {
+        $base = ($concepto !== "" && strtoupper($concepto) !== "MENSUALIDAD")
             ? mb_convert_case(mb_strtolower($concepto, "UTF-8"), MB_CASE_TITLE, "UTF-8")
             : "Mensualidad";
-        $textoConcepto = $h($conceptoBase . " " . textoPeriodoTicket($periodo));
-    } else {
-        $textoConcepto = "Pago de servicio de internet";
-    }
+
+        return trim($base . " " . textoPeriodoTicket($periodo));
+    };
 
     $monto = number_format((float)($t["monto"] ?? 0), 2);
+
+    /*
+     * Renglones del concepto. "conceptos" = lista de [periodo, concepto, monto]
+     * cuando un pago cubre varios meses; si no, se usa periodo/concepto y el
+     * monto total.
+     */
+    $filasConcepto = "";
+    $conceptos = is_array($t["conceptos"] ?? null) ? $t["conceptos"] : [];
+
+    if (count($conceptos) > 0) {
+        foreach ($conceptos as $c) {
+            $filasConcepto .= '<tr><td>' . $h($nombreConcepto(
+                    trim((string)($c["concepto"] ?? "")),
+                    trim((string)($c["periodo"] ?? ""))
+                )) . '</td><td class="der"><strong>$'
+                . number_format((float)($c["monto"] ?? 0), 2) . '</strong></td></tr>';
+        }
+    } else {
+        $textoConcepto = $periodo !== ""
+            ? $h($nombreConcepto($concepto, $periodo))
+            : "Pago de servicio de internet";
+
+        $filasConcepto = '<tr><td>' . $textoConcepto . '</td><td class="der"><strong>$'
+            . $monto . '</strong></td></tr>';
+    }
 
     $filaSaldo = $saldoRestanteCentavos > 0
         ? '<tr><td>Saldo pendiente del periodo</td><td class="der"><strong>$'
@@ -118,20 +145,45 @@ function construirHtmlTicket(array $t): string
         "TRANSFERENCIA" => "Transferencia",
         "DEPOSITO" => "Depósito",
         "TARJETA" => "Tarjeta / terminal",
+        "CORTESIA" => "Crédito de cortesía",
     ];
 
     $metodo = $h($nombresMetodos[$metodoPago] ?? $metodoPago);
     $textoReferencia = $h($referencia !== "" ? $referencia : "Sin referencia");
 
     $zona = new DateTimeZone("America/Mexico_City");
-    $fechaPago = (new DateTimeImmutable((string)$t["fecha_pago"], $zona))->format("d/m/Y");
+    // Registrar pago guarda la fecha a las 12:00 (sin hora real); UISP y el banco sí traen hora.
+    $fechaObjeto = new DateTimeImmutable((string)$t["fecha_pago"], $zona);
+    $fechaPago = $fechaObjeto->format("H:i:s") === "12:00:00"
+        ? $fechaObjeto->format("d/m/Y")
+        : $fechaObjeto->format("d/m/Y H:i");
     $emitido = (new DateTimeImmutable("now", $zona))->format("d/m/Y H:i");
 
-    $estado = $esPendiente ? "PENDIENTE DE CONFIRMACIÓN" : "PAGO CONFIRMADO";
-    $etiquetaMonto = $esPendiente ? "IMPORTE REGISTRADO" : "IMPORTE RECIBIDO";
+    $estadoPago = strtoupper((string)($t["estado_pago"] ?? "PAGADO"));
+    $esCancelado = in_array($estadoPago, ["CANCELADO", "CANCELADA", "RECHAZADO"], true);
 
-    $notaEstado = $esPendiente
-        ? '<div class="nota">Este pago se confirmará cuando el banco reporte la recepción del dinero.</div>'
+    if ($esPendiente) {
+        $estado = "PENDIENTE DE CONFIRMACIÓN";
+        $etiquetaMonto = "IMPORTE REGISTRADO";
+        $notaEstado = '<div class="nota">Este pago se confirmará cuando el banco reporte la recepción del dinero.</div>';
+    } elseif ($esCancelado) {
+        $estado = "PAGO " . $h($estadoPago);
+        $etiquetaMonto = "IMPORTE";
+        $notaEstado = '<div class="nota">Este pago fue cancelado y no cuenta como abono.</div>';
+    } elseif (strtoupper($metodoPago) === "CORTESIA") {
+        // Descuento de cortesía: cubre la mensualidad, no es dinero recibido.
+        $estado = "DESCUENTO APLICADO";
+        $etiquetaMonto = "CRÉDITO DE CORTESÍA";
+        $notaEstado = '<div class="nota">Descuento otorgado por UBB; no es un pago en dinero.</div>';
+    } else {
+        $estado = "PAGO CONFIRMADO";
+        $etiquetaMonto = "IMPORTE RECIBIDO";
+        $notaEstado = "";
+    }
+
+    $origen = trim((string)($t["origen"] ?? ""));
+    $filaOrigen = $origen !== ""
+        ? '<tr><td>Origen</td><td class="der">' . $h($origen) . '</td></tr>'
         : "";
 
     $contacto = UBB_TELEFONO_ATENCION_TICKET !== ""
@@ -281,17 +333,14 @@ function construirHtmlTicket(array $t): string
 
     <div class="seccion">CONCEPTO</div>
     <table class="concepto">
-        <tr>
-            <td>' . $textoConcepto . '</td>
-            <td class="der"><strong>$' . $monto . '</strong></td>
-        </tr>
+        ' . $filasConcepto . '
         ' . $filaSaldo . '
     </table>
 
     <div class="resumen">
         <div class="etiqueta-monto">' . $etiquetaMonto . '</div>
         <div class="monto">$' . $monto . ' MXN</div>
-        <span class="estado' . ($esPendiente ? " estado-pendiente" : "") . '">' . $estado . '</span>
+        <span class="estado' . ($esPendiente || $esCancelado ? " estado-pendiente" : "") . '">' . $estado . '</span>
         ' . $notaEstado . '
     </div>
 
@@ -304,6 +353,7 @@ function construirHtmlTicket(array $t): string
             <td>Referencia</td>
             <td class="der">' . $textoReferencia . '</td>
         </tr>
+        ' . $filaOrigen . '
     </table>
 
     <div class="pie">
@@ -366,4 +416,90 @@ function generarPdfTicket(string $html): string
     $dompdf->render();
 
     return $dompdf->output();
+}
+
+/*
+ * Datos legibles del cliente y servicio para el ticket (nombre, códigos, paquete).
+ * Si la base remota no responde, devuelve lo que tenga y el ticket usa los números.
+ */
+function obtenerDatosTicket(int $idCliente, ?int $idServicio): array
+{
+    $datos = [
+        "nombre" => "",
+        "codigo_cliente" => "",
+        "codigo_servicio" => "",
+        "paquete" => "",
+        "tecnologia" => "",
+    ];
+
+    $remota = null;
+
+    try {
+        $remota = require __DIR__ . "/../conexion_plataforma.php";
+
+        if (!$remota instanceof mysqli) {
+            throw new RuntimeException("La conexión remota no devolvió una conexión mysqli.");
+        }
+
+        $stmt = $remota->prepare(
+            "SELECT nombre, apellido_paterno, apellido_materno, codigo_cliente
+             FROM clientes
+             WHERE id_cliente = ?
+             LIMIT 1"
+        );
+
+        if ($stmt) {
+            $stmt->bind_param("i", $idCliente);
+
+            if ($stmt->execute()) {
+                $fila = $stmt->get_result()->fetch_assoc();
+
+                if ($fila) {
+                    $datos["nombre"] = trim(implode(" ", array_filter([
+                        trim((string)$fila["nombre"]),
+                        trim((string)$fila["apellido_paterno"]),
+                        trim((string)$fila["apellido_materno"]),
+                    ], "strlen")));
+                    $datos["codigo_cliente"] = trim((string)$fila["codigo_cliente"]);
+                }
+            }
+
+            $stmt->close();
+        }
+
+        if ($idServicio !== null) {
+            $stmt = $remota->prepare(
+                "SELECT codigo_servicio, paquete_referencia, tecnologia
+                 FROM servicios
+                 WHERE id_servicio = ? AND id_cliente = ?
+                 LIMIT 1"
+            );
+
+            if ($stmt) {
+                $stmt->bind_param("ii", $idServicio, $idCliente);
+
+                if ($stmt->execute()) {
+                    $fila = $stmt->get_result()->fetch_assoc();
+
+                    if ($fila) {
+                        $datos["codigo_servicio"] = trim((string)$fila["codigo_servicio"]);
+                        $datos["paquete"] = trim((string)$fila["paquete_referencia"]);
+                        $datos["tecnologia"] = trim((string)$fila["tecnologia"]);
+                    }
+                }
+
+                $stmt->close();
+            }
+        }
+
+    } catch (Throwable $e) {
+        error_log("Datos del ticket UBB: " . $e->getMessage());
+
+    } finally {
+        if ($remota instanceof mysqli) {
+            $remota->close();
+        }
+    }
+
+    return $datos;
 }

@@ -520,14 +520,12 @@ if ($consulta) {
                                             </a>
                                             <?php endif; ?>
 
-                                <?php if (!empty($pago['comprobante'])): ?>
-                                    <br>
-                                    <a href="<?php echo htmlspecialchars($pago['comprobante'], ENT_QUOTES, 'UTF-8'); ?>"
-                                       target="_blank"
-                                       rel="noopener noreferrer">
-                                        📄 Ver comprobante
-                                    </a>
-                                <?php endif; ?>
+                                <br>
+                                <a href="comprobante.php?id=<?php echo (int) $pago['id_pago']; ?>"
+                                   target="_blank"
+                                   rel="noopener noreferrer">
+                                    📄 Ver comprobante
+                                </a>
 
                             </td>    
 
