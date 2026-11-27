@@ -197,57 +197,45 @@ function calcularCicloDashboard($fechaInstalacion, $hoy) {
 require_once __DIR__ . "/includes/estado_pagos.php";
 
 try {
-    // Misma regla que proximos.php: mensualidades y pagos reales.
-    $estado_pagos_dashboard = estadoPagosPorServicio($conexion);
+    // Situación de cada servicio según mensualidades y pagos reales (ubb_pagos).
+    $estado_pagos_todos = estadoPagosPorServicio($conexion);
 
-    $sql_vencimientos = "
-        SELECT
-            s.id_servicio,
-            c.nombre,
-            c.apellido_paterno,
-            c.apellido_materno,
-            s.fecha_instalacion
-        FROM servicios s
-        INNER JOIN clientes c ON c.id_cliente = s.id_cliente
-        WHERE s.estado = 'ACTIVO'
-    ";
+    // Base única para todas las cifras de cobranza del tablero: servicios que
+    // existen en la plataforma y no están dados de baja (mismo criterio que
+    // vencidos.php). El estado ACTIVO de la plataforma no se usa porque no se
+    // actualiza al cortar; el estado real del servicio lo da Grezz.
+    $resultado_servicios = $conexion_plataforma->query("
+        SELECT id_servicio
+        FROM servicios
+        WHERE COALESCE(estado, '') <> 'BAJA'
+    ");
 
-    $resultado_vencimientos = $conexion_plataforma->query($sql_vencimientos);
-
-    while ($fila = $resultado_vencimientos->fetch_assoc()) {
-        $ciclo = $estado_pagos_dashboard[(int)$fila["id_servicio"]] ?? null;
-
-        if ($ciclo === null || $ciclo["tipo"] === "futuro") {
-            continue;
-        }
-
-        $fila["nombre_completo"] = trim(
-            ($fila["nombre"] ?? "") . " " .
-            ($fila["apellido_paterno"] ?? "") . " " .
-            ($fila["apellido_materno"] ?? "")
-        );
-
-        $fila["ciclo"] = $ciclo;
-        $vencimientos_dashboard[] = $fila;
+    $servicios_vigentes = [];
+    while ($fila = $resultado_servicios->fetch_assoc()) {
+        $servicios_vigentes[(int)$fila["id_servicio"]] = true;
     }
 
-    $total_proximos = count($vencimientos_dashboard);
+    $estado_pagos_dashboard = array_intersect_key($estado_pagos_todos, $servicios_vigentes);
 
-    // Primero mostrar las fechas de pago más cercanas.
-    usort($vencimientos_dashboard, function ($a, $b) {
-        $fechaA = $a["ciclo"]["fecha_pago"];
-        $fechaB = $b["ciclo"]["fecha_pago"];
+    // Próximas a vencer: vencen en los próximos 10 días o hoy. Las que ya
+    // vencieron (en gracia o fuera de gracia) se muestran en el monitor.
+    $total_proximos = 0;
+    $total_vencen_hoy = 0;
 
-        if ($fechaA === null) return 1;
-        if ($fechaB === null) return -1;
-
-        return $fechaA <=> $fechaB;
-    });
+    foreach ($estado_pagos_dashboard as $ciclo) {
+        if ($ciclo["tipo"] === "proximo" || $ciclo["tipo"] === "hoy") {
+            $total_proximos++;
+        }
+        if ($ciclo["tipo"] === "hoy") {
+            $total_vencen_hoy++;
+        }
+    }
 
 } catch (Throwable $e) {
     $error_proximos = true;
     $total_proximos = null;
-    $vencimientos_dashboard = [];
+    $total_vencen_hoy = null;
+    $estado_pagos_dashboard = [];
 
     error_log(
         "Dashboard UBB: no fue posible consultar próximos vencimientos: " .
@@ -372,6 +360,101 @@ $auto_cortes = $automatizacion['cortes'];
 $auto_ejec = $automatizacion['ejecuciones'] ?? [];
 $auto_uisp = $automatizacion['pagos_uisp'] ?? null;
 
+// Si no se pudo calcular la situación de pagos, las cifras de cobranza se
+// muestran como "—" y no como 0.
+$auto_venc = $error_proximos ? array_fill_keys(['proximos', 'vencen_hoy', 'en_gracia', 'fuera_gracia'], null)
+    : $automatizacion['vencimientos'];
+if ($error_proximos) {
+    $auto_cortes['fuera_gracia'] = null;
+    $auto_cortes['en_gracia'] = null;
+}
+
+/* ===== CENTRO DE CONTROL: ESTADO DE PROCESOS Y ACTIVIDAD ===== */
+require_once __DIR__ . "/includes/tablero_datos.php";
+
+$importe_pagos_hoy = importePagosHoy($conexion);
+$grezz_semana = solicitudesGrezzSemana($conexion);
+$actividad = actividadRecienteTablero($conexion, $conexion_plataforma ?? null, 25);
+
+// Última ejecución de cada proceso (o null).
+$ejec = fn(string $proceso) => $auto_ejec[$proceso] ?? null;
+
+// La ejecución más reciente entre varios procesos relacionados.
+$ultimaDe = function (array $procesos) use ($ejec): ?array {
+    $ultima = null;
+    foreach ($procesos as $p) {
+        $e = $ejec($p);
+        if ($e && (!$ultima || $e['fecha_fin'] > $ultima['fecha_fin'])) {
+            $ultima = $e;
+        }
+    }
+    return $ultima;
+};
+
+$errorEn = fn(array $procesos) => (bool)array_filter($procesos, fn($p) => ($ejec($p)['resultado'] ?? '') === 'ERROR');
+
+// 1. Conciliación y pagos bancarios (banco + UISP).
+$proc_conc_ejec = $ultimaDe(['CONCILIACION', 'PAGOS_UISP', 'APLICAR_PAGOS_UISP']);
+$proc_conc_alertas = (int)($auto_mov['revision'] ?? 0) + (int)($auto_uisp['revision'] ?? 0);
+$proc_conc = estadoProcesoTablero(
+    $errorEn(['CONCILIACION', 'PAGOS_UISP', 'APLICAR_PAGOS_UISP']) ? ['resultado' => 'ERROR'] : $proc_conc_ejec,
+    $proc_conc_alertas,
+    $auto_mov === null && $auto_conc === null && $auto_uisp === null
+);
+
+// 2. Vencimientos y periodos de gracia (mensualidades).
+$proc_venc_ejec = $ultimaDe(['MENSUALIDADES_UISP', 'MESES_SIN_SERVICIO', 'FACTURAS_UISP', 'FACTURAS_PLATAFORMA']);
+$proc_venc = estadoProcesoTablero(
+    $errorEn(['MENSUALIDADES_UISP', 'MESES_SIN_SERVICIO', 'FACTURAS_UISP', 'FACTURAS_PLATAFORMA']) ? ['resultado' => 'ERROR'] : $proc_venc_ejec,
+    0,
+    $error_proximos
+);
+
+// 3. Suspensiones y reactivaciones.
+$proc_susp_ejec = $ultimaDe(['SUSPENSION']);
+$proc_susp = estadoProcesoTablero(
+    $proc_susp_ejec,
+    (int)($auto_cortes['suspendidos_sin_adeudo'] ?? 0),
+    $error_proximos
+);
+
+// 4. Integración con Grezz.
+$grezz_simulacion = defined('GREZZ_SIMULAR') && GREZZ_SIMULAR;
+$grezz_pendientes = (int)($auto_sol['pendientes'] ?? 0);
+$grezz_rechazadas = (int)($grezz_semana['rechazadas'] ?? 0);
+if ($error_servicios) {
+    $proc_grezz = ['clase' => 'error', 'texto' => 'Sin conexión'];
+} elseif ($grezz_pendientes > 0 || $grezz_rechazadas > 0) {
+    $proc_grezz = ['clase' => 'atencion', 'texto' => 'Requiere atención'];
+} elseif ($grezz_simulacion) {
+    $proc_grezz = ['clase' => 'simulacion', 'texto' => 'Conectado · simulación'];
+} else {
+    $proc_grezz = ['clase' => 'ok', 'texto' => 'Conectado'];
+}
+
+// 5. Notificaciones a clientes.
+$proc_avisos_ejec = $ultimaDe(['NOTIFICACIONES', 'RECORDATORIOS']);
+$proc_avisos = estadoProcesoTablero(
+    $errorEn(['NOTIFICACIONES', 'RECORDATORIOS']) ? ['resultado' => 'ERROR'] : $proc_avisos_ejec,
+    (int)($auto_avisos['con_problema'] ?? 0),
+    $auto_avisos === null
+);
+
+// Errores y alertas de todos los procesos, para el aviso del encabezado.
+$procesos_con_error = count(array_filter(
+    [$proc_conc, $proc_venc, $proc_susp, $proc_grezz, $proc_avisos],
+    fn($p) => $p['clase'] === 'error'
+));
+$procesos_con_alerta = count(array_filter(
+    [$proc_conc, $proc_venc, $proc_susp, $proc_grezz, $proc_avisos],
+    fn($p) => $p['clase'] === 'atencion'
+));
+
+function e_tablero($valor): string
+{
+    return htmlspecialchars((string)$valor, ENT_QUOTES, 'UTF-8');
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -383,6 +466,7 @@ $auto_uisp = $automatizacion['pagos_uisp'] ?? null;
     <title>UBB Comunicaciones - Gestión de Pagos</title>
 
     <link rel="stylesheet" href="css/pagos.css?v=<?php echo filemtime(__DIR__ . '/css/pagos.css'); ?>">
+    <link rel="stylesheet" href="css/tablero.css?v=<?php echo filemtime(__DIR__ . '/css/tablero.css'); ?>">
 </head>
 
 <body>
@@ -399,430 +483,480 @@ $auto_uisp = $automatizacion['pagos_uisp'] ?? null;
 ========================================================= -->
 
 <?php require __DIR__ . "/includes/panel_lateral.php"; ?>
-<main class="contenedor">
+<main class="contenedor cc">
 
     <!-- =====================================================
-         CENTRO DE CONTROL
+         CABECERA DEL CENTRO DE CONTROL
     ====================================================== -->
-
-    <section class="encabezado-control">
-
-        <div>
-            <div class="titulo-centro-fila"><span class="icono-centro-control" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="5" rx="2"/><rect x="13" y="10" width="8" height="11" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/></svg></span><h2 class="titulo-centro-control">CENTRO DE CONTROL</h2></div>
-            <p class="subtitulo-centro-control">Resumen general de pagos y servicios de internet</p>
-        </div>
-
-        <div class="automatizacion">
-            <span class="punto-verde"></span>
-
-            <div>
-                <strong>AUTOMATIZACIÓN DE PAGOS</strong>
-                <small>Pagos conciliados y servicios coordinados con Grezz</small>
-            </div>
-        </div>
-
-    </section>
-
-
-    <!-- =====================================================
-         TARJETAS PRINCIPALES
-    ====================================================== -->
-
-    <section class="tarjetas">
-
-        <div class="tarjeta tarjeta-activos" onclick="window.location.href='activos.php'">
-           <div class="tarjeta-titulo">
-                <span class="icono-tarjeta" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M16 3.2a4 4 0 0 1 0 7.6M20 21v-2a4 4 0 0 0-3-3.9"/></svg></span>
-                <span>ACTIVOS</span>
-           </div>
-
-    <strong class="numero"><?php echo $servicios_activos !== null ? $servicios_activos : '—'; ?></strong>
-
-    <small><?php echo $error_servicios ? 'No disponible: revisar conexión' : 'Servicios DHCP activos en Grezz'; ?></small>
-    <span class="capsula-tendencia tendencia-neutra"><?php echo $error_servicios ? 'Sin conexión' : 'Datos reales'; ?></span>
-</div>
-
-
-  <div class="tarjeta tarjeta-pagos" onclick="window.location.href='pagos_hoy.php'">
-    <div class="tarjeta-titulo">
-        <span class="icono-tarjeta" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19M6 15h4"/></svg></span>
-        <span>PAGOS HOY</span>
-    </div>
-    
-          <strong class="numero"><?php echo $pagos_hoy; ?></strong>
-
-    <small>Pagos registrados hoy</small>
-    <span class="capsula-tendencia <?php echo $clase_tendencia_pagos; ?>"><?php echo htmlspecialchars($texto_tendencia_pagos, ENT_QUOTES, "UTF-8"); ?></span>
-</div>
-
-
-        <div class="tarjeta tarjeta-proximos" onclick="window.location.href='./proximos.php';">
-            <div class="tarjeta-titulo">
-                <span class="icono-tarjeta" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M12 13v3l2 1"/></svg></span>
-                <span>PRÓXIMOS</span>
-            </div>
-
-            <strong class="numero"><?php echo $total_proximos !== null ? number_format($total_proximos) : '—'; ?></strong>
-
-            <small><?php echo $error_proximos ? 'No disponible: revisar conexión' : 'Con mensualidad por vencer o vencida'; ?></small>
-            <span class="capsula-tendencia tendencia-precaucion"><?php echo $error_proximos ? 'Sin conexión' : 'Datos reales'; ?></span>
-        </div>
-
-
-        <div class="tarjeta tarjeta-suspendidos" onclick="window.location.href='suspendidos.php'">
-
-            <div class="tarjeta-titulo">
-                <span class="icono-tarjeta" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10.3 3.9 2.5 17.4A2 2 0 0 0 4.2 20h15.6a2 2 0 0 0 1.7-2.6L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg></span>
-                <span>SUSPENDIDOS</span>
-            </div>
-
-            <strong class="numero"><?php echo $servicios_suspendidos !== null ? $servicios_suspendidos : '—'; ?></strong>
-
-            <small><?php echo $error_servicios ? 'No disponible: revisar conexión' : 'Servicios DHCP suspendidos en Grezz'; ?></small>
-            <span class="capsula-tendencia tendencia-alerta"><?php echo $error_servicios ? 'Sin conexión' : 'Datos reales'; ?></span>
-        </div>
-
-    </section>
-
-
-    <!-- =====================================================
-         CENTRO DE AUTOMATIZACIÓN
-         Lo que el sistema hace solo: conciliar pagos, solicitar
-         suspensiones y reactivaciones a Grezz y avisar a los clientes.
-    ====================================================== -->
-
-    <section class="panel auto-centro">
-
-        <div class="auto-encabezado">
-            <div class="auto-titulo">
-                <span class="icono-circular-ingresos" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
-                         stroke="currentColor" stroke-width="2"
-                         stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/>
-                        <circle cx="12" cy="12" r="4"/>
-                    </svg>
-                </span>
-                <div>
-                    <h3>Centro de automatización</h3>
-                    <p>Lo que el sistema hace solo: concilia pagos, coordina cortes y reconexiones con Grezz y avisa a los clientes.</p>
-                </div>
-            </div>
-            <span class="auto-regla">Gracia: 10 días · Corte: día 11</span>
-        </div>
-
-        <div class="auto-flujo">
-
-            <!-- 1. Pagos bancarios -->
-            <a class="auto-paso" href="conciliacion_bancaria.php">
-                <span class="auto-paso-num">1</span>
-                <strong>Pagos bancarios</strong>
-                <div class="auto-cifra">
-                    <?= numeroAuto($auto_conc['total'] ?? null) ?>
-                    <small>conciliados solos (7 días)</small>
-                </div>
-                <ul>
-                    <li>$<?= number_format((float)($auto_conc['importe'] ?? 0), 2) ?> aplicados</li>
-                    <li><?= numeroAuto($auto_mov['pendientes'] ?? ($auto_mov === null ? null : 0)) ?> por conciliar</li>
-                    <li class="<?= (int)($auto_mov['revision'] ?? 0) > 0 ? 'auto-alerta' : '' ?>">
-                        <?= numeroAuto($auto_mov['revision'] ?? ($auto_mov === null ? null : 0)) ?> en revisión manual
-                    </li>
-                    <li class="<?= ($auto_ejec['PAGOS_UISP']['resultado'] ?? '') === 'ERROR' ? 'auto-alerta' : '' ?>">
-                        Pagos UISP: <?= htmlspecialchars(textoUltimaEjecucion($auto_ejec['PAGOS_UISP'] ?? null), ENT_QUOTES, 'UTF-8') ?>
-                    </li>
-                    <li class="<?= (int)($auto_uisp['revision'] ?? 0) > 0 ? 'auto-alerta' : '' ?>">
-                        <?= numeroAuto($auto_uisp['aplicados_7d'] ?? ($auto_uisp === null ? null : 0)) ?> de UISP aplicados (7 días) ·
-                        <?= numeroAuto($auto_uisp['revision'] ?? ($auto_uisp === null ? null : 0)) ?> en revisión
-                    </li>
-                </ul>
-                <span class="auto-ejecucion"><?= htmlspecialchars(textoUltimaEjecucion($auto_ejec['CONCILIACION'] ?? null), ENT_QUOTES, 'UTF-8') ?></span>
-            </a>
-
-            <!-- 2. Cortes -->
-            <a class="auto-paso" href="vencidos.php">
-                <span class="auto-paso-num">2</span>
-                <strong>Suspensiones</strong>
-                <div class="auto-cifra">
-                    <?= numeroAuto($auto_cortes['fuera_gracia']) ?>
-                    <small>fuera de gracia</small>
-                </div>
-                <ul>
-                    <li><?= numeroAuto($auto_cortes['gestionables']) ?> se cortan automáticamente</li>
-                    <li><?= numeroAuto($auto_cortes['cortados']) ?> ya están cortados</li>
-                    <li><?= numeroAuto($auto_cortes['manuales']) ?> requieren corte manual (PPPoE)</li>
-                    <li><?= numeroAuto($auto_cortes['en_gracia']) ?> en periodo de gracia</li>
-                </ul>
-                <span class="auto-ejecucion"><?= htmlspecialchars(textoUltimaEjecucion($auto_ejec['SUSPENSION'] ?? null), ENT_QUOTES, 'UTF-8') ?></span>
-            </a>
-
-            <!-- 3. Grezz -->
-            <a class="auto-paso" href="suspendidos.php">
-                <span class="auto-paso-num">3</span>
-                <strong>Solicitudes a Grezz</strong>
-                <div class="auto-cifra">
-                    <?= numeroAuto(isset($auto_sol) && $auto_sol !== null
-                        ? (int)($auto_sol['suspensiones_hoy'] ?? 0) + (int)($auto_sol['reactivaciones_hoy'] ?? 0)
-                        : null) ?>
-                    <small>enviadas hoy</small>
-                </div>
-                <ul>
-                    <li><?= numeroAuto($auto_sol['suspensiones_hoy'] ?? ($auto_sol === null ? null : 0)) ?> suspensiones</li>
-                    <li><?= numeroAuto($auto_sol['reactivaciones_hoy'] ?? ($auto_sol === null ? null : 0)) ?> reactivaciones</li>
-                    <li class="<?= (int)($auto_sol['pendientes'] ?? 0) > 0 ? 'auto-alerta' : '' ?>">
-                        <?= numeroAuto($auto_sol['pendientes'] ?? ($auto_sol === null ? null : 0)) ?> sin confirmar
-                    </li>
-                </ul>
-                <span class="auto-ejecucion">Modo simulación hasta validar con Grezz</span>
-            </a>
-
-            <!-- 4. Avisos -->
-            <a class="auto-paso" href="notificaciones.php">
-                <span class="auto-paso-num">4</span>
-                <strong>Avisos a clientes</strong>
-                <div class="auto-cifra">
-                    <?= numeroAuto($auto_avisos['enviados_hoy'] ?? ($auto_avisos === null ? null : 0)) ?>
-                    <small>enviados hoy</small>
-                </div>
-                <ul>
-                    <li><?= numeroAuto($auto_avisos['pendientes'] ?? ($auto_avisos === null ? null : 0)) ?> por enviar</li>
-                    <li class="<?= (int)($auto_avisos['con_problema'] ?? 0) > 0 ? 'auto-alerta' : '' ?>">
-                        <?= numeroAuto($auto_avisos['con_problema'] ?? ($auto_avisos === null ? null : 0)) ?> sin teléfono o con error
-                    </li>
-                </ul>
-                <span class="auto-ejecucion"><?= htmlspecialchars(textoUltimaEjecucion($auto_ejec['NOTIFICACIONES'] ?? null), ENT_QUOTES, 'UTF-8') ?></span>
-            </a>
-
-        </div>
-    </section>
-
-
-    <!-- =====================================================
-         PAGOS + ESTADO DE SERVICIOS
-    ====================================================== -->
-
-
-       <!-- PAGOS + DISTRIBUCIÓN -->
-
-<section class="graficas-servicios">
-
-    <!-- PAGOS -->
-    <div class="panel">
-
-        <div class="panel-titulo encabezado-grafica-ingresos">
-    <div class="titulo-grafica titulo-ingresos-limpio">
-    <span class="icono-circular-ingresos" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="20" height="20"
-             fill="none" stroke="currentColor" stroke-width="2"
-             stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 19V5"></path>
-            <path d="M4 19h17"></path>
-            <rect x="7" y="11" width="3" height="5" rx="1" fill="currentColor" stroke="none"></rect>
-            <rect x="13" y="7" width="3" height="9" rx="1" fill="currentColor" stroke="none"></rect>
-            <rect x="19" y="3" width="2" height="13" rx="1" fill="currentColor" stroke="none"></rect>
-        </svg>
-    </span>
-    <h3>Ingresos por semana</h3>
-</div>
-
-    <form class="selector-semana" method="get" action="index.php">
-        <label class="selector-semana-control" for="fecha-semana">
-            <svg class="icono-calendario-control" viewBox="0 0 24 24"
-                 width="17" height="17" fill="none" stroke="currentColor"
-                 stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
-                 aria-hidden="true">
-                <rect x="3" y="5" width="18" height="16" rx="2"></rect>
-                <path d="M16 3v4M8 3v4M3 10h18"></path>
-            </svg>
-            <span class="texto-rango-semana">
-                <?= htmlspecialchars($inicio_semana->format('j') . ' ' . [
-                    1=>'ene.', 2=>'feb.', 3=>'mar.', 4=>'abr.',
-                    5=>'may.', 6=>'jun.', 7=>'jul.', 8=>'ago.',
-                    9=>'sep.', 10=>'oct.', 11=>'nov.', 12=>'dic.'
-                ][(int)$inicio_semana->format('n')] . ' ' . $inicio_semana->format('Y')
-                . ' – ' .
-                $fin_semana->format('j') . ' ' . [
-                    1=>'ene.', 2=>'feb.', 3=>'mar.', 4=>'abr.',
-                    5=>'may.', 6=>'jun.', 7=>'jul.', 8=>'ago.',
-                    9=>'sep.', 10=>'oct.', 11=>'nov.', 12=>'dic.'
-                ][(int)$fin_semana->format('n')] . ' ' . $fin_semana->format('Y'),
-                ENT_QUOTES, 'UTF-8') ?>
+    <header class="cc-cabecera">
+        <div class="cc-cabecera-texto">
+            <span class="cc-cabecera-icono" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="5" rx="2"/><rect x="13" y="10" width="8" height="11" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/></svg>
             </span>
-            <svg class="flecha-selector-semana" viewBox="0 0 24 24"
-                 width="15" height="15" fill="none" stroke="currentColor"
-                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                 aria-hidden="true">
-                <path d="m6 9 6 6 6-6"></path>
-            </svg>
-        </label>
-        <input
-            id="fecha-semana"
-            type="date"
-            name="semana"
-            value="<?= htmlspecialchars($fecha_seleccionada, ENT_QUOTES, 'UTF-8') ?>"
-            aria-label="Elegir una fecha para consultar su semana"
-            onchange="this.form.submit()">
-    </form>
-</div>
-
-<div class="resumen-ingresos-semana resumen-ingresos-doble resumen-ingresos-unico">
-    <div class="resumen-fuente">
-        <span>Total de la semana</span>
-        <strong>$<?= number_format($total_ingresos_semana, 2) ?></strong>
-    </div>
-</div>
-
-<div class="grafica grafica-ingresos">
-    <div class="grafica-vertical">
-        <div class="eje-grafica">
-            <?php for ($nivel = 4; $nivel >= 0; $nivel--): ?>
-                <span>$<?= number_format($escala_ingresos * $nivel, 0) ?></span>
-            <?php endfor; ?>
-        </div>
-
-        <div class="area-barras">
-            <?php foreach ($ingresos_semana as $fecha => $importe_dia):
-                $altura_dia = $maximo_eje_ingresos > 0
-                    ? (int)round($importe_dia / $maximo_eje_ingresos * 150) : 0;
-
-                $fecha_obj = new DateTimeImmutable($fecha);
-                $dias_es = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-                $etiqueta_dia = $dias_es[(int)$fecha_obj->format('N') - 1];
-
-                $detalle = $fecha . ' | $' . number_format($importe_dia, 2);
-            ?>
-            <div class="barra-vertical grupo-barras-dia"
-                 title="<?= htmlspecialchars($detalle, ENT_QUOTES, 'UTF-8') ?>">
-
-                <div class="barras-dobles">
-                    <div class="barra-fuente barra-uisp barra-unica"
-                         style="height: <?= $altura_dia ?>px !important;"
-                         title="$<?= number_format($importe_dia, 2) ?>">
-                    </div>
-                </div>
-
-                <span class="etiqueta-fecha">
-                    <?= $etiqueta_dia ?><br><?= $fecha_obj->format('d/m') ?>
-                </span>
-            </div>
-            <?php endforeach; ?>
-        </div>
-    </div>
-
-</div>
-    </div>
-
-
-    <!-- DISTRIBUCIÓN DE SERVICIOS -->
-    <div class="panel">
-
-        <div class="panel-titulo titulo-estados-pago">
-            <span class="icono-circular-ingresos" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="20" height="20"
-                     fill="none" stroke="currentColor" stroke-width="2"
-                     stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M4 4h16v16H4z"></path>
-                    <path d="M8 8h8M8 12h5"></path>
-                    <path d="m8 16 2 2 5-5"></path>
-                </svg>
-            </span>
-            <h3>Estado de servicios</h3>
-        </div>
-
-        <?php if ($error_grafica_servicios): ?>
-            <p>No fue posible consultar los estados de los servicios.</p>
-        <?php else: ?>
-
-        <div class="grafica-circular dona-ubb">
-            <div class="dona-ubb-visual"
-                 role="img"
-                 aria-label="Distribución de <?= $total_estados ?> servicios: <?= $servicios_estado["ACTIVO"] ?> activos, <?= $servicios_estado["SUSPENDIDO"] ?> suspendidos y <?= $servicios_estado["SIN_DATOS"] ?> sin datos."
-                 style="background: conic-gradient(
-                    #16a34a 0% <?= number_format($porcentaje_activo, 2, '.', '') ?>%,
-                    #f0b429 <?= number_format($porcentaje_activo, 2, '.', '') ?>% <?= number_format($porcentaje_acumulado, 2, '.', '') ?>%,
-                    #94a3b8 <?= number_format($porcentaje_acumulado, 2, '.', '') ?>% 100%
-                 );">
-                <div class="dona-ubb-centro">
-                    <strong><?= number_format($total_estados) ?></strong>
-                    <span>Servicios totales</span>
-                </div>
-            </div>
-
-            <div class="leyenda-pastel leyenda-ubb">
-                <div class="item-leyenda item-leyenda-ubb">
-                    <span class="punto-leyenda pagado"></span>
-                    <div class="detalle-leyenda-ubb">
-                        <span class="nombre-estado-ubb">Activos</span>
-                        <strong><?= number_format($servicios_estado["ACTIVO"]) ?></strong>
-                        <small><?= number_format($porcentaje_activo, 1) ?>%</small>
-                    </div>
-                </div>
-
-                <div class="item-leyenda item-leyenda-ubb">
-                    <span class="punto-leyenda pendiente"></span>
-                    <div class="detalle-leyenda-ubb">
-                        <span class="nombre-estado-ubb">Suspendidos</span>
-                        <strong><?= number_format($servicios_estado["SUSPENDIDO"]) ?></strong>
-                        <small><?= number_format($porcentaje_suspendido, 1) ?>%</small>
-                    </div>
-                </div>
-
-                <div class="item-leyenda item-leyenda-ubb">
-                    <span class="punto-leyenda cancelado"></span>
-                    <div class="detalle-leyenda-ubb">
-                        <span class="nombre-estado-ubb">Sin datos</span>
-                        <strong><?= number_format($servicios_estado["SIN_DATOS"]) ?></strong>
-                        <small><?= number_format($porcentaje_sin_datos, 1) ?>%</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <?php endif; ?>
-    </div>
-
-</section>
-
-
-<!-- ESTADO DE SERVICIOS -->
-
-
-
-
-    <!-- ACCESO DIRECTO -->
-
-    <section class="panel">
-
-        <div class="panel-titulo">
-            <span>⚡</span>
             <div>
-                <span class="etiqueta-seccion">ACCESO DIRECTO</span>
-                <h3>Operaciones</h3>
+                <h1>Centro de control</h1>
+                <p>Cobranza, servicios de internet y procesos automáticos de UBB Comunicaciones</p>
             </div>
         </div>
 
-        <div class="acciones">
-            <a href="reporte_uisp.php" class="accion">
-                <span>📊</span>
-                <div>
-                    <strong>Historial UISP</strong>
-                    <small>Consultar pagos históricos importados</small>
-                </div>
-            </a>
+        <div class="cc-cabecera-estado">
+            <?php if ($procesos_con_error > 0): ?>
+                <a class="cc-pildora cc-pildora--error" href="#cc-monitor">
+                    <span class="cc-punto"></span><?= $procesos_con_error ?> proceso<?= $procesos_con_error === 1 ? '' : 's' ?> con error
+                </a>
+            <?php elseif ($procesos_con_alerta > 0): ?>
+                <a class="cc-pildora cc-pildora--atencion" href="#cc-monitor">
+                    <span class="cc-punto"></span><?= $procesos_con_alerta ?> proceso<?= $procesos_con_alerta === 1 ? '' : 's' ?> requiere<?= $procesos_con_alerta === 1 ? '' : 'n' ?> atención
+                </a>
+            <?php else: ?>
+                <span class="cc-pildora cc-pildora--ok"><span class="cc-punto"></span>Procesos sin errores</span>
+            <?php endif; ?>
+            <span class="cc-actualizado">Consultado hoy a las <?= date('H:i') ?></span>
+        </div>
+    </header>
+
+
+    <!-- =====================================================
+         1. RESUMEN GENERAL
+         Solo indicadores de estado. Cada cifra aparece una vez.
+    ====================================================== -->
+    <section class="cc-seccion" aria-labelledby="cc-titulo-resumen">
+        <div class="cc-seccion-titulo">
+            <h2 id="cc-titulo-resumen">Resumen general</h2>
+            <p>Cómo están hoy los servicios y la cobranza</p>
         </div>
 
+        <div class="cc-kpis">
+
+            <a class="cc-kpi cc-kpi--activos" href="activos.php">
+                <div class="cc-kpi-cabeza">
+                    <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M16 3.2a4 4 0 0 1 0 7.6M20 21v-2a4 4 0 0 0-3-3.9"/></svg></span>
+                    <span class="cc-kpi-nombre">Servicios activos</span>
+                </div>
+                <strong class="cc-kpi-numero"><?= $servicios_activos !== null ? number_format($servicios_activos) : '—' ?></strong>
+                <span class="cc-kpi-detalle"><?= $error_servicios ? 'Grezz no respondió: no se puede confirmar' : 'Servicios DHCP conectados' ?></span>
+                <span class="cc-kpi-fuente">Fuente: Grezz · no incluye PPPoE</span>
+            </a>
+
+            <a class="cc-kpi cc-kpi--pagos" href="pagos_hoy.php">
+                <div class="cc-kpi-cabeza">
+                    <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19M6 15h4"/></svg></span>
+                    <span class="cc-kpi-nombre">Pagos registrados hoy</span>
+                </div>
+                <strong class="cc-kpi-numero"><?= number_format($pagos_hoy) ?></strong>
+                <span class="cc-kpi-detalle">
+                    <?= $importe_pagos_hoy !== null ? '$' . number_format($importe_pagos_hoy, 2) . ' cobrados hoy' : 'Importe no disponible' ?>
+                </span>
+                <span class="cc-kpi-fuente cc-tendencia <?= e_tablero($clase_tendencia_pagos) ?>"><?= e_tablero($texto_tendencia_pagos) ?></span>
+            </a>
+
+            <a class="cc-kpi cc-kpi--proximos" href="proximos.php">
+                <div class="cc-kpi-cabeza">
+                    <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M12 13v3l2 1"/></svg></span>
+                    <span class="cc-kpi-nombre">Próximas a vencer</span>
+                </div>
+                <strong class="cc-kpi-numero"><?= $total_proximos !== null ? number_format($total_proximos) : '—' ?></strong>
+                <span class="cc-kpi-detalle"><?= $error_proximos ? 'No disponible: revisar conexión' : 'Mensualidades que vencen hoy o en los próximos 10 días' ?></span>
+                <span class="cc-kpi-fuente">Fuente: mensualidades y pagos registrados</span>
+            </a>
+
+            <a class="cc-kpi cc-kpi--suspendidos" href="suspendidos.php">
+                <div class="cc-kpi-cabeza">
+                    <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10.3 3.9 2.5 17.4A2 2 0 0 0 4.2 20h15.6a2 2 0 0 0 1.7-2.6L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg></span>
+                    <span class="cc-kpi-nombre">Servicios suspendidos</span>
+                </div>
+                <strong class="cc-kpi-numero"><?= $servicios_suspendidos !== null ? number_format($servicios_suspendidos) : '—' ?></strong>
+                <span class="cc-kpi-detalle"><?= $error_servicios ? 'Grezz no respondió: no se puede confirmar' : 'Servicios DHCP cortados' ?></span>
+                <span class="cc-kpi-fuente">Fuente: Grezz · no incluye PPPoE</span>
+            </a>
+
+        </div>
+
+        <div class="graficas-servicios cc-graficas">
+
+            <!-- Ingresos de la semana -->
+            <div class="panel cc-panel">
+                <div class="panel-titulo encabezado-grafica-ingresos">
+                    <div class="titulo-grafica titulo-ingresos-limpio">
+                        <span class="icono-circular-ingresos" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4 19V5"></path>
+                                <path d="M4 19h17"></path>
+                                <rect x="7" y="11" width="3" height="5" rx="1" fill="currentColor" stroke="none"></rect>
+                                <rect x="13" y="7" width="3" height="9" rx="1" fill="currentColor" stroke="none"></rect>
+                                <rect x="19" y="3" width="2" height="13" rx="1" fill="currentColor" stroke="none"></rect>
+                            </svg>
+                        </span>
+                        <h3>Ingresos por semana</h3>
+                    </div>
+
+                    <form class="selector-semana" method="get" action="index.php">
+                        <label class="selector-semana-control" for="fecha-semana">
+                            <svg class="icono-calendario-control" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <rect x="3" y="5" width="18" height="16" rx="2"></rect>
+                                <path d="M16 3v4M8 3v4M3 10h18"></path>
+                            </svg>
+                            <span class="texto-rango-semana">
+                                <?php
+                                $meses_cortos = [1 => 'ene.', 2 => 'feb.', 3 => 'mar.', 4 => 'abr.', 5 => 'may.', 6 => 'jun.',
+                                    7 => 'jul.', 8 => 'ago.', 9 => 'sep.', 10 => 'oct.', 11 => 'nov.', 12 => 'dic.'];
+                                echo e_tablero(
+                                    $inicio_semana->format('j') . ' ' . $meses_cortos[(int)$inicio_semana->format('n')] . ' ' . $inicio_semana->format('Y')
+                                    . ' – ' .
+                                    $fin_semana->format('j') . ' ' . $meses_cortos[(int)$fin_semana->format('n')] . ' ' . $fin_semana->format('Y')
+                                );
+                                ?>
+                            </span>
+                            <svg class="flecha-selector-semana" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="m6 9 6 6 6-6"></path>
+                            </svg>
+                        </label>
+                        <input id="fecha-semana" type="date" name="semana"
+                               value="<?= e_tablero($fecha_seleccionada) ?>"
+                               aria-label="Elegir una fecha para consultar su semana"
+                               onchange="this.form.submit()">
+                    </form>
+                </div>
+
+                <div class="resumen-ingresos-semana resumen-ingresos-doble resumen-ingresos-unico">
+                    <div class="resumen-fuente">
+                        <span>Total de la semana</span>
+                        <strong>$<?= number_format($total_ingresos_semana, 2) ?></strong>
+                    </div>
+                </div>
+
+                <div class="grafica grafica-ingresos">
+                    <div class="grafica-vertical">
+                        <div class="eje-grafica">
+                            <?php for ($nivel = 4; $nivel >= 0; $nivel--): ?>
+                                <span>$<?= number_format($escala_ingresos * $nivel, 0) ?></span>
+                            <?php endfor; ?>
+                        </div>
+
+                        <div class="area-barras">
+                            <?php
+                            $dias_es = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+                            foreach ($ingresos_semana as $fecha => $importe_dia):
+                                $altura_dia = $maximo_eje_ingresos > 0
+                                    ? (int)round($importe_dia / $maximo_eje_ingresos * 150) : 0;
+                                $fecha_obj = new DateTimeImmutable($fecha);
+                                $etiqueta_dia = $dias_es[(int)$fecha_obj->format('N') - 1];
+                                $detalle = $fecha . ' | $' . number_format($importe_dia, 2);
+                            ?>
+                            <div class="barra-vertical grupo-barras-dia" title="<?= e_tablero($detalle) ?>">
+                                <div class="barras-dobles">
+                                    <div class="barra-fuente barra-uisp barra-unica"
+                                         style="height: <?= $altura_dia ?>px !important;"
+                                         title="$<?= number_format($importe_dia, 2) ?>">
+                                    </div>
+                                </div>
+                                <span class="etiqueta-fecha"><?= $etiqueta_dia ?><br><?= $fecha_obj->format('d/m') ?></span>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Distribución de servicios DHCP según Grezz -->
+            <div class="panel cc-panel">
+                <div class="panel-titulo titulo-estados-pago">
+                    <span class="icono-circular-ingresos" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 4h16v16H4z"></path>
+                            <path d="M8 8h8M8 12h5"></path>
+                            <path d="m8 16 2 2 5-5"></path>
+                        </svg>
+                    </span>
+                    <h3>Distribución de servicios DHCP</h3>
+                </div>
+
+                <?php if ($error_grafica_servicios): ?>
+                    <p class="cc-vacio">Grezz no respondió: no se puede mostrar la distribución.</p>
+                <?php else: ?>
+                <div class="grafica-circular dona-ubb">
+                    <div class="dona-ubb-visual"
+                         role="img"
+                         aria-label="Distribución de <?= $total_estados ?> servicios DHCP: <?= $servicios_estado["ACTIVO"] ?> activos, <?= $servicios_estado["SUSPENDIDO"] ?> suspendidos y <?= $servicios_estado["SIN_DATOS"] ?> sin estado."
+                         style="background: conic-gradient(
+                            #16a34a 0% <?= number_format($porcentaje_activo, 2, '.', '') ?>%,
+                            #f0b429 <?= number_format($porcentaje_activo, 2, '.', '') ?>% <?= number_format($porcentaje_acumulado, 2, '.', '') ?>%,
+                            #94a3b8 <?= number_format($porcentaje_acumulado, 2, '.', '') ?>% 100%
+                         );">
+                        <div class="dona-ubb-centro">
+                            <strong><?= number_format($total_estados) ?></strong>
+                            <span>Servicios en Grezz</span>
+                        </div>
+                    </div>
+
+                    <!-- Porcentajes: las cantidades de activos y suspendidos están en el resumen. -->
+                    <div class="leyenda-pastel leyenda-ubb">
+                        <div class="item-leyenda item-leyenda-ubb">
+                            <span class="punto-leyenda pagado"></span>
+                            <div class="detalle-leyenda-ubb">
+                                <span class="nombre-estado-ubb">Activos</span>
+                                <strong><?= number_format($porcentaje_activo, 1) ?>%</strong>
+                            </div>
+                        </div>
+                        <div class="item-leyenda item-leyenda-ubb">
+                            <span class="punto-leyenda pendiente"></span>
+                            <div class="detalle-leyenda-ubb">
+                                <span class="nombre-estado-ubb">Suspendidos</span>
+                                <strong><?= number_format($porcentaje_suspendido, 1) ?>%</strong>
+                            </div>
+                        </div>
+                        <div class="item-leyenda item-leyenda-ubb">
+                            <span class="punto-leyenda cancelado"></span>
+                            <div class="detalle-leyenda-ubb">
+                                <span class="nombre-estado-ubb">Sin estado en Grezz</span>
+                                <strong><?= number_format($porcentaje_sin_datos, 1) ?>%</strong>
+                                <small><?= number_format($servicios_estado["SIN_DATOS"]) ?> servicios</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
+            </div>
+
+        </div>
     </section>
 
 
+    <!-- =====================================================
+         2. MONITOR DE AUTOMATIZACIONES
+         Procesos independientes: cada uno con su estado, cifras,
+         pendientes y errores.
+    ====================================================== -->
+    <section class="cc-seccion" id="cc-monitor" aria-labelledby="cc-titulo-monitor">
+        <div class="cc-seccion-titulo">
+            <h2 id="cc-titulo-monitor">Monitor de automatizaciones</h2>
+            <p>Cada proceso funciona por separado · Gracia: <?= UBB_DIAS_GRACIA ?> días · Corte: día <?= UBB_DIAS_GRACIA + 1 ?></p>
+        </div>
+
+        <div class="cc-procesos">
+
+            <!-- Conciliación y pagos bancarios -->
+            <article class="cc-proceso cc-proceso--<?= $proc_conc['clase'] ?>">
+                <header class="cc-proceso-cabeza">
+                    <span class="cc-proceso-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 10h18M5 10V20M19 10V20M9 10v10M15 10v10M3 20h18M12 3 3 8h18Z"/></svg></span>
+                    <h3>Conciliación de pagos</h3>
+                    <span class="cc-estado cc-estado--<?= $proc_conc['clase'] ?>"><?= e_tablero($proc_conc['texto']) ?></span>
+                </header>
+                <div class="cc-proceso-cifra">
+                    <strong><?= numeroAuto($auto_conc['total'] ?? null) ?></strong>
+                    <span>pagos del banco conciliados solos · 7 días</span>
+                </div>
+                <dl class="cc-filas">
+                    <div><dt>Importe aplicado (7 días)</dt><dd><?= $auto_conc === null ? '—' : '$' . number_format((float)($auto_conc['importe'] ?? 0), 2) ?></dd></div>
+                    <div><dt>Movimientos por conciliar</dt><dd><?= numeroAuto($auto_mov === null ? null : (int)($auto_mov['pendientes'] ?? 0)) ?></dd></div>
+                    <div class="<?= (int)($auto_mov['revision'] ?? 0) > 0 ? 'cc-fila--alerta' : '' ?>"><dt>Movimientos en revisión manual</dt><dd><?= numeroAuto($auto_mov === null ? null : (int)($auto_mov['revision'] ?? 0)) ?></dd></div>
+                    <div><dt>Pagos de UISP aplicados (7 días)</dt><dd><?= numeroAuto($auto_uisp === null ? null : (int)($auto_uisp['aplicados_7d'] ?? 0)) ?></dd></div>
+                    <div class="<?= (int)($auto_uisp['revision'] ?? 0) > 0 ? 'cc-fila--alerta' : '' ?>"><dt>Pagos de UISP en revisión</dt><dd><?= numeroAuto($auto_uisp === null ? null : (int)($auto_uisp['revision'] ?? 0)) ?></dd></div>
+                </dl>
+                <footer class="cc-proceso-pie">
+                    <span>Banco: <?= e_tablero(fechaRelativaTablero($ejec('CONCILIACION')['fecha_fin'] ?? null)) ?> · UISP: <?= e_tablero(fechaRelativaTablero($ejec('PAGOS_UISP')['fecha_fin'] ?? null)) ?></span>
+                    <span class="cc-enlaces"><a href="conciliacion_bancaria.php">Banco</a><a href="revision_uisp.php">UISP</a></span>
+                </footer>
+            </article>
+
+            <!-- Vencimientos y periodos de gracia -->
+            <article class="cc-proceso cc-proceso--<?= $proc_venc['clase'] ?>">
+                <header class="cc-proceso-cabeza">
+                    <span class="cc-proceso-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+                    <h3>Vencimientos y gracia</h3>
+                    <span class="cc-estado cc-estado--<?= $proc_venc['clase'] ?>"><?= e_tablero($proc_venc['texto']) ?></span>
+                </header>
+                <div class="cc-proceso-cifra">
+                    <strong><?= numeroAuto($auto_venc['en_gracia']) ?></strong>
+                    <span>mensualidades vencidas dentro de la gracia (1 a <?= UBB_DIAS_GRACIA ?> días)</span>
+                </div>
+                <dl class="cc-filas">
+                    <div><dt>Vencen hoy</dt><dd><?= numeroAuto($auto_venc['vencen_hoy']) ?></dd></div>
+                    <div><dt>Vencen en 1 a <?= UBB_DIAS_GRACIA ?> días</dt><dd><?= numeroAuto($auto_venc['proximos']) ?></dd></div>
+                    <div class="<?= (int)($auto_venc['fuera_gracia'] ?? 0) > 0 ? 'cc-fila--alerta' : '' ?>"><dt>Fuera de gracia (pasan a corte)</dt><dd><?= numeroAuto($auto_venc['fuera_gracia']) ?></dd></div>
+                </dl>
+                <footer class="cc-proceso-pie">
+                    <span>Mensualidades: <?= e_tablero(fechaRelativaTablero($proc_venc_ejec['fecha_fin'] ?? null)) ?></span>
+                    <span class="cc-enlaces"><a href="proximos.php">Próximos</a><a href="vencidos.php">Vencidos</a></span>
+                </footer>
+            </article>
+
+            <!-- Suspensiones y reactivaciones -->
+            <article class="cc-proceso cc-proceso--<?= $proc_susp['clase'] ?>">
+                <header class="cc-proceso-cabeza">
+                    <span class="cc-proceso-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M18.4 5.6a9 9 0 1 1-12.8 0"/><path d="M12 2v10"/></svg></span>
+                    <h3>Suspensiones y reactivaciones</h3>
+                    <span class="cc-estado cc-estado--<?= $proc_susp['clase'] ?>"><?= e_tablero($proc_susp['texto']) ?></span>
+                </header>
+                <div class="cc-proceso-cifra">
+                    <strong><?= numeroAuto($auto_cortes['gestionables']) ?></strong>
+                    <span>fuera de gracia y con servicio DHCP: corte automático</span>
+                </div>
+                <dl class="cc-filas">
+                    <div><dt>Fuera de gracia ya cortados (DHCP)</dt><dd><?= numeroAuto($auto_cortes['cortados']) ?></dd></div>
+                    <div class="<?= (int)($auto_cortes['manuales'] ?? 0) > 0 ? 'cc-fila--alerta' : '' ?>"><dt>Fuera de gracia sin Grezz: corte manual (PPPoE u otros)</dt><dd><?= numeroAuto($auto_cortes['manuales']) ?></dd></div>
+                    <div><dt>Suspensiones solicitadas hoy</dt><dd><?= numeroAuto($auto_sol === null ? null : (int)($auto_sol['suspensiones_hoy'] ?? 0)) ?></dd></div>
+                    <div><dt>Reactivaciones solicitadas hoy</dt><dd><?= numeroAuto($auto_sol === null ? null : (int)($auto_sol['reactivaciones_hoy'] ?? 0)) ?></dd></div>
+                    <div class="<?= (int)($auto_cortes['suspendidos_sin_adeudo'] ?? 0) > 0 ? 'cc-fila--alerta' : '' ?>"><dt>Cortados sin adeudo vencido: revisar reactivación</dt><dd><?= numeroAuto($auto_cortes['suspendidos_sin_adeudo'] ?? null) ?></dd></div>
+                </dl>
+                <footer class="cc-proceso-pie">
+                    <span><?= e_tablero(ultimaEjecucionTablero($proc_susp_ejec)) ?></span>
+                    <span class="cc-enlaces"><a href="vencidos.php">Vencidos</a><a href="suspendidos.php">Suspendidos</a></span>
+                </footer>
+            </article>
+
+            <!-- Integración con Grezz -->
+            <article class="cc-proceso cc-proceso--<?= $proc_grezz['clase'] ?>">
+                <header class="cc-proceso-cabeza">
+                    <span class="cc-proceso-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg></span>
+                    <h3>Integración con Grezz</h3>
+                    <span class="cc-estado cc-estado--<?= $proc_grezz['clase'] ?>"><?= e_tablero($proc_grezz['texto']) ?></span>
+                </header>
+                <div class="cc-proceso-cifra">
+                    <strong><?= numeroAuto($grezz_semana === null ? null
+                        : (int)($grezz_semana['completadas'] ?? 0) + (int)($grezz_semana['simuladas'] ?? 0)
+                          + (int)($grezz_semana['rechazadas'] ?? 0) + (int)($grezz_semana['pendientes'] ?? 0)) ?></strong>
+                    <span>solicitudes enviadas · 7 días</span>
+                </div>
+                <dl class="cc-filas">
+                    <div><dt>Modo de operación</dt><dd><?= $grezz_simulacion ? 'Simulación (no corta)' : 'Real' ?></dd></div>
+                    <div><dt>Completadas · simuladas (7 días)</dt><dd><?= numeroAuto($grezz_semana === null ? null : (int)($grezz_semana['completadas'] ?? 0)) ?> · <?= numeroAuto($grezz_semana === null ? null : (int)($grezz_semana['simuladas'] ?? 0)) ?></dd></div>
+                    <div class="<?= $grezz_rechazadas > 0 ? 'cc-fila--alerta' : '' ?>"><dt>Rechazadas por Grezz (7 días)</dt><dd><?= numeroAuto($grezz_semana === null ? null : $grezz_rechazadas) ?></dd></div>
+                    <div class="<?= $grezz_pendientes > 0 ? 'cc-fila--alerta' : '' ?>"><dt>Sin confirmar por Grezz</dt><dd><?= numeroAuto($auto_sol === null ? null : $grezz_pendientes) ?></dd></div>
+                    <div><dt>Servicios DHCP reportados</dt><dd><?= $error_servicios ? '—' : number_format($total_estados) ?></dd></div>
+                </dl>
+                <footer class="cc-proceso-pie">
+                    <span>Última solicitud: <?= e_tablero(fechaRelativaTablero($grezz_semana['ultima'] ?? null)) ?></span>
+                    <span class="cc-enlaces"><a href="suspendidos.php">Ver servicios</a></span>
+                </footer>
+            </article>
+
+            <!-- Notificaciones a clientes -->
+            <article class="cc-proceso cc-proceso--<?= $proc_avisos['clase'] ?>">
+                <header class="cc-proceso-cabeza">
+                    <span class="cc-proceso-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+                    <h3>Notificaciones a clientes</h3>
+                    <span class="cc-estado cc-estado--<?= $proc_avisos['clase'] ?>"><?= e_tablero($proc_avisos['texto']) ?></span>
+                </header>
+                <div class="cc-proceso-cifra">
+                    <strong><?= numeroAuto($auto_avisos === null ? null : (int)($auto_avisos['enviados_hoy'] ?? 0)) ?></strong>
+                    <span>avisos enviados hoy</span>
+                </div>
+                <dl class="cc-filas">
+                    <div><dt>Por enviar</dt><dd><?= numeroAuto($auto_avisos === null ? null : (int)($auto_avisos['pendientes'] ?? 0)) ?></dd></div>
+                    <div class="<?= (int)($auto_avisos['con_problema'] ?? 0) > 0 ? 'cc-fila--alerta' : '' ?>"><dt>Sin teléfono o con error</dt><dd><?= numeroAuto($auto_avisos === null ? null : (int)($auto_avisos['con_problema'] ?? 0)) ?></dd></div>
+                    <div><dt>Recordatorios generados</dt><dd><?= e_tablero(fechaRelativaTablero($ejec('RECORDATORIOS')['fecha_fin'] ?? null)) ?></dd></div>
+                </dl>
+                <footer class="cc-proceso-pie">
+                    <span>Envío: <?= e_tablero(fechaRelativaTablero($ejec('NOTIFICACIONES')['fecha_fin'] ?? null)) ?></span>
+                    <span class="cc-enlaces"><a href="notificaciones.php">Ver avisos</a></span>
+                </footer>
+            </article>
+
+        </div>
+    </section>
 
 
+    <!-- =====================================================
+         3. ACTIVIDAD RECIENTE
+    ====================================================== -->
+    <section class="cc-seccion" aria-labelledby="cc-titulo-actividad">
+        <div class="cc-seccion-titulo cc-seccion-titulo--con-filtros">
+            <div>
+                <h2 id="cc-titulo-actividad">Actividad reciente</h2>
+                <p>Últimos <?= count($actividad) ?> movimientos de todos los procesos</p>
+            </div>
+            <div class="cc-filtros" role="group" aria-label="Filtrar actividad">
+                <button type="button" class="cc-filtro" data-filtro="" aria-pressed="true">Todo</button>
+                <button type="button" class="cc-filtro" data-filtro="pago conciliacion" aria-pressed="false">Pagos</button>
+                <button type="button" class="cc-filtro" data-filtro="conciliacion revision" aria-pressed="false">Conciliación</button>
+                <button type="button" class="cc-filtro" data-filtro="suspension reactivacion" aria-pressed="false">Cortes y reconexiones</button>
+                <button type="button" class="cc-filtro" data-filtro="notificacion" aria-pressed="false">Notificaciones</button>
+                <button type="button" class="cc-filtro" data-filtro="error" aria-pressed="false">Errores</button>
+            </div>
+        </div>
+
+        <div class="cc-panel cc-actividad">
+            <?php if (!$actividad): ?>
+                <p class="cc-vacio">Todavía no hay movimientos registrados.</p>
+            <?php else: ?>
+            <ol class="cc-linea" id="ccLinea">
+                <?php foreach ($actividad as $ev): ?>
+                    <li class="cc-evento cc-evento--<?= e_tablero($ev['tipo']) ?>" data-tipo="<?= e_tablero($ev['tipo']) ?>">
+                        <span class="cc-evento-icono" aria-hidden="true">
+                            <?php switch ($ev['tipo']):
+                                case 'pago': ?><svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19"/></svg><?php break;
+                                case 'conciliacion': ?><svg viewBox="0 0 24 24"><path d="M3 10h18M12 3 3 8h18ZM5 10v8M19 10v8M3 20h18"/></svg><?php break;
+                                case 'revision': ?><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><?php break;
+                                case 'suspension': ?><svg viewBox="0 0 24 24"><path d="M18.4 5.6a9 9 0 1 1-12.8 0"/><path d="M12 2v10"/></svg><?php break;
+                                case 'reactivacion': ?><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15.5-6.3L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.3L3 16"/></svg><?php break;
+                                case 'notificacion': ?><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><?php break;
+                                default: ?><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg><?php
+                            endswitch; ?>
+                        </span>
+                        <div class="cc-evento-cuerpo">
+                            <div class="cc-evento-linea1">
+                                <strong><?= e_tablero($ev['titulo']) ?></strong>
+                                <span class="cc-estado cc-estado--<?= e_tablero($ev['etiqueta_clase']) ?>"><?= e_tablero($ev['etiqueta']) ?></span>
+                            </div>
+                            <div class="cc-evento-linea2">
+                                <?php if ($ev['cliente']): ?>
+                                    <a href="ver_cliente.php?id=<?= (int)$ev['id_cliente'] ?>"><?= e_tablero($ev['cliente']) ?></a>
+                                    <?php if ($ev['id_servicio']): ?>· servicio <?= (int)$ev['id_servicio'] ?><?php endif; ?>
+                                <?php endif; ?>
+                                <?php if ($ev['detalle'] !== ''): ?>
+                                    <span class="cc-evento-detalle"><?= $ev['cliente'] ? '· ' : '' ?><?= e_tablero($ev['detalle']) ?></span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <time class="cc-evento-fecha" datetime="<?= e_tablero($ev['fecha']) ?>"><?= e_tablero(fechaRelativaTablero($ev['fecha'], $ev['solo_fecha'])) ?></time>
+                    </li>
+                <?php endforeach; ?>
+            </ol>
+            <p class="cc-vacio" id="ccLineaVacia" hidden>No hay movimientos de este tipo entre los recientes.</p>
+            <?php endif; ?>
+        </div>
+    </section>
 
 
-
-
-
-
+    <!-- =====================================================
+         ACCESOS DIRECTOS
+    ====================================================== -->
+    <nav class="cc-accesos" aria-label="Accesos directos">
+        <span>Accesos directos</span>
+        <a href="registrar.php">Registrar pago</a>
+        <a href="historial.php">Historial de pagos</a>
+        <a href="reporte_uisp.php">Historial UISP</a>
+        <a href="reporte_semanal.php">Reporte semanal</a>
+    </nav>
 
 </main>
+
+<script>
+// Filtros de la actividad reciente.
+(() => {
+    const botones = document.querySelectorAll('.cc-filtro');
+    const eventos = document.querySelectorAll('#ccLinea .cc-evento');
+    const vacio = document.getElementById('ccLineaVacia');
+
+    botones.forEach((boton) => {
+        boton.addEventListener('click', () => {
+            const tipos = boton.dataset.filtro ? boton.dataset.filtro.split(' ') : null;
+            let visibles = 0;
+
+            botones.forEach((b) => b.setAttribute('aria-pressed', String(b === boton)));
+
+            eventos.forEach((ev) => {
+                const mostrar = !tipos || tipos.includes(ev.dataset.tipo);
+                ev.hidden = !mostrar;
+                visibles += mostrar ? 1 : 0;
+            });
+
+            if (vacio) vacio.hidden = visibles > 0;
+        });
+    });
+})();
+</script>
 
 
 <!-- =========================================================

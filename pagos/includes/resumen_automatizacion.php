@@ -110,6 +110,8 @@ function resumenAutomatizacion(mysqli $conexion, array $estadoPagos, ?array $ser
     $gestionables = 0;
     $cortados = 0;
     $enGracia = 0;
+    $proximos = 0;
+    $vencenHoy = 0;
 
     foreach ($estadoPagos as $idServicio => $situacion) {
         if ($situacion['tipo'] === 'vencido') {
@@ -123,8 +125,29 @@ function resumenAutomatizacion(mysqli $conexion, array $estadoPagos, ?array $ser
             }
         } elseif ($situacion['tipo'] === 'gracia') {
             $enGracia++;
+        } elseif ($situacion['tipo'] === 'proximo') {
+            $proximos++;
+        } elseif ($situacion['tipo'] === 'hoy') {
+            $vencenHoy++;
         }
     }
+
+    // Cortados en Grezz sin mensualidad fuera de gracia: pueden ser cortes
+    // manuales o clientes que ya pagaron y siguen sin reactivar.
+    $suspendidosSinAdeudo = 0;
+
+    foreach ($estadosGrezz as $idServicio => $estadoGrezz) {
+        if ($estadoGrezz === 'SUSPENDIDO' && ($estadoPagos[$idServicio]['tipo'] ?? '') !== 'vencido') {
+            $suspendidosSinAdeudo++;
+        }
+    }
+
+    $r['vencimientos'] = [
+        'proximos' => $proximos,
+        'vencen_hoy' => $vencenHoy,
+        'en_gracia' => $enGracia,
+        'fuera_gracia' => $fueraGracia,
+    ];
 
     // Manuales: Grezz no los reconoce (PPPoE u otro error), ni activos ni
     // cortados. Los ya cortados se cuentan aparte.
@@ -134,6 +157,7 @@ function resumenAutomatizacion(mysqli $conexion, array $estadoPagos, ?array $ser
         'cortados' => $serviciosGrezz === null ? null : $cortados,
         'manuales' => $serviciosGrezz === null ? null : $fueraGracia - $gestionables - $cortados,
         'en_gracia' => $enGracia,
+        'suspendidos_sin_adeudo' => $serviciosGrezz === null ? null : $suspendidosSinAdeudo,
     ];
 
     return $r;
