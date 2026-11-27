@@ -132,8 +132,9 @@ function resumenAutomatizacion(mysqli $conexion, array $estadoPagos, ?array $ser
         }
     }
 
-    // Cortados en Grezz sin mensualidad fuera de gracia: pueden ser cortes
-    // manuales o clientes que ya pagaron y siguen sin reactivar.
+    // Cortados en Grezz sin mensualidad fuera de gracia. Normalmente son
+    // servicios sin datos del cliente, que se cortan a propósito para que el
+    // cliente llame y los dé; también puede haber otros cortes manuales.
     $suspendidosSinAdeudo = 0;
 
     foreach ($estadosGrezz as $idServicio => $estadoGrezz) {

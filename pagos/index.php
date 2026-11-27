@@ -412,11 +412,9 @@ $proc_venc = estadoProcesoTablero(
 
 // 3. Suspensiones y reactivaciones.
 $proc_susp_ejec = $ultimaDe(['SUSPENSION']);
-$proc_susp = estadoProcesoTablero(
-    $proc_susp_ejec,
-    (int)($auto_cortes['suspendidos_sin_adeudo'] ?? 0),
-    $error_proximos
-);
+// Los cortados sin adeudo no son alerta: se cortan a propósito los servicios
+// sin datos del cliente para que el cliente llame y los proporcione.
+$proc_susp = estadoProcesoTablero($proc_susp_ejec, 0, $error_proximos);
 
 // 4. Integración con Grezz.
 $grezz_simulacion = defined('GREZZ_SIMULAR') && GREZZ_SIMULAR;
@@ -797,7 +795,7 @@ function e_tablero($valor): string
                     <div class="<?= (int)($auto_cortes['manuales'] ?? 0) > 0 ? 'cc-fila--alerta' : '' ?>"><dt>Fuera de gracia sin RADIUS: corte manual (PPPoE u otros)</dt><dd><?= numeroAuto($auto_cortes['manuales']) ?></dd></div>
                     <div><dt>Suspensiones solicitadas hoy</dt><dd><?= numeroAuto($auto_sol === null ? null : (int)($auto_sol['suspensiones_hoy'] ?? 0)) ?></dd></div>
                     <div><dt>Reactivaciones solicitadas hoy</dt><dd><?= numeroAuto($auto_sol === null ? null : (int)($auto_sol['reactivaciones_hoy'] ?? 0)) ?></dd></div>
-                    <div class="<?= (int)($auto_cortes['suspendidos_sin_adeudo'] ?? 0) > 0 ? 'cc-fila--alerta' : '' ?>"><dt>Cortados sin adeudo vencido: revisar reactivación</dt><dd><?= numeroAuto($auto_cortes['suspendidos_sin_adeudo'] ?? null) ?></dd></div>
+                    <div><dt>Cortados sin adeudo (sin datos del cliente u otro motivo)</dt><dd><?= numeroAuto($auto_cortes['suspendidos_sin_adeudo'] ?? null) ?></dd></div>
                 </dl>
                 <footer class="cc-proceso-pie">
                     <span><?= e_tablero(ultimaEjecucionTablero($proc_susp_ejec)) ?></span>
