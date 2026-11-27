@@ -56,15 +56,63 @@ if ($estado !== "todos") {
 }
 
 
+/* Conexión de solo lectura a la plataforma (nombres de clientes).
+   Si no responde, la página sigue funcionando con el número de cliente. */
+
+$plataforma = null;
+
+try {
+    $plataforma = require __DIR__ . "/conexion_plataforma.php";
+
+    if (!$plataforma instanceof mysqli) {
+        $plataforma = null;
+    }
+} catch (Throwable $e) {
+    error_log("UBB historial: sin conexión a la plataforma: " . $e->getMessage());
+    $plataforma = null;
+}
+
+
 /* Búsqueda */
 
 if ($buscar !== "") {
 
     $buscar_seguro = $conexion->real_escape_string($buscar);
 
+    $coincide_cliente = "";
+
+    // Clientes cuyo nombre coincide con lo buscado
+    if ($plataforma !== null) {
+        try {
+            $stmt = $plataforma->prepare(
+                "SELECT id_cliente
+                 FROM clientes
+                 WHERE CONCAT_WS(' ', nombre, apellido_paterno, apellido_materno) LIKE ?
+                 LIMIT 500"
+            );
+            $patron = "%" . $buscar . "%";
+            $stmt->bind_param("s", $patron);
+            $stmt->execute();
+            $resultado = $stmt->get_result();
+
+            $ids_por_nombre = [];
+            while ($fila = $resultado->fetch_assoc()) {
+                $ids_por_nombre[] = (int)$fila["id_cliente"];
+            }
+            $stmt->close();
+
+            if (count($ids_por_nombre) > 0) {
+                $coincide_cliente = " OR id_cliente IN (" . implode(",", $ids_por_nombre) . ")";
+            }
+        } catch (Throwable $e) {
+            error_log("UBB historial: búsqueda por nombre: " . $e->getMessage());
+        }
+    }
+
     $condiciones[] = "(
         id_cliente LIKE '%$buscar_seguro%'
         OR referencia LIKE '%$buscar_seguro%'
+        $coincide_cliente
     )";
 }
 
@@ -124,6 +172,43 @@ if ($consulta) {
             $total_recaudado += (float)$pago["monto"];
             $total_pagados++;
         }
+    }
+}
+
+
+/* =========================
+   NOMBRES DE CLIENTES
+========================= */
+
+$nombres_clientes = [];
+
+$ids_clientes = array_values(array_unique(array_filter(
+    array_map(fn($p) => (int)$p["id_cliente"], $pagos)
+)));
+
+if ($plataforma !== null && count($ids_clientes) > 0) {
+    try {
+        foreach (array_chunk($ids_clientes, 500) as $grupo) {
+            $resultado = $plataforma->query(
+                "SELECT id_cliente, nombre, apellido_paterno, apellido_materno
+                 FROM clientes
+                 WHERE id_cliente IN (" . implode(",", $grupo) . ")"
+            );
+
+            while ($fila = $resultado->fetch_assoc()) {
+                $nombre = trim(implode(" ", array_filter([
+                    trim((string)$fila["nombre"]),
+                    trim((string)$fila["apellido_paterno"]),
+                    trim((string)$fila["apellido_materno"]),
+                ], "strlen")));
+
+                if ($nombre !== "") {
+                    $nombres_clientes[(int)$fila["id_cliente"]] = $nombre;
+                }
+            }
+        }
+    } catch (Throwable $e) {
+        error_log("UBB historial: nombres de clientes: " . $e->getMessage());
     }
 }
 
@@ -303,8 +388,14 @@ if ($consulta) {
 
                         <tr>
 
-                            <td class="hist-fuerte">
-                                Cliente #<?php echo htmlspecialchars($pago["id_cliente"]); ?>
+                            <td class="hist-cliente">
+                                <?php $nombre_cliente = $nombres_clientes[(int)$pago["id_cliente"]] ?? null; ?>
+                                <?php if ($nombre_cliente !== null): ?>
+                                    <strong><?php echo htmlspecialchars($nombre_cliente); ?></strong>
+                                    <span>Cliente #<?php echo (int)$pago["id_cliente"]; ?></span>
+                                <?php else: ?>
+                                    <strong>Cliente #<?php echo htmlspecialchars($pago["id_cliente"]); ?></strong>
+                                <?php endif; ?>
                             </td>
 
                             <td>

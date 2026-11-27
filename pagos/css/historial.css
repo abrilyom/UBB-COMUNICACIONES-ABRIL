@@ -194,6 +194,19 @@
     color: var(--cc-texto-suave);
 }
 
+.hist-cliente strong {
+    display: block;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.hist-cliente span {
+    display: block;
+    margin-top: 2px;
+    color: var(--cc-texto-suave);
+    font-size: 12px;
+}
+
 .hist-fecha {
     white-space: nowrap;
 }
