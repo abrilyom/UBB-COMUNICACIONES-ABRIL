@@ -7,10 +7,9 @@ require_once __DIR__ . "/includes/ticket_pago.php";
 /*
  * Ticket de cualquier pago: comprobante.php?id=<id_pago>
  *
- * - Si el pago ya tiene su PDF guardado (los de "Registrar pago"), muestra ese,
- *   que es el que se entregó al cliente.
- * - Si no (UISP, conciliación bancaria, anteriores), lo arma en ese momento
- *   con los datos actuales del pago. No guarda nada.
+ * Siempre lo arma en ese momento con el diseño actual y el estado actual del
+ * pago (un pago cancelado dice CANCELADO). No guarda nada. Los PDF que
+ * "Registrar pago" guardó al capturar siguen en comprobantes/ como respaldo.
  */
 
 function salirComprobante(int $codigo, string $mensaje): void
@@ -48,22 +47,6 @@ if (!$pago) {
 }
 
 $nombreDescarga = "comprobante_pago_" . (int)$pago["id_pago"] . ".pdf";
-
-/* PDF original guardado al registrar. */
-$guardado = trim((string)($pago["comprobante"] ?? ""));
-
-if ($guardado !== "") {
-    $carpeta = realpath(__DIR__ . "/comprobantes");
-    $ruta = realpath(__DIR__ . "/" . $guardado);
-
-    if ($carpeta !== false && $ruta !== false && str_starts_with($ruta, $carpeta . DIRECTORY_SEPARATOR) && is_file($ruta)) {
-        header("Content-Type: application/pdf");
-        header('Content-Disposition: inline; filename="' . $nombreDescarga . '"');
-        header("Content-Length: " . filesize($ruta));
-        readfile($ruta);
-        exit;
-    }
-}
 
 /* Mensualidades a las que se aplicó el pago. */
 $stmt = $conexion->prepare(
