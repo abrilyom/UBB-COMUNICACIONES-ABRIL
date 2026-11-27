@@ -216,127 +216,152 @@ $totalNotificaciones = count($notificaciones);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notificaciones - UBB Comunicaciones</title>
     <link rel="stylesheet" href="css/pagos.css?v=<?php echo filemtime(__DIR__ . '/css/pagos.css'); ?>">
+    <link rel="stylesheet" href="css/vencidos.css?v=<?php echo filemtime(__DIR__ . '/css/vencidos.css'); ?>">
     <link rel="stylesheet" href="css/notificaciones.css?v=<?php echo filemtime(__DIR__ . '/css/notificaciones.css'); ?>">
+    <link rel="stylesheet" href="css/tablero.css?v=<?php echo filemtime(__DIR__ . '/css/tablero.css'); ?>">
+    <link rel="stylesheet" href="css/listados.css?v=<?php echo filemtime(__DIR__ . '/css/listados.css'); ?>">
 </head>
 <body>
 
 <?php require __DIR__ . "/includes/encabezado.php"; ?>
 <?php require __DIR__ . "/includes/panel_lateral.php"; ?>
 
-<main class="contenedor nt-page">
-    <section class="nt-panel">
+<main class="contenedor cc hist notificaciones">
 
-        <header class="nt-encabezado">
-            <div class="nt-titulo">
-                <div class="nt-icono" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="1.8"
-                         stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/>
-                        <path d="M10 21h4"/>
-                    </svg>
+    <!-- =================================================
+         CABECERA
+    ================================================== -->
+
+    <header class="cc-cabecera">
+        <div class="cc-cabecera-texto">
+            <span class="cc-cabecera-icono" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
+            </span>
+            <div>
+                <h1>Notificaciones de pago</h1>
+                <p>Prepara recordatorios personalizados según el estado de cada mensualidad.</p>
+            </div>
+        </div>
+    </header>
+
+    <?php if ($errorCarga): ?>
+
+        <div class="cc-panel nt-error-panel">
+            <?= escNotificacion($errorCarga) ?>
+        </div>
+
+    <?php else: ?>
+
+        <!-- =================================================
+             RESUMEN
+        ================================================== -->
+
+        <div class="cc-kpis hist-kpis adeudos-kpis">
+
+            <div class="cc-kpi hist-kpi--confirmados">
+                <div class="cc-kpi-cabeza">
+                    <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M12 13v3l2 1"/></svg></span>
+                    <span class="cc-kpi-nombre">Próximos a vencer</span>
                 </div>
-                <div>
-                    <span class="nt-etiqueta">COMUNICACIÓN CON CLIENTES</span>
-                    <h1>Notificaciones de pago</h1>
-                    <p>Prepara recordatorios personalizados según el estado de cada mensualidad.</p>
+                <strong class="cc-kpi-numero"><?= number_format($categorias["proximo"]) ?></strong>
+                <span class="cc-kpi-detalle">Recordatorio antes del vencimiento</span>
+            </div>
+
+            <div class="cc-kpi cc-kpi--proximos">
+                <div class="cc-kpi-cabeza">
+                    <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+                    <span class="cc-kpi-nombre">Vencen hoy</span>
                 </div>
+                <strong class="cc-kpi-numero"><?= number_format($categorias["hoy"]) ?></strong>
+                <span class="cc-kpi-detalle">Último día para pagar a tiempo</span>
             </div>
 
-            <a href="index.php" class="nt-regresar">
-                ← Regresar al centro de control
-            </a>
-        </header>
-
-        <?php if ($errorCarga): ?>
-            <div class="nt-error">
-                <?= escNotificacion($errorCarga) ?>
-            </div>
-        <?php else: ?>
-
-            <div class="nt-indicadores">
-                <article class="nt-indicador nt-indicador-proximo">
-                    <span>Próximos a vencer</span>
-                    <strong><?= number_format($categorias["proximo"]) ?></strong>
-                </article>
-
-                <article class="nt-indicador nt-indicador-hoy">
-                    <span>Vencen hoy</span>
-                    <strong><?= number_format($categorias["hoy"]) ?></strong>
-                </article>
-
-                <article class="nt-indicador nt-indicador-gracia">
-                    <span>En periodo de gracia</span>
-                    <strong><?= number_format($categorias["gracia"]) ?></strong>
-                </article>
-
-                <article class="nt-indicador nt-indicador-vencido">
-                    <span>Vencidos</span>
-                    <strong><?= number_format($categorias["vencido"]) ?></strong>
-                </article>
+            <div class="cc-kpi cc-kpi--pagos">
+                <div class="cc-kpi-cabeza">
+                    <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 7v5h5"/></svg></span>
+                    <span class="cc-kpi-nombre">En periodo de gracia</span>
+                </div>
+                <strong class="cc-kpi-numero"><?= number_format($categorias["gracia"]) ?></strong>
+                <span class="cc-kpi-detalle">Vencidos, aún sin corte</span>
             </div>
 
-            <div class="nt-nota">
-                <strong><?= number_format($totalNotificaciones) ?></strong>
-                mensualidades con saldo pendiente.
-                Los pagos confirmados y sus abonos se descuentan del saldo.
+            <div class="cc-kpi cc-kpi--suspendidos">
+                <div class="cc-kpi-cabeza">
+                    <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10.3 3.9 2.5 17.4A2 2 0 0 0 4.2 20h15.6a2 2 0 0 0 1.7-2.6L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg></span>
+                    <span class="cc-kpi-nombre">Vencidos</span>
+                </div>
+                <strong class="cc-kpi-numero"><?= number_format($categorias["vencido"]) ?></strong>
+                <span class="cc-kpi-detalle">Pasaron el periodo de gracia</span>
             </div>
 
-            <div class="nt-filtros">
-                <label class="nt-busqueda">
-                    <svg viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="2"
-                         stroke-linecap="round">
-                        <circle cx="11" cy="11" r="7"/>
-                        <path d="m20 20-4-4"/>
-                    </svg>
-                    <input type="search" id="ntBuscar"
-                           placeholder="Buscar cliente, teléfono, servicio o referencia..."
-                           autocomplete="off">
-                </label>
+        </div>
 
-                <select id="ntCategoria" aria-label="Filtrar por situación">
+
+        <!-- =================================================
+             FILTROS (se aplican al momento, sin recargar)
+        ================================================== -->
+
+        <div class="cc-panel hist-filtros">
+
+            <div class="hist-buscador adeudos-buscador">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                <input type="search" id="ntBuscar"
+                       placeholder="Buscar cliente, teléfono, servicio o referencia..."
+                       aria-label="Buscar notificación"
+                       autocomplete="off">
+            </div>
+
+            <label class="hist-campo">
+                <span>Situación</span>
+                <select id="ntCategoria">
                     <option value="">Todas las situaciones</option>
                     <option value="proximo">Próximos a vencer</option>
                     <option value="hoy">Vencen hoy</option>
                     <option value="gracia">En periodo de gracia</option>
                     <option value="vencido">Vencidos</option>
                 </select>
+            </label>
 
-                <select id="ntPaquete" aria-label="Filtrar por paquete">
+            <label class="hist-campo">
+                <span>Paquete</span>
+                <select id="ntPaquete">
                     <option value="">Todos los paquetes</option>
                     <?php foreach ($paquetesDisponibles as $paquete): ?>
-                        <option value="<?= escNotificacion($paquete) ?>">
-                            <?= escNotificacion($paquete) ?>
-                        </option>
+                        <option value="<?= escNotificacion($paquete) ?>"><?= escNotificacion($paquete) ?></option>
                     <?php endforeach; ?>
                 </select>
-            </div>
+            </label>
 
-            <p class="nt-ayuda">
-                La búsqueda y los filtros se aplican automáticamente.
-            </p>
+            <span class="adeudos-ayuda">
+                <strong><?= number_format($totalNotificaciones) ?></strong> mensualidades con saldo pendiente.
+                Los pagos confirmados y sus abonos se descuentan del saldo. La búsqueda y los filtros se aplican al momento.
+            </span>
 
-            <div class="nt-tabla-contenedor">
-                <table class="nt-tabla" id="ntTabla">
+        </div>
+
+
+        <!-- =================================================
+             TABLA
+        ================================================== -->
+
+        <section class="cc-panel hist-tabla">
+
+            <div class="hist-tabla-scroll">
+                <table id="ntTabla">
                     <thead>
                         <tr>
-                            <th>CLIENTE</th>
-                            <th>TELÉFONO</th>
-                            <th>ID SERVICIO</th>
-                            <th>PAQUETE</th>
-                            <th>VENCIMIENTO</th>
-                            <th>LÍMITE DE GRACIA</th>
-                            <th>SALDO</th>
-                            <th>REFERENCIA</th>
-                            <th>SITUACIÓN</th>
-                            <th>ACCIÓN</th>
+                            <th class="mens-col-cliente">Cliente</th>
+                            <th>Servicio</th>
+                            <th>Vencimiento</th>
+                            <th class="hist-num">Saldo</th>
+                            <th>Situación</th>
+                            <th>Acción</th>
                         </tr>
                     </thead>
                     <tbody>
                     <?php if (!$notificaciones): ?>
                         <tr>
-                            <td colspan="10" class="nt-vacio">
+                            <td colspan="6" class="hist-vacio">
                                 No hay mensualidades pendientes con saldo por cobrar.
                             </td>
                         </tr>
@@ -358,27 +383,25 @@ $totalNotificaciones = count($notificaciones);
                                 data-categoria="<?= escNotificacion($fila["tipo"]) ?>"
                                 data-paquete="<?= escNotificacion($fila["paquete"]) ?>"
                             >
-                                <td>
-                                    <strong class="nt-nombre">
-                                        <?= escNotificacion($fila["nombre"]) ?>
-                                    </strong>
+                                <td class="hist-cliente mens-col-cliente">
+                                    <strong><?= escNotificacion($fila["nombre"]) ?></strong>
+                                    <?php if ($fila["telefono"]): ?>
+                                        <span><?= escNotificacion($fila["telefono"]) ?></span>
+                                    <?php else: ?>
+                                        <span class="nt-sin-telefono">Sin teléfono</span>
+                                    <?php endif; ?>
                                 </td>
-                                <td>
-                                    <?= $fila["telefono"]
-                                        ? escNotificacion($fila["telefono"])
-                                        : '<span class="nt-sin-telefono">Sin teléfono</span>' ?>
+                                <td class="hist-cliente">
+                                    <strong>#<?= escNotificacion($fila["id_servicio"]) ?></strong>
+                                    <?php if ($fila["paquete"]): ?><span><?= escNotificacion($fila["paquete"]) ?></span><?php endif; ?>
+                                    <?php if ($fila["referencia"]): ?><span class="mens-ref"><?= escNotificacion($fila["referencia"]) ?></span><?php endif; ?>
                                 </td>
-                                <td><?= escNotificacion($fila["id_servicio"]) ?></td>
-                                <td><?= escNotificacion($fila["paquete"]) ?></td>
-                                <td><?= escNotificacion($fila["fecha_vencimiento"]) ?></td>
-                                <td><?= escNotificacion($fila["fecha_limite"]) ?></td>
-                                <td>
-                                    <strong class="nt-saldo">
-                                        $<?= number_format($fila["saldo"], 2) ?>
-                                    </strong>
+                                <td class="hist-cliente">
+                                    <strong><?= escNotificacion($fila["fecha_vencimiento"]) ?></strong>
+                                    <span>Gracia hasta <?= escNotificacion($fila["fecha_limite"]) ?></span>
                                 </td>
-                                <td class="nt-referencia">
-                                    <?= escNotificacion($fila["referencia"]) ?>
+                                <td class="hist-num">
+                                    <strong class="px-importe-vencido">$<?= number_format($fila["saldo"], 2) ?></strong>
                                 </td>
                                 <td>
                                     <span class="nt-estado nt-estado-<?= escNotificacion($fila["tipo"]) ?>">
@@ -389,15 +412,11 @@ $totalNotificaciones = count($notificaciones);
                                     <?php if ($fila["telefono"] !== ""): ?>
                                         <button
                                             type="button"
-                                            class="nt-btn-copiar"
+                                            class="hist-boton hist-boton--principal nt-btn-copiar"
                                             data-mensaje="<?= escNotificacion($fila["mensaje"]) ?>"
-                                        >
-                                            Copiar mensaje
-                                        </button>
+                                        >Copiar mensaje</button>
                                     <?php else: ?>
-                                        <span class="nt-falta-telefono">
-                                            Falta teléfono
-                                        </span>
+                                        <span class="nt-falta-telefono">Falta teléfono</span>
                                     <?php endif; ?>
                                 </td>
                             </tr>
@@ -407,13 +426,15 @@ $totalNotificaciones = count($notificaciones);
                 </table>
             </div>
 
-            <div class="nt-pie">
+            <div class="adeudos-pie">
                 Mostrando <strong id="ntFilasVisibles"><?= $totalNotificaciones ?></strong>
-                de <?= $totalNotificaciones ?> mensualidades.
+                de <?= $totalNotificaciones ?> mensualidades
             </div>
 
-        <?php endif; ?>
-    </section>
+        </section>
+
+    <?php endif; ?>
+
 </main>
 
 <script>

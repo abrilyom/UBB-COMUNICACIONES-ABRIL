@@ -702,15 +702,15 @@
     transform: translateY(-2px);
 }
 
-.mensualidades .mens-col-cliente {
+.hist .mens-col-cliente {
     min-width: 220px;
 }
 
-.mensualidades td.mens-col-cliente strong {
+.hist td.mens-col-cliente strong {
     font-size: 15px;
 }
 
-.mensualidades .hist-cliente .mens-ref {
+.hist .hist-cliente .mens-ref {
     margin-top: 4px;
     font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
     font-size: 11.5px;
@@ -766,4 +766,28 @@
 @media (max-width: 900px) {
     .mens-kpis { grid-template-columns: minmax(0, 1fr); }
     .mensualidades .cc-cabecera { flex-wrap: wrap; }
+}
+
+
+/* =========================================================
+   NOTIFICACIONES (notificaciones.php)
+========================================================= */
+
+.nt-error-panel {
+    padding: 22px;
+    color: var(--cc-error);
+    font-weight: 700;
+}
+
+.hist .hist-cliente .nt-sin-telefono {
+    color: #a34a08;
+    font-weight: 700;
+}
+
+.notificaciones .nt-estado {
+    font-weight: 800;
+}
+
+.notificaciones .nt-btn-copiar {
+    cursor: pointer;
 }
