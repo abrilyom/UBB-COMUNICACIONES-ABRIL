@@ -228,7 +228,7 @@ if ($plataforma !== null && count($ids_clientes) > 0) {
 
     <link rel="stylesheet" href="css/pagos.css?v=<?php echo filemtime(__DIR__ . '/css/pagos.css'); ?>">
     <link rel="stylesheet" href="css/tablero.css?v=<?php echo filemtime(__DIR__ . '/css/tablero.css'); ?>">
-    <link rel="stylesheet" href="css/historial.css?v=<?php echo filemtime(__DIR__ . '/css/historial.css'); ?>">
+    <link rel="stylesheet" href="css/listados.css?v=<?php echo filemtime(__DIR__ . '/css/listados.css'); ?>">
 
 </head>
 

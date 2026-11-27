@@ -1,5 +1,5 @@
 /* =========================================================
-   HISTORIAL (historial.php)
+   LISTADOS: Historial, Adeudos y demás páginas con filtros y tabla
    Se apoya en tablero.css (.cc, .cc-cabecera, .cc-kpi, .cc-panel)
    para verse igual que el Centro de control.
 ========================================================= */
@@ -378,4 +378,58 @@
     .hist-kpis { grid-template-columns: minmax(0, 1fr); }
     .hist-campo { flex: 1 1 140px; min-width: 0; }
     .hist-buscador { flex-basis: 100%; margin-left: 0; }
+}
+
+
+/* =========================================================
+   ADEUDOS (adeudos.php)
+========================================================= */
+
+.adeudos-kpis {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.adeudos-buscador {
+    flex: 1 1 100%;
+    margin-left: 0;
+}
+
+.adeudos-exportar {
+    align-self: flex-end;
+    height: 42px;
+    margin-left: auto;
+    padding: 0 14px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.adeudos-ayuda {
+    flex-basis: 100%;
+    color: var(--cc-texto-suave);
+    font-size: 12px;
+}
+
+.adeudos .px-estado {
+    font-weight: 800;
+}
+
+.adeudos-pie {
+    padding: 13px 16px;
+    border-top: 1px solid var(--cc-borde);
+    background: #fcf8fd;
+    color: var(--cc-texto-suave);
+    font-size: 13px;
+}
+
+.adeudos-pie strong {
+    color: var(--cc-texto);
+}
+
+@media (max-width: 1100px) {
+    .adeudos-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 900px) {
+    .adeudos-kpis { grid-template-columns: minmax(0, 1fr); }
+    .adeudos-exportar { margin-left: 0; }
 }

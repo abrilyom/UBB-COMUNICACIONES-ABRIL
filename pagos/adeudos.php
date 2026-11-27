@@ -217,6 +217,8 @@ if (!isset(ADEUDOS_SITUACIONES[$situacionInicial])) {
     <title>Adeudos - UBB Comunicaciones</title>
     <link rel="stylesheet" href="css/pagos.css?v=<?php echo filemtime(__DIR__ . '/css/pagos.css'); ?>">
     <link rel="stylesheet" href="css/vencidos.css?v=<?php echo filemtime(__DIR__ . '/css/vencidos.css'); ?>">
+    <link rel="stylesheet" href="css/tablero.css?v=<?php echo filemtime(__DIR__ . '/css/tablero.css'); ?>">
+    <link rel="stylesheet" href="css/listados.css?v=<?php echo filemtime(__DIR__ . '/css/listados.css'); ?>">
 </head>
 
 <body>
@@ -224,120 +226,168 @@ if (!isset(ADEUDOS_SITUACIONES[$situacionInicial])) {
 <?php require __DIR__ . "/includes/encabezado.php"; ?>
 <?php require __DIR__ . "/includes/panel_lateral.php"; ?>
 
-<main class="contenedor proximos-page">
-    <section class="px-panel">
-        <header class="px-encabezado">
-            <div class="px-titulo">
-                <div class="px-icono" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                         stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                    </svg>
-                </div>
-                <div>
-                    <span class="px-etiqueta">COBRANZA</span>
-                    <h1>Adeudos</h1>
-                    <p>Servicios con mensualidades sin pagar, según los pagos registrados y conciliados. Gracia: <?= UBB_DIAS_GRACIA ?> días; se suspenden el día <?= UBB_DIAS_GRACIA + 1 ?>.</p>
-                </div>
-            </div>
-            <a href="index.php" class="px-regresar">← Regresar al centro de control</a>
-        </header>
+<main class="contenedor cc hist adeudos">
 
-        <div class="px-resumen">
-            <div class="px-indicador px-indicador-red-cortado">
-                <span>Total adeudado (mensualidades vencidas)</span>
-                <strong><?= $errorCarga ? "—" : "$" . number_format($totales["importe_vencido"], 2) ?></strong>
-            </div>
-            <div class="px-indicador">
-                <span>Clientes que deben</span>
-                <strong><?= $errorCarga ? "—" : number_format(count($totales["clientes_deben"])) ?></strong>
-            </div>
-            <div class="px-indicador px-indicador-red-cortado">
-                <span>Deben 2 meses o más</span>
-                <strong><?= $errorCarga ? "—" : number_format(count($totales["clientes_dos_meses"])) ?></strong>
-            </div>
-            <div class="px-indicador px-indicador-info">
-                <span>Por vencer (aún sin atraso)</span>
-                <strong><?= $errorCarga ? "—" : "$" . number_format($totales["importe_por_vencer"], 2) ?></strong>
+    <!-- =================================================
+         CABECERA
+    ================================================== -->
+
+    <header class="cc-cabecera">
+        <div class="cc-cabecera-texto">
+            <span class="cc-cabecera-icono" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </span>
+            <div>
+                <h1>Adeudos</h1>
+                <p>Servicios con mensualidades sin pagar, según los pagos registrados y conciliados. Gracia: <?= UBB_DIAS_GRACIA ?> días; se suspenden el día <?= UBB_DIAS_GRACIA + 1 ?>.</p>
             </div>
         </div>
+    </header>
 
-        <div class="px-filtros">
-            <label class="px-busqueda">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                    <circle cx="11" cy="11" r="7"/>
-                    <path d="m20 20-4-4"/>
-                </svg>
-                <input type="search" id="buscarAdeudo"
-                       placeholder="Buscar cliente, teléfono, servicio, paquete o referencia..."
-                       autocomplete="off">
-            </label>
 
-            <div class="px-filtros-secundarios">
-                <select id="filtroSituacion" aria-label="Filtrar por situación">
-                    <option value="">Todas las situaciones (<?= number_format(count($adeudos)) ?>)</option>
-                    <?php foreach (ADEUDOS_SITUACIONES as $clave => $texto): ?>
-                        <option value="<?= $clave ?>" <?= $situacionInicial === $clave ? "selected" : "" ?>>
-                            <?= escAdeudo($texto) ?> (<?= number_format($conteoSituacion[$clave]) ?>)
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+    <!-- =================================================
+         RESUMEN
+    ================================================== -->
 
-                <select id="filtroMeses" aria-label="Filtrar por meses vencidos">
-                    <option value="">Cualquier atraso</option>
-                    <option value="1">Con al menos 1 mes vencido</option>
-                    <option value="2">2 meses vencidos o más</option>
-                </select>
+    <div class="cc-kpis hist-kpis adeudos-kpis">
 
-                <select id="filtroRed" aria-label="Filtrar por estado del servicio en RADIUS">
-                    <option value="">Con y sin servicio</option>
-                    <?php foreach (ADEUDOS_ESTADOS_RED as $clave => $texto): ?>
-                        <option value="<?= $clave ?>"><?= escAdeudo($texto) ?></option>
-                    <?php endforeach; ?>
-                </select>
-
-                <select id="filtroPaquete" aria-label="Filtrar por paquete">
-                    <option value="">Todos los paquetes</option>
-                    <?php foreach ($paquetes as $paquete): ?>
-                        <option value="<?= escAdeudo($paquete) ?>"><?= escAdeudo($paquete) ?></option>
-                    <?php endforeach; ?>
-                </select>
-
-                <button type="button" class="px-btn-exportar" id="exportarAdeudos">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>
-                    Exportar a Excel
-                </button>
+        <div class="cc-kpi cc-kpi--suspendidos">
+            <div class="cc-kpi-cabeza">
+                <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+                <span class="cc-kpi-nombre">Total adeudado</span>
             </div>
-            <span class="px-ayuda">Los filtros se aplican al momento y la exportación descarga solo lo que ves.</span>
+            <strong class="cc-kpi-numero"><?= $errorCarga ? "—" : "$" . number_format($totales["importe_vencido"], 2) ?></strong>
+            <span class="cc-kpi-detalle">Mensualidades vencidas</span>
         </div>
 
-        <?php if ($estadosRed === null && !$errorCarga): ?>
-            <p class="px-aviso-grezz" role="status">
-                No se pudo consultar RADIUS: no se sabe cuáles de estos servicios ya están cortados.
-                Los adeudos se calculan igual con los pagos registrados.
-            </p>
-        <?php endif; ?>
+        <div class="cc-kpi cc-kpi--pagos">
+            <div class="cc-kpi-cabeza">
+                <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M16 3.2a4 4 0 0 1 0 7.6M20 21v-2a4 4 0 0 0-3-3.9"/></svg></span>
+                <span class="cc-kpi-nombre">Clientes que deben</span>
+            </div>
+            <strong class="cc-kpi-numero"><?= $errorCarga ? "—" : number_format(count($totales["clientes_deben"])) ?></strong>
+            <span class="cc-kpi-detalle">Con al menos una mensualidad vencida</span>
+        </div>
 
-        <div class="px-tabla-contenedor">
-            <table class="px-tabla" id="tablaAdeudos">
+        <div class="cc-kpi cc-kpi--proximos">
+            <div class="cc-kpi-cabeza">
+                <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10.3 3.9 2.5 17.4A2 2 0 0 0 4.2 20h15.6a2 2 0 0 0 1.7-2.6L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg></span>
+                <span class="cc-kpi-nombre">Deben 2 meses o más</span>
+            </div>
+            <strong class="cc-kpi-numero"><?= $errorCarga ? "—" : number_format(count($totales["clientes_dos_meses"])) ?></strong>
+            <span class="cc-kpi-detalle">Clientes con mayor atraso</span>
+        </div>
+
+        <div class="cc-kpi hist-kpi--confirmados">
+            <div class="cc-kpi-cabeza">
+                <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M12 13v3l2 1"/></svg></span>
+                <span class="cc-kpi-nombre">Por vencer</span>
+            </div>
+            <strong class="cc-kpi-numero"><?= $errorCarga ? "—" : "$" . number_format($totales["importe_por_vencer"], 2) ?></strong>
+            <span class="cc-kpi-detalle">Aún sin atraso</span>
+        </div>
+
+    </div>
+
+
+    <!-- =================================================
+         FILTROS (se aplican al momento, sin recargar)
+    ================================================== -->
+
+    <div class="cc-panel hist-filtros">
+
+        <div class="hist-buscador adeudos-buscador">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <input type="search" id="buscarAdeudo"
+                   placeholder="Buscar cliente, teléfono, servicio, paquete o referencia..."
+                   aria-label="Buscar adeudo"
+                   autocomplete="off">
+        </div>
+
+        <label class="hist-campo">
+            <span>Situación</span>
+            <select id="filtroSituacion">
+                <option value="">Todas (<?= number_format(count($adeudos)) ?>)</option>
+                <?php foreach (ADEUDOS_SITUACIONES as $clave => $texto): ?>
+                    <option value="<?= $clave ?>" <?= $situacionInicial === $clave ? "selected" : "" ?>>
+                        <?= escAdeudo($texto) ?> (<?= number_format($conteoSituacion[$clave]) ?>)
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </label>
+
+        <label class="hist-campo">
+            <span>Atraso</span>
+            <select id="filtroMeses">
+                <option value="">Cualquier atraso</option>
+                <option value="1">Al menos 1 mes vencido</option>
+                <option value="2">2 meses vencidos o más</option>
+            </select>
+        </label>
+
+        <label class="hist-campo">
+            <span>Servicio (RADIUS)</span>
+            <select id="filtroRed">
+                <option value="">Con y sin servicio</option>
+                <?php foreach (ADEUDOS_ESTADOS_RED as $clave => $texto): ?>
+                    <option value="<?= $clave ?>"><?= escAdeudo($texto) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </label>
+
+        <label class="hist-campo">
+            <span>Paquete</span>
+            <select id="filtroPaquete">
+                <option value="">Todos los paquetes</option>
+                <?php foreach ($paquetes as $paquete): ?>
+                    <option value="<?= escAdeudo($paquete) ?>"><?= escAdeudo($paquete) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </label>
+
+        <button type="button" class="hist-boton adeudos-exportar" id="exportarAdeudos">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>
+            Exportar a Excel
+        </button>
+
+        <span class="adeudos-ayuda">Los filtros se aplican al momento y la exportación descarga solo lo que ves.</span>
+
+    </div>
+
+    <?php if ($estadosRed === null && !$errorCarga): ?>
+        <p class="px-aviso-grezz" role="status">
+            No se pudo consultar RADIUS: no se sabe cuáles de estos servicios ya están cortados.
+            Los adeudos se calculan igual con los pagos registrados.
+        </p>
+    <?php endif; ?>
+
+
+    <!-- =================================================
+         TABLA
+    ================================================== -->
+
+    <section class="cc-panel hist-tabla">
+
+        <div class="hist-tabla-scroll">
+            <table id="tablaAdeudos">
                 <thead>
                     <tr>
-                        <th>CLIENTE</th>
-                        <th>SERVICIO</th>
-                        <th>SITUACIÓN</th>
-                        <th>DESDE</th>
-                        <th>MESES VENCIDOS</th>
-                        <th>ADEUDO</th>
-                        <th>REFERENCIA</th>
-                        <th>SERVICIO (RADIUS)</th>
-                        <th>ACCIONES</th>
+                        <th>Cliente</th>
+                        <th>Servicio</th>
+                        <th>Situación</th>
+                        <th>Desde</th>
+                        <th class="px-centro">Meses vencidos</th>
+                        <th class="hist-num">Adeudo</th>
+                        <th>Referencia</th>
+                        <th>Servicio (RADIUS)</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                 <?php if ($errorCarga): ?>
-                    <tr><td colspan="9" class="px-vacio"><?= escAdeudo($errorCarga) ?></td></tr>
+                    <tr><td colspan="9" class="hist-vacio"><?= escAdeudo($errorCarga) ?></td></tr>
                 <?php elseif (!$adeudos): ?>
-                    <tr><td colspan="9" class="px-vacio">No hay servicios con mensualidades pendientes.</td></tr>
+                    <tr><td colspan="9" class="hist-vacio">No hay servicios con mensualidades pendientes.</td></tr>
                 <?php else: ?>
                     <?php foreach ($adeudos as $a):
                         $ciclo = $a["ciclo"];
@@ -361,51 +411,61 @@ if (!isset(ADEUDOS_SITUACIONES[$situacionInicial])) {
                             number_format((float)$ciclo["saldo_total"], 2, ".", ""),
                             $ciclo["referencia"], ADEUDOS_ESTADOS_RED[$a["red"]], $a["direccion"],
                         ], JSON_UNESCAPED_UNICODE)) ?>">
-                        <td>
-                            <strong class="px-nombre"><?= escAdeudo($a["nombre"]) ?></strong>
-                            <?php if ($a["telefono"]): ?><small class="px-subtexto"><?= escAdeudo($a["telefono"]) ?></small><?php endif; ?>
+                        <td class="hist-cliente">
+                            <strong><?= escAdeudo($a["nombre"]) ?></strong>
+                            <?php if ($a["telefono"]): ?><span><?= escAdeudo($a["telefono"]) ?></span><?php endif; ?>
                         </td>
-                        <td>
-                            <?= (int)$a["id_servicio"] ?>
-                            <?php if ($a["paquete"]): ?><small class="px-subtexto"><?= escAdeudo($a["paquete"]) ?></small><?php endif; ?>
+                        <td class="hist-cliente">
+                            <strong>#<?= (int)$a["id_servicio"] ?></strong>
+                            <?php if ($a["paquete"]): ?><span><?= escAdeudo($a["paquete"]) ?></span><?php endif; ?>
                         </td>
                         <td>
                             <span class="px-estado px-estado-<?= escAdeudo($ciclo["tipo"]) ?>"><?= escAdeudo($ciclo["situacion"]) ?></span>
                             <small class="px-subtexto"><?= escAdeudo($ciclo["dias"]) ?></small>
                         </td>
-                        <td><?= escAdeudo($desde) ?></td>
+                        <td class="hist-fecha"><?= escAdeudo($desde) ?></td>
                         <td class="px-centro">
                             <?php if ($a["meses_vencidos"] > 0): ?>
                                 <span class="px-meses <?= $a["meses_vencidos"] >= 2 ? "px-meses-alto" : "" ?>"><?= (int)$a["meses_vencidos"] ?></span>
                             <?php else: ?>
-                                <span class="px-subtexto">0</span>
+                                <span class="hist-suave">0</span>
                             <?php endif; ?>
                         </td>
-                        <td><strong class="<?= $a["saldo_vencido"] > 0 ? "px-importe-vencido" : "px-importe-por-vencer" ?>"><?= escAdeudo($importe) ?></strong></td>
-                        <td><code class="px-referencia"><?= escAdeudo($ciclo["referencia"] ?: "—") ?></code></td>
+                        <td class="hist-num"><strong class="<?= $a["saldo_vencido"] > 0 ? "px-importe-vencido" : "px-importe-por-vencer" ?>"><?= escAdeudo($importe) ?></strong></td>
+                        <td class="hist-referencia"><?= escAdeudo($ciclo["referencia"] ?: "—") ?></td>
                         <td>
                             <span class="px-estado px-red-<?= escAdeudo($a["red"]) ?>"><?= escAdeudo(ADEUDOS_ESTADOS_RED[$a["red"]]) ?></span>
                         </td>
                         <td>
-                            <?php if ($a["id_cliente"] > 0): ?>
-                                <a class="px-btn-ver" href="ver_cliente.php?id=<?= (int)$a["id_cliente"] ?>">Ver cliente</a>
-                            <?php else: ?>
-                                <a class="px-btn-ver" href="ver_servicio.php?id=<?= (int)$a["id_servicio"] ?>">Ver servicio</a>
-                            <?php endif; ?>
+                            <div class="hist-acciones">
+                                <?php if ($a["id_cliente"] > 0): ?>
+                                    <a class="hist-boton" href="ver_cliente.php?id=<?= (int)$a["id_cliente"] ?>">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>
+                                        Cliente
+                                    </a>
+                                <?php else: ?>
+                                    <a class="hist-boton" href="ver_servicio.php?id=<?= (int)$a["id_servicio"] ?>">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><path d="M12 19.5h.01"/></svg>
+                                        Servicio
+                                    </a>
+                                <?php endif; ?>
+                            </div>
                         </td>
                     </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>
                 </tbody>
             </table>
-            <p class="px-vacio" id="adeudosSinResultados" hidden>Ningún adeudo coincide con los filtros.</p>
+            <p class="hist-vacio" id="adeudosSinResultados" hidden>Ningún adeudo coincide con los filtros.</p>
         </div>
 
-        <div class="px-pie">
+        <div class="adeudos-pie">
             Mostrando <strong id="adeudosVisibles"><?= count($adeudos) ?></strong> de <?= count($adeudos) ?> servicios
             · Adeudo de lo mostrado: <strong id="adeudosImporteVisible">—</strong>
         </div>
+
     </section>
+
 </main>
 
 <script>
