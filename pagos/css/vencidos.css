@@ -251,3 +251,16 @@ body.px-modal-activo { overflow:hidden; }
         min-width: 0;
     }
 }
+
+/* Mensualidades */
+.px-mes { display:flex; align-items:center; gap:10px; margin-bottom:18px; }
+.px-mes label { color:#766685; font-size:12px; font-weight:700; }
+.px-mes select {
+    height:42px; min-width:200px; padding:0 12px; border:1px solid #ead9ee; border-radius:11px;
+    background:#fff; color:#55355b; font:inherit; font-size:13px; font-weight:700;
+}
+.px-mes select:focus { outline:0; border-color:#bc9bc2; box-shadow:0 0 0 3px rgba(172,112,183,.10); }
+a.px-indicador { text-decoration:none; transition:transform .2s, box-shadow .2s; }
+a.px-indicador:hover { transform:translateY(-1px); box-shadow:0 6px 18px rgba(166,104,178,.12); }
+.px-indicador .px-subtexto { margin-top:-4px; }
+.px-panel-faltantes { margin-top:24px; }
