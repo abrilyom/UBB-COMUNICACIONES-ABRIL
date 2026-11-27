@@ -158,6 +158,16 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
     ]);
     ini_set('session.use_strict_mode', '1');
     ini_set('session.use_only_cookies', '1');
+
+    // La sesión dura una jornada (8 h sin actividad), no los 24 min de PHP.
+    // Carpeta propia para que la limpieza de PHP use este mismo tiempo.
+    ini_set('session.gc_maxlifetime', (string)(8 * 3600));
+    $carpetaSesiones = sys_get_temp_dir() . '/ubb_pagos_sesiones';
+
+    if (is_dir($carpetaSesiones) || @mkdir($carpetaSesiones, 0700, true)) {
+        session_save_path($carpetaSesiones);
+    }
+
     session_start();
 }
 
