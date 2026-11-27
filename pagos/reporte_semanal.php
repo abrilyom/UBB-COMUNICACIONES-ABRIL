@@ -270,6 +270,15 @@ $porcentaje = $ingresosAnterior > 0
         }
         .reporte .hist-tabla + .hist-tabla { margin-top: 18px; }
 
+        /* Tarjetas que se pueden pulsar */
+        .rep-kpi { cursor: pointer; }
+        .hist a.cc-kpi.rep-kpi:hover { transform: translateY(-2px); }
+        .rep-kpi--activa { box-shadow: 0 0 0 2px var(--cc-acento), var(--cc-sombra) !important; }
+        #rep-metodos, #rep-detalle { scroll-margin-top: 110px; }
+        .rep-filtro-aviso { display: inline-flex; align-items: center; gap: 8px; margin-left: 6px; }
+        .rep-filtro-aviso[hidden] { display: none; }
+        .rep-filtro-aviso .hist-limpiar { margin-left: 0; padding: 4px 10px; font-size: 12px; cursor: pointer; font-family: inherit; }
+
         @media (max-width: 1250px) {
             .rep-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         }
@@ -359,43 +368,43 @@ $urlCsv = '?' . http_build_query(['desde' => $desde, 'hasta' => $hasta, 'metodo'
 
     <div class="cc-kpis hist-kpis rep-kpis">
 
-        <div class="cc-kpi cc-kpi--activos">
+        <a class="cc-kpi cc-kpi--activos rep-kpi" href="#rep-metodos" title="Ver de dónde vino el dinero">
             <div class="cc-kpi-cabeza">
                 <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
                 <span class="cc-kpi-nombre">Ingresos confirmados</span>
             </div>
             <strong class="cc-kpi-numero"><?= dinero($ingresos) ?></strong>
             <span class="cc-kpi-detalle">Solo pagos con estado PAGADO</span>
-        </div>
+        </a>
 
-        <div class="cc-kpi cc-kpi--pagos">
+        <a class="cc-kpi cc-kpi--pagos rep-kpi" href="#rep-detalle" data-filtro="PAGADO" title="Ver solo los pagos confirmados">
             <div class="cc-kpi-cabeza">
                 <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg></span>
                 <span class="cc-kpi-nombre">Pagos confirmados</span>
             </div>
             <strong class="cc-kpi-numero"><?= number_format((int)$resumen['pagados']) ?></strong>
             <span class="cc-kpi-detalle">Movimientos pagados en el periodo</span>
-        </div>
+        </a>
 
-        <div class="cc-kpi cc-kpi--proximos">
+        <a class="cc-kpi cc-kpi--proximos rep-kpi" href="#rep-detalle" data-filtro="PENDIENTE" title="Ver solo los pagos pendientes">
             <div class="cc-kpi-cabeza">
                 <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
                 <span class="cc-kpi-nombre">Pagos pendientes</span>
             </div>
             <strong class="cc-kpi-numero"><?= number_format((int)$resumen['pendientes']) ?></strong>
             <span class="cc-kpi-detalle">Monto pendiente: <?= dinero($resumen['monto_pendiente']) ?></span>
-        </div>
+        </a>
 
-        <div class="cc-kpi cc-kpi--suspendidos">
+        <a class="cc-kpi cc-kpi--suspendidos rep-kpi" href="#rep-detalle" data-filtro="CANCELADO" title="Ver solo los pagos cancelados">
             <div class="cc-kpi-cabeza">
                 <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg></span>
                 <span class="cc-kpi-nombre">Pagos cancelados</span>
             </div>
             <strong class="cc-kpi-numero"><?= number_format((int)$resumen['cancelados']) ?></strong>
             <span class="cc-kpi-detalle">No se consideran ingresos</span>
-        </div>
+        </a>
 
-        <div class="cc-kpi hist-kpi--confirmados">
+        <a class="cc-kpi hist-kpi--confirmados rep-kpi" href="<?= h('?' . http_build_query(['desde' => $desdeAnterior, 'hasta' => $hastaAnterior, 'metodo' => $metodo, 'estado' => $estado])) ?>" title="Abrir el reporte del periodo anterior">
             <div class="cc-kpi-cabeza">
                 <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></span>
                 <span class="cc-kpi-nombre">Periodo anterior</span>
@@ -408,7 +417,7 @@ $urlCsv = '?' . http_build_query(['desde' => $desde, 'hasta' => $hasta, 'metodo'
             <?php else: ?>
                 <span class="cc-kpi-detalle">Sin ingresos en el periodo anterior para comparar</span>
             <?php endif; ?>
-        </div>
+        </a>
 
     </div>
 
@@ -417,7 +426,7 @@ $urlCsv = '?' . http_build_query(['desde' => $desde, 'hasta' => $hasta, 'metodo'
          INGRESOS POR MÉTODO
     ================================================== -->
 
-    <section class="cc-panel hist-tabla">
+    <section class="cc-panel hist-tabla" id="rep-metodos">
         <div class="mens-faltantes-cabecera">
             <div>
                 <h2>Ingresos por método de pago</h2>
@@ -461,11 +470,20 @@ $urlCsv = '?' . http_build_query(['desde' => $desde, 'hasta' => $hasta, 'metodo'
          DETALLE DE MOVIMIENTOS
     ================================================== -->
 
-    <section class="cc-panel hist-tabla">
+    <section class="cc-panel hist-tabla" id="rep-detalle">
         <div class="mens-faltantes-cabecera">
             <div>
                 <h2>Detalle de movimientos</h2>
-                <p><?= number_format(count($movimientos)) ?> movimientos en el periodo.</p>
+                <p>
+                    <span id="repConteo"><?= number_format(count($movimientos)) ?> movimientos en el periodo.</span>
+                    <span class="rep-filtro-aviso" id="repFiltroAviso" hidden>
+                        Mostrando solo <strong id="repFiltroTexto"></strong>
+                        <button type="button" class="hist-limpiar" id="repQuitarFiltro">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                            Quitar filtro
+                        </button>
+                    </span>
+                </p>
             </div>
             <a class="hist-boton adeudos-exportar" href="<?= h($urlCsv) ?>">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>
@@ -491,7 +509,7 @@ $urlCsv = '?' . http_build_query(['desde' => $desde, 'hasta' => $hasta, 'metodo'
                 <?php if (!$movimientos): ?>
                     <tr><td colspan="9" class="hist-vacio">No hay movimientos en el periodo seleccionado.</td></tr>
                 <?php else: foreach ($movimientos as $m): ?>
-                    <tr>
+                    <tr data-estado="<?= h($m['estado_pago']) ?>">
                         <td class="hist-fuerte">PAG-<?= str_pad((string)(int)$m['id_pago'], 6, '0', STR_PAD_LEFT) ?></td>
                         <td>
                             <a class="hist-boton" href="ver_cliente.php?id=<?= (int)$m['id_cliente'] ?>">#<?= h($m['id_cliente']) ?></a>
@@ -523,5 +541,48 @@ $urlCsv = '?' . http_build_query(['desde' => $desde, 'hasta' => $hasta, 'metodo'
     </section>
 
 </main>
+
+<script>
+/* Tarjetas: Pagos confirmados, Pendientes y Cancelados filtran el detalle
+   al momento; con otro clic (o "Quitar filtro") se ve todo otra vez. */
+(function () {
+    const filas = [...document.querySelectorAll("#rep-detalle tbody tr[data-estado]")];
+    const tarjetas = [...document.querySelectorAll(".rep-kpi[data-filtro]")];
+    const aviso = document.getElementById("repFiltroAviso");
+    const textoAviso = document.getElementById("repFiltroTexto");
+    const conteo = document.getElementById("repConteo");
+    const nombres = { PAGADO: "pagos confirmados", PENDIENTE: "pagos pendientes", CANCELADO: "pagos cancelados" };
+    const conteoOriginal = conteo ? conteo.textContent : "";
+    let activo = "";
+
+    function aplicar(estado) {
+        activo = estado;
+        let visibles = 0;
+        filas.forEach(function (fila) {
+            const mostrar = !estado || fila.dataset.estado === estado;
+            fila.hidden = !mostrar;
+            if (mostrar) visibles++;
+        });
+        tarjetas.forEach(function (t) {
+            t.classList.toggle("rep-kpi--activa", t.dataset.filtro === estado);
+        });
+        if (aviso) aviso.hidden = !estado;
+        if (textoAviso) textoAviso.textContent = estado ? nombres[estado] + " (" + visibles + ")" : "";
+        if (conteo) conteo.textContent = estado ? "" : conteoOriginal;
+    }
+
+    tarjetas.forEach(function (tarjeta) {
+        tarjeta.addEventListener("click", function (evento) {
+            evento.preventDefault();
+            aplicar(activo === tarjeta.dataset.filtro ? "" : tarjeta.dataset.filtro);
+            document.getElementById("rep-detalle").scrollIntoView({ behavior: "smooth" });
+        });
+    });
+
+    document.getElementById("repQuitarFiltro")?.addEventListener("click", function () {
+        aplicar("");
+    });
+})();
+</script>
 </body>
 </html>
