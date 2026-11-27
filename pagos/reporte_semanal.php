@@ -200,117 +200,328 @@ $porcentaje = $ingresosAnterior > 0
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Reporte de pagos | UBB Comunicaciones</title>
-<style>
-:root{--morado:#a96db5;--fondo:#f4f3f8;--texto:#41395c;--borde:#ece2ee}
-*{box-sizing:border-box}
-body{margin:0;background:var(--fondo);font-family:Arial,Helvetica,sans-serif;color:var(--texto)}
-.contenedor{max-width:1250px;margin:auto;padding:26px}
-.reporte-titulo{background:linear-gradient(120deg,#a96db5,#a37dab);color:white;padding:25px 28px;border-radius:18px;margin-bottom:22px}
-.reporte-titulo h1{margin:0 0 8px;font-size:25px}
-.reporte-titulo p{margin:0;opacity:.9}
-.panel{background:white;border:1px solid var(--borde);border-radius:15px;padding:20px;margin-bottom:20px;box-shadow:0 5px 18px rgba(113,58,124,.04)}
-.filtros{display:flex;gap:14px;align-items:end;flex-wrap:wrap}
-.campo{display:flex;flex-direction:column;gap:7px;min-width:150px}
-label{font-size:13px;font-weight:bold}
-input,select{padding:11px;border:1px solid #e1d3e4;border-radius:9px;background:white;color:var(--texto)}
-.boton{display:inline-block;padding:11px 15px;border-radius:9px;border:0;background:var(--morado);color:white;text-decoration:none;font-weight:bold;cursor:pointer}
-.boton.secundario{background:#f2e9f4;color:var(--morado)}
-.tarjetas{display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:15px;margin-bottom:20px}
-.tarjeta{background:white;border:1px solid var(--borde);border-radius:15px;padding:20px}
-.tarjeta small{color:#716982;font-weight:bold}
-.tarjeta h2{font-size:25px;margin:12px 0 5px;overflow-wrap:anywhere}
-.tarjeta p{font-size:12px;color:#716982;margin:0}
-h2.seccion{font-size:18px;margin:0 0 15px}
-.tabla{overflow-x:auto}
-table{width:100%;border-collapse:collapse;white-space:nowrap}
-th,td{text-align:left;padding:12px 10px;border-bottom:1px solid #f2eaf3;font-size:13px}
-th{background:#f9f5fa;color:#785d7e}
-.estado{font-size:11px;font-weight:bold;padding:5px 8px;border-radius:20px;background:#f2e9f4}
-.estado.PAGADO{background:#e1f6e9;color:#197444}
-.estado.PENDIENTE{background:#fff0cc;color:#805900}
-.estado.CANCELADO{background:#ffe4e4;color:#a02c2c}
-.pie{font-size:12px;color:#716982;margin-top:15px}
-@media(max-width:600px){.contenedor{padding:12px}.encabezado{padding:20px}.tarjeta h2{font-size:22px}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Reporte de pagos | UBB Comunicaciones</title>
     <link rel="stylesheet" href="css/pagos.css?v=<?php echo filemtime(__DIR__ . '/css/pagos.css'); ?>">
+    <link rel="stylesheet" href="css/tablero.css?v=<?php echo filemtime(__DIR__ . '/css/tablero.css'); ?>">
+    <link rel="stylesheet" href="css/listados.css?v=<?php echo filemtime(__DIR__ . '/css/listados.css'); ?>">
+    <style>
+        /* Filtros: fechas y selects del mismo alto que el resto */
+        .reporte .hist-campo input[type="date"] {
+            height: 42px;
+            padding: 0 12px;
+            border: 1px solid var(--cc-borde);
+            border-radius: 11px;
+            background: #fff;
+            color: var(--cc-texto);
+            font: inherit;
+            font-size: 14px;
+        }
+        .reporte .hist-campo input[type="date"]:focus {
+            outline: none;
+            border-color: var(--cc-morado-medio);
+            box-shadow: 0 0 0 3px rgba(154, 90, 166, .15);
+        }
+        .rep-acciones-filtro {
+            display: flex;
+            gap: 8px;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+        .rep-acciones-filtro .hist-boton {
+            height: 42px;
+            padding: 0 16px;
+            font-size: 13px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        /* Cinco tarjetas */
+        .rep-kpis { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+        .rep-kpis .cc-kpi-numero { font-size: 28px; }
+        .rep-kpis .cc-tendencia { align-self: flex-start; margin-top: 4px; font-size: 11.5px; }
+
+        /* Ingresos por método: barra proporcional */
+        .rep-barra {
+            position: relative;
+            width: 100%;
+            min-width: 140px;
+            height: 8px;
+            border-radius: 999px;
+            background: #f3eaf5;
+            overflow: hidden;
+        }
+        .rep-barra span {
+            position: absolute;
+            inset: 0 auto 0 0;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #c08fca, #8a4a98);
+        }
+        .rep-porcentaje { color: var(--cc-texto-suave); font-size: 12px; margin-top: 4px; }
+
+        .rep-pie {
+            padding: 13px 16px;
+            border-top: 1px solid var(--cc-borde);
+            background: #fcf8fd;
+            color: var(--cc-texto-suave);
+            font-size: 12.5px;
+            line-height: 1.5;
+        }
+        .reporte .hist-tabla + .hist-tabla { margin-top: 18px; }
+
+        @media (max-width: 1250px) {
+            .rep-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
+        @media (max-width: 900px) {
+            .rep-kpis { grid-template-columns: minmax(0, 1fr); }
+            .rep-acciones-filtro { margin-left: 0; }
+        }
+    </style>
 </head>
 <body>
 <?php require __DIR__ . "/includes/encabezado.php"; ?>
-
 <?php require __DIR__ . "/includes/panel_lateral.php"; ?>
 
-<div class="contenedor">
-<div class="reporte-titulo">
-<h1>📊 Reporte de pagos</h1>
-<p>UBB COMUNICACIONES · Resumen por periodo y comparación con el periodo anterior</p>
-</div>
+<?php
+$fechaCorta = static fn(string $f): string => (new DateTimeImmutable($f))->format('d/m/Y');
+$maxMetodo = 0.0;
+foreach ($metodos as $fila) {
+    $maxMetodo = max($maxMetodo, (float)$fila['ingresos']);
+}
+$urlCsv = '?' . http_build_query(['desde' => $desde, 'hasta' => $hasta, 'metodo' => $metodo, 'estado' => $estado, 'exportar' => 'csv']);
+?>
 
-<form class="panel filtros" method="get">
-<div class="campo"><label for="desde">Fecha inicial</label><input id="desde" type="date" name="desde" value="<?= h($desde) ?>" required></div>
-<div class="campo"><label for="hasta">Fecha final</label><input id="hasta" type="date" name="hasta" value="<?= h($hasta) ?>" required></div>
-<div class="campo"><label for="metodo">Método</label>
-<select id="metodo" name="metodo"><option value="">Todos</option>
-<?php foreach ($metodosPermitidos as $m): ?><option value="<?= h($m) ?>" <?= $metodo===$m?'selected':'' ?>><?= h($m) ?></option><?php endforeach; ?>
-</select></div>
-<div class="campo"><label for="estado">Estado</label>
-<select id="estado" name="estado"><option value="">Todos</option>
-<?php foreach ($estadosPermitidos as $e): ?><option value="<?= h($e) ?>" <?= $estado===$e?'selected':'' ?>><?= h($e) ?></option><?php endforeach; ?>
-</select></div>
-<button class="boton" type="submit">Generar reporte</button>
-<a class="boton secundario" href="reporte_semanal.php">Esta semana</a>
-</form>
+<main class="contenedor cc hist reporte">
 
-<div class="tarjetas">
-<div class="tarjeta"><small>INGRESOS CONFIRMADOS</small><h2><?= dinero($ingresos) ?></h2><p>Solo pagos con estado PAGADO</p></div>
-<div class="tarjeta"><small>PAGOS CONFIRMADOS</small><h2><?= number_format((int)$resumen['pagados']) ?></h2><p>Movimientos pagados en el periodo</p></div>
-<div class="tarjeta"><small>PAGOS PENDIENTES</small><h2><?= number_format((int)$resumen['pendientes']) ?></h2><p>Monto pendiente: <?= dinero($resumen['monto_pendiente']) ?></p></div>
-<div class="tarjeta"><small>PAGOS CANCELADOS</small><h2><?= number_format((int)$resumen['cancelados']) ?></h2><p>No se consideran ingresos</p></div>
-<div class="tarjeta"><small>PERIODO ANTERIOR</small><h2><?= dinero($ingresosAnterior) ?></h2><p>
-<?php if ($porcentaje !== null): ?>
-<?= $diferencia >= 0 ? 'Aumento de ' : 'Disminución de ' ?><?= number_format(abs($porcentaje),1) ?>%
-<?php else: ?>Sin ingresos en el periodo anterior para comparar<?php endif; ?>
-</p></div>
-</div>
+    <!-- =================================================
+         CABECERA
+    ================================================== -->
 
-<section class="panel">
-<h2 class="seccion">Ingresos por método de pago</h2>
-<div class="tabla"><table>
-<thead><tr><th>Método</th><th>Movimientos</th><th>Ingresos confirmados</th></tr></thead>
-<tbody>
-<?php if (!$metodos): ?><tr><td colspan="3">No hay movimientos para los filtros seleccionados.</td></tr>
-<?php else: foreach ($metodos as $fila): ?>
-<tr><td><?= h($fila['metodo_pago']) ?></td><td><?= number_format((int)$fila['cantidad']) ?></td><td><?= dinero($fila['ingresos']) ?></td></tr>
-<?php endforeach; endif; ?>
-</tbody></table></div>
-</section>
+    <header class="cc-cabecera">
+        <div class="cc-cabecera-texto">
+            <span class="cc-cabecera-icono" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 19V5"/><path d="M4 19h17"/><path d="M8 15v-3M12 15V8M16 15v-5M20 15V6"/></svg>
+            </span>
+            <div>
+                <h1>Reporte de pagos</h1>
+                <p>Del <?= h($fechaCorta($desde)) ?> al <?= h($fechaCorta($hasta)) ?> · comparado con los <?= (int)$diasPeriodo ?> días anteriores</p>
+            </div>
+        </div>
+        <a class="hist-boton hist-boton--principal" href="<?= h($urlCsv) ?>">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>
+            Exportar CSV
+        </a>
+    </header>
 
-<section class="panel">
-<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:15px">
-<h2 class="seccion" style="margin:0">Detalle de movimientos</h2>
-<a class="boton" href="?<?= h(http_build_query(['desde'=>$desde,'hasta'=>$hasta,'metodo'=>$metodo,'estado'=>$estado,'exportar'=>'csv'])) ?>">⬇ Exportar CSV</a>
-</div>
-<div class="tabla"><table>
-<thead><tr><th>Folio</th><th>Cliente ID</th><th>Servicio ID</th><th>Fecha</th><th>Monto</th><th>Método</th><th>Estado</th><th>Referencia</th><th>Comprobante</th></tr></thead>
-<tbody>
-<?php if (!$movimientos): ?><tr><td colspan="9">No hay movimientos en el periodo seleccionado.</td></tr>
-<?php else: foreach ($movimientos as $m): ?>
-<tr>
-<td><?= h($m['id_pago']) ?></td><td><?= h($m['id_cliente']) ?></td>
-<td><?= $m['id_servicio'] === null ? '—' : h($m['id_servicio']) ?></td>
-<td><?= h($m['fecha_pago']) ?></td><td><?= dinero($m['monto']) ?></td>
-<td><?= h($m['metodo_pago']) ?></td>
-<td><span class="estado <?= h($m['estado_pago']) ?>"><?= h($m['estado_pago']) ?></span></td>
-<td><?= h($m['referencia'] ?: '—') ?></td>
-<td><a href="comprobante.php?id=<?= (int)$m['id_pago'] ?>" target="_blank" rel="noopener">Ver</a></td>
-</tr>
-<?php endforeach; endif; ?>
-</tbody></table></div>
-<p class="pie">Periodo: <?= h($desde) ?> al <?= h($hasta) ?>. Los ingresos excluyen pagos pendientes y cancelados. El detalle utiliza los identificadores disponibles en la tabla de pagos; no inventa nombres de clientes.</p>
-</section>
-<p><a class="boton secundario" href="index.php">← Volver al centro de control</a></p>
-</div>
+
+    <!-- =================================================
+         FILTROS
+    ================================================== -->
+
+    <form class="cc-panel hist-filtros" method="get">
+        <label class="hist-campo">
+            <span>Fecha inicial</span>
+            <input id="desde" type="date" name="desde" value="<?= h($desde) ?>" required>
+        </label>
+        <label class="hist-campo">
+            <span>Fecha final</span>
+            <input id="hasta" type="date" name="hasta" value="<?= h($hasta) ?>" required>
+        </label>
+        <label class="hist-campo">
+            <span>Método</span>
+            <select id="metodo" name="metodo" onchange="this.form.submit()">
+                <option value="">Todos</option>
+                <?php foreach ($metodosPermitidos as $m): ?>
+                    <option value="<?= h($m) ?>" <?= $metodo === $m ? 'selected' : '' ?>><?= h($m) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </label>
+        <label class="hist-campo">
+            <span>Estado</span>
+            <select id="estado" name="estado" onchange="this.form.submit()">
+                <option value="">Todos</option>
+                <?php foreach ($estadosPermitidos as $e): ?>
+                    <option value="<?= h($e) ?>" <?= $estado === $e ? 'selected' : '' ?>><?= h($e) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </label>
+        <div class="rep-acciones-filtro">
+            <a class="hist-boton" href="reporte_semanal.php">Esta semana</a>
+            <button class="hist-boton hist-boton--principal" type="submit">Generar reporte</button>
+        </div>
+    </form>
+
+
+    <!-- =================================================
+         RESUMEN
+    ================================================== -->
+
+    <div class="cc-kpis hist-kpis rep-kpis">
+
+        <div class="cc-kpi cc-kpi--activos">
+            <div class="cc-kpi-cabeza">
+                <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+                <span class="cc-kpi-nombre">Ingresos confirmados</span>
+            </div>
+            <strong class="cc-kpi-numero"><?= dinero($ingresos) ?></strong>
+            <span class="cc-kpi-detalle">Solo pagos con estado PAGADO</span>
+        </div>
+
+        <div class="cc-kpi cc-kpi--pagos">
+            <div class="cc-kpi-cabeza">
+                <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg></span>
+                <span class="cc-kpi-nombre">Pagos confirmados</span>
+            </div>
+            <strong class="cc-kpi-numero"><?= number_format((int)$resumen['pagados']) ?></strong>
+            <span class="cc-kpi-detalle">Movimientos pagados en el periodo</span>
+        </div>
+
+        <div class="cc-kpi cc-kpi--proximos">
+            <div class="cc-kpi-cabeza">
+                <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+                <span class="cc-kpi-nombre">Pagos pendientes</span>
+            </div>
+            <strong class="cc-kpi-numero"><?= number_format((int)$resumen['pendientes']) ?></strong>
+            <span class="cc-kpi-detalle">Monto pendiente: <?= dinero($resumen['monto_pendiente']) ?></span>
+        </div>
+
+        <div class="cc-kpi cc-kpi--suspendidos">
+            <div class="cc-kpi-cabeza">
+                <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg></span>
+                <span class="cc-kpi-nombre">Pagos cancelados</span>
+            </div>
+            <strong class="cc-kpi-numero"><?= number_format((int)$resumen['cancelados']) ?></strong>
+            <span class="cc-kpi-detalle">No se consideran ingresos</span>
+        </div>
+
+        <div class="cc-kpi hist-kpi--confirmados">
+            <div class="cc-kpi-cabeza">
+                <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></span>
+                <span class="cc-kpi-nombre">Periodo anterior</span>
+            </div>
+            <strong class="cc-kpi-numero"><?= dinero($ingresosAnterior) ?></strong>
+            <?php if ($porcentaje !== null): ?>
+                <span class="cc-tendencia <?= $diferencia >= 0 ? 'tendencia-positiva' : 'tendencia-negativa' ?>">
+                    <?= $diferencia >= 0 ? '↑ Aumento de ' : '↓ Disminución de ' ?><?= number_format(abs($porcentaje), 1) ?>%
+                </span>
+            <?php else: ?>
+                <span class="cc-kpi-detalle">Sin ingresos en el periodo anterior para comparar</span>
+            <?php endif; ?>
+        </div>
+
+    </div>
+
+
+    <!-- =================================================
+         INGRESOS POR MÉTODO
+    ================================================== -->
+
+    <section class="cc-panel hist-tabla">
+        <div class="mens-faltantes-cabecera">
+            <div>
+                <h2>Ingresos por método de pago</h2>
+                <p>Cuánto entró por cada método en el periodo (solo pagos confirmados).</p>
+            </div>
+        </div>
+        <div class="hist-tabla-scroll">
+            <table style="min-width:640px">
+                <thead>
+                    <tr>
+                        <th>Método</th>
+                        <th class="hist-num">Movimientos</th>
+                        <th class="hist-num">Ingresos confirmados</th>
+                        <th style="width:38%">Proporción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php if (!$metodos): ?>
+                    <tr><td colspan="4" class="hist-vacio">No hay movimientos para los filtros seleccionados.</td></tr>
+                <?php else: foreach ($metodos as $fila):
+                    $proporcion = $ingresos > 0 ? ((float)$fila['ingresos'] / $ingresos) * 100 : 0;
+                    $anchoBarra = $maxMetodo > 0 ? ((float)$fila['ingresos'] / $maxMetodo) * 100 : 0;
+                ?>
+                    <tr>
+                        <td><span class="hist-pildora hist-pildora--metodo"><?= h($fila['metodo_pago']) ?></span></td>
+                        <td class="hist-num"><?= number_format((int)$fila['cantidad']) ?></td>
+                        <td class="hist-num hist-fuerte"><?= dinero($fila['ingresos']) ?></td>
+                        <td>
+                            <div class="rep-barra"><span style="width:<?= number_format($anchoBarra, 1, '.', '') ?>%"></span></div>
+                            <div class="rep-porcentaje"><?= number_format($proporcion, 1) ?>% de los ingresos</div>
+                        </td>
+                    </tr>
+                <?php endforeach; endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+
+    <!-- =================================================
+         DETALLE DE MOVIMIENTOS
+    ================================================== -->
+
+    <section class="cc-panel hist-tabla">
+        <div class="mens-faltantes-cabecera">
+            <div>
+                <h2>Detalle de movimientos</h2>
+                <p><?= number_format(count($movimientos)) ?> movimientos en el periodo.</p>
+            </div>
+            <a class="hist-boton adeudos-exportar" href="<?= h($urlCsv) ?>">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>
+                Exportar CSV
+            </a>
+        </div>
+        <div class="hist-tabla-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Folio</th>
+                        <th>Cliente</th>
+                        <th>Servicio</th>
+                        <th>Fecha</th>
+                        <th class="hist-num">Monto</th>
+                        <th>Método</th>
+                        <th>Estado</th>
+                        <th>Referencia</th>
+                        <th>Comprobante</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php if (!$movimientos): ?>
+                    <tr><td colspan="9" class="hist-vacio">No hay movimientos en el periodo seleccionado.</td></tr>
+                <?php else: foreach ($movimientos as $m): ?>
+                    <tr>
+                        <td class="hist-fuerte">PAG-<?= str_pad((string)(int)$m['id_pago'], 6, '0', STR_PAD_LEFT) ?></td>
+                        <td>
+                            <a class="hist-boton" href="ver_cliente.php?id=<?= (int)$m['id_cliente'] ?>">#<?= h($m['id_cliente']) ?></a>
+                        </td>
+                        <td class="hist-servicio"><?= $m['id_servicio'] === null ? '<span class="hist-suave">—</span>' : '#' . h($m['id_servicio']) ?></td>
+                        <td class="hist-fecha">
+                            <?= h(date('d/m/Y', strtotime((string)$m['fecha_pago']))) ?>
+                            <span><?= h(date('H:i', strtotime((string)$m['fecha_pago']))) ?></span>
+                        </td>
+                        <td class="hist-num hist-fuerte"><?= dinero($m['monto']) ?></td>
+                        <td><span class="hist-pildora hist-pildora--metodo"><?= h($m['metodo_pago']) ?></span></td>
+                        <td><span class="hist-pildora hist-estado-<?= h(strtolower((string)$m['estado_pago'])) ?>"><?= h($m['estado_pago']) ?></span></td>
+                        <td class="hist-referencia"><?= h($m['referencia'] ?: '—') ?></td>
+                        <td>
+                            <a class="hist-boton hist-boton--principal" href="comprobante.php?id=<?= (int)$m['id_pago'] ?>" target="_blank" rel="noopener">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>
+                                Ver
+                            </a>
+                        </td>
+                    </tr>
+                <?php endforeach; endif; ?>
+                </tbody>
+            </table>
+        </div>
+        <div class="rep-pie">
+            Periodo: <?= h($fechaCorta($desde)) ?> al <?= h($fechaCorta($hasta)) ?>.
+            Los ingresos excluyen pagos pendientes, cancelados y créditos de cortesía.
+        </div>
+    </section>
+
+</main>
 </body>
 </html>
