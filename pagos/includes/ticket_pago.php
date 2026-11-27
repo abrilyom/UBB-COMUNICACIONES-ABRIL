@@ -364,7 +364,7 @@ function construirHtmlTicket(array $t): string
     </table>
 
     <div class="pie">
-        <strong>¡Gracias por tu pago!</strong><br>
+        <strong>' . ($esCancelado ? "Comprobante sin validez de pago" : "¡Gracias por tu pago!") . '</strong><br>
         UBB Comunicaciones · Tu mejor conexión, siempre.
         ' . $contacto . '
         <div class="emitido">Emitido el ' . $emitido . ' · Conserva este comprobante</div>
