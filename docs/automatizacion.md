@@ -197,6 +197,7 @@ Pagos no tiene login propio: la gente entra desde la plataforma de Jamileth. Al 
 - `pagos/includes/sesion.php` (incluido al inicio de cada página) cambia el pase por el usuario con `POST …/api/v1/sso.php` (campo `sso`, encabezado `X-API-Key`, la misma llave de los avisos) y lo guarda en la sesión: `id_usuario`, `nombre`, `correo`, `rol` (ADMINISTRADOR, OPERADOR o CONSULTA). Después quita el pase de la URL.
 - El encabezado muestra el nombre y rol; **Salir** (`?salir=1`) borra la sesión y regresa a la plataforma.
 - Al registrar un pago se guarda quién lo registró (`pagos.id_usuario_registro`, `pagos.registrado_por`, migración `2026-12-06_pagos_registrado_por.sql`) y el ticket imprime "Atendió".
+- **Rol CONSULTA = solo ve:** `sesion.php` rechaza con 403 cualquier POST y las páginas de captura (`registrar.php`, `subir_comprobante.php`); el menú, los accesos directos, "Registrar pago" en la ficha del cliente, las decisiones de Revisión UISP y "Marcar revisado" de la campanita se esconden.
 - **Todavía no bloquea:** sin sesión, las páginas funcionan como antes y el encabezado dice "Sin sesión".
 
 Variables opcionales: `UBB_PLATAFORMA_SSO_URL` (por defecto la dirección de los avisos con `sso.php`) y `UBB_PLATAFORMA_URL` (la plataforma en el navegador, para Entrar/Salir; por defecto `http://192.168.102.221:8081/`).

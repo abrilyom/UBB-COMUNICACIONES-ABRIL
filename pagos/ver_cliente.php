@@ -433,7 +433,7 @@ function exp_estado_clase(string $estado): string {
                 </div>
                 <div class="exp-acciones">
                     <a class="exp-btn secundario" href="clientes.php">← Volver a clientes</a>
-                    <a class="exp-btn" href="registrar.php">Registrar pago</a>
+                    <?php if (puedeModificar()): ?><a class="exp-btn" href="registrar.php">Registrar pago</a><?php endif; ?>
                 </div>
             </div>
 

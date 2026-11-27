@@ -923,7 +923,7 @@ function e_tablero($valor): string
     ====================================================== -->
     <nav class="cc-accesos" aria-label="Accesos directos">
         <span>Accesos directos</span>
-        <a href="registrar.php">Registrar pago</a>
+        <?php if (puedeModificar()): ?><a href="registrar.php">Registrar pago</a><?php endif; ?>
         <a href="historial.php">Historial de pagos</a>
         <a href="reporte_uisp.php">Historial UISP</a>
         <a href="reporte_semanal.php">Reporte semanal</a>

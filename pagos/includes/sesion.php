@@ -192,3 +192,54 @@ if (isset($_GET['sso'])) {
     header('Location: ' . urlActualSinPase());
     exit;
 }
+
+/*
+ * Rol CONSULTA: solo ve. No puede enviar nada que modifique datos (POST)
+ * ni abrir las páginas que solo sirven para capturar.
+ */
+const UBB_PAGINAS_SOLO_CAPTURA = ['registrar.php', 'subir_comprobante.php'];
+
+function esSoloConsulta(): bool
+{
+    $usuario = usuarioSesion();
+
+    return $usuario !== null && $usuario['rol'] === 'CONSULTA';
+}
+
+/** true si el usuario puede registrar, cancelar o cambiar datos. */
+function puedeModificar(): bool
+{
+    return !esSoloConsulta();
+}
+
+if (esSoloConsulta()) {
+    $metodoConsulta = strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? 'GET'));
+    $paginaConsulta = basename((string)($_SERVER['SCRIPT_NAME'] ?? ''));
+
+    if (
+        !in_array($metodoConsulta, ['GET', 'HEAD'], true)
+        || in_array($paginaConsulta, UBB_PAGINAS_SOLO_CAPTURA, true)
+    ) {
+        http_response_code(403);
+        $mensajeConsulta = 'Tu usuario es de solo consulta: puedes ver la información, pero no registrar ni cambiar pagos.';
+
+        $pideJson = str_contains((string)($_SERVER['HTTP_ACCEPT'] ?? ''), 'application/json')
+            || ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'fetch';
+
+        if ($pideJson) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['ok' => false, 'error' => $mensajeConsulta, 'mensaje' => $mensajeConsulta], JSON_UNESCAPED_UNICODE);
+        } else {
+            header('Content-Type: text/html; charset=utf-8');
+            echo '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Solo consulta</title>'
+                . '<style>body{font-family:system-ui,sans-serif;background:#f7f2f8;color:#3b2f40;display:flex;'
+                . 'align-items:center;justify-content:center;min-height:100vh;margin:0}'
+                . 'div{background:#fff;padding:32px 36px;border-radius:16px;max-width:440px;text-align:center;'
+                . 'box-shadow:0 8px 30px rgba(90,40,110,.12)}a{color:#8d5998;font-weight:600}</style></head><body><div>'
+                . '<h2>Solo consulta</h2><p>' . htmlspecialchars($mensajeConsulta, ENT_QUOTES, 'UTF-8') . '</p>'
+                . '<p><a href="index.php">Volver al centro de control</a></p></div></body></html>';
+        }
+
+        exit;
+    }
+}

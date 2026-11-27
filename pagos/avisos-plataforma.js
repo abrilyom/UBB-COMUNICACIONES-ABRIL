@@ -77,12 +77,15 @@
       if (aviso.id_servicio) datos.append(' · ', enlace(`Servicio ${aviso.id_servicio}`, `ver_servicio.php?id=${encodeURIComponent(aviso.id_servicio)}`));
       pie.append(datos);
 
-      const revisar = document.createElement('button');
-      revisar.type = 'button';
-      revisar.className = 'ubb-aviso-revisar';
-      revisar.textContent = 'Marcar revisado';
-      revisar.addEventListener('click', () => marcarRevisado(aviso.id, revisar));
-      pie.append(revisar);
+      // Usuarios de solo consulta ven los avisos pero no los marcan.
+      if (contenedor.dataset.soloConsulta !== '1') {
+        const revisar = document.createElement('button');
+        revisar.type = 'button';
+        revisar.className = 'ubb-aviso-revisar';
+        revisar.textContent = 'Marcar revisado';
+        revisar.addEventListener('click', () => marcarRevisado(aviso.id, revisar));
+        pie.append(revisar);
+      }
 
       li.append(pie);
       lista.append(li);

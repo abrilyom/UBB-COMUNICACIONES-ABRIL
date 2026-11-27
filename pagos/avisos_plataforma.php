@@ -11,6 +11,7 @@ declare(strict_types=1);
  *   POST id=<id>              → marca el aviso como revisado
  */
 
+require_once __DIR__ . '/includes/sesion.php';
 require_once __DIR__ . '/api/cliente_avisos_plataforma.php';
 
 header('Content-Type: application/json; charset=utf-8');

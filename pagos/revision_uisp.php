@@ -278,7 +278,15 @@ $visibles = $filtro === ""
                         <?= h($p["motivo_revision"]) ?>
                     </td>
                     <td class="rv-acciones">
-                        <?php if (!empty($p["decision_revision"])): ?>
+                        <?php if (!puedeModificar()): ?>
+                            <span class="rv-decision">
+                                <?php if (!empty($p["decision_revision"])): ?>
+                                    <?= $p["decision_revision"] === "SALDO_FAVOR" ? "Saldo a favor" : "Histórico" ?>
+                                <?php else: ?>
+                                    Solo consulta
+                                <?php endif; ?>
+                            </span>
+                        <?php elseif (!empty($p["decision_revision"])): ?>
                             <span class="rv-decision">
                                 <?= $p["decision_revision"] === "SALDO_FAVOR" ? "Saldo a favor" : "Histórico" ?>
                                 · se aplica en la siguiente ejecución

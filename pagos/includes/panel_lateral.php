@@ -24,6 +24,14 @@ $opcionesMenu = [
     ["archivo" => "reporte_semanal.php", "texto" => "Reportes",
      "icono" => '<path d="M3 3v18h18"/><rect x="6" y="12" width="3" height="6" rx=".5"/><rect x="11" y="8" width="3" height="10" rx=".5"/><rect x="16" y="5" width="3" height="13" rx=".5"/>']
 ];
+
+// Usuarios de solo consulta no ven las opciones de captura.
+if (function_exists('puedeModificar') && !puedeModificar()) {
+    $opcionesMenu = array_values(array_filter(
+        $opcionesMenu,
+        static fn($opcion) => !in_array($opcion["archivo"], UBB_PAGINAS_SOLO_CAPTURA, true)
+    ));
+}
 ?>
 <aside class="menu-lateral-ubb" id="menu-lateral-ubb">
     <nav aria-label="Navegación principal de pagos">

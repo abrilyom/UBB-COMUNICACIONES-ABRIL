@@ -31,7 +31,7 @@ $urlPlataformaEncabezado = function_exists('urlPlataformaNavegador')
     <div class="barra-superior">
 
         <div class="ubb-herramientas" aria-label="Herramientas">
-            <div class="ubb-avisos" id="ubbAvisos">
+            <div class="ubb-avisos" id="ubbAvisos"<?php if (function_exists('puedeModificar') && !puedeModificar()): ?> data-solo-consulta="1"<?php endif; ?>>
                 <button type="button" class="ubb-icono ubb-avisos-boton" id="ubbAvisosBoton"
                         title="Avisos de la plataforma" aria-label="Avisos de la plataforma"
                         aria-haspopup="true" aria-expanded="false" aria-controls="ubbAvisosPanel">
