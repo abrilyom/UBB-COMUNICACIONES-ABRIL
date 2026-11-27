@@ -142,6 +142,8 @@ if ($consulta) {
     <title>Movimientos de pagos - UBB Comunicaciones</title>
 
     <link rel="stylesheet" href="css/pagos.css?v=<?php echo filemtime(__DIR__ . '/css/pagos.css'); ?>">
+    <link rel="stylesheet" href="css/tablero.css?v=<?php echo filemtime(__DIR__ . '/css/tablero.css'); ?>">
+    <link rel="stylesheet" href="css/historial.css?v=<?php echo filemtime(__DIR__ . '/css/historial.css'); ?>">
 
 </head>
 
@@ -163,395 +165,219 @@ if ($consulta) {
 
 <?php require __DIR__ . "/includes/panel_lateral.php"; ?>
 
-<main class="contenedor">
+<main class="contenedor cc hist">
+
+    <!-- =================================================
+         CABECERA
+    ================================================== -->
+
+    <header class="cc-cabecera">
+        <div class="cc-cabecera-texto">
+            <span class="cc-cabecera-icono" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>
+            </span>
+            <div>
+                <h1>Movimientos de pagos</h1>
+                <p>Historial de pagos registrados: busca por cliente o referencia y abre su comprobante</p>
+            </div>
+        </div>
+    </header>
 
 
     <!-- =================================================
-         TÍTULO
+         FILTROS
     ================================================== -->
 
-    <section class="panel">
+    <form method="GET" class="cc-panel hist-filtros">
 
-        <div class="panel-encabezado">
-
-            <div>
-
-                <span class="etiqueta-seccion">
-                    CONTROL DE PAGOS
-                </span>
-
-                <h2 class="panel-titulo">
-                    Movimientos de pagos
-                </h2>
-
-            </div>
-
-        </div>
-
-
-        <!-- =============================================
-             FILTROS
-        ============================================== -->
-
-        <form method="GET" class="filtros-clientes">
-
-
-            <!-- PERÍODO -->
-
+        <label class="hist-campo">
+            <span>Período</span>
             <select name="periodo" class="filtro">
-
-                <option value="hoy"
-                    <?php echo $periodo === "hoy" ? "selected" : ""; ?>>
-                    Hoy
-                </option>
-
-                <option value="semana"
-                    <?php echo $periodo === "semana" ? "selected" : ""; ?>>
-                    Esta semana
-                </option>
-
-                <option value="mes"
-                    <?php echo $periodo === "mes" ? "selected" : ""; ?>>
-                    Este mes
-                </option>
-
-                <option value="todos"
-                    <?php echo $periodo === "todos" ? "selected" : ""; ?>>
-                    Todos
-                </option>
-
+                <option value="hoy" <?php echo $periodo === "hoy" ? "selected" : ""; ?>>Hoy</option>
+                <option value="semana" <?php echo $periodo === "semana" ? "selected" : ""; ?>>Esta semana</option>
+                <option value="mes" <?php echo $periodo === "mes" ? "selected" : ""; ?>>Este mes</option>
+                <option value="todos" <?php echo $periodo === "todos" ? "selected" : ""; ?>>Todos</option>
             </select>
+        </label>
 
-
-            <!-- MÉTODO -->
-
+        <label class="hist-campo">
+            <span>Método</span>
             <select name="metodo" class="filtro">
-
-                <option value="todos">
-                    Todos los métodos
-                </option>
-
-                <option value="EFECTIVO"
-                    <?php echo $metodo === "EFECTIVO" ? "selected" : ""; ?>>
-                    Efectivo
-                </option>
-
-                <option value="TRANSFERENCIA"
-                    <?php echo $metodo === "TRANSFERENCIA" ? "selected" : ""; ?>>
-                    Transferencia
-                </option>
-
-                <option value="DEPOSITO"
-                    <?php echo $metodo === "DEPOSITO" ? "selected" : ""; ?>>
-                    Depósito
-                </option>
-
-                <option value="TARJETA"
-                    <?php echo $metodo === "TARJETA" ? "selected" : ""; ?>>
-                    Tarjeta
-                </option>
-
+                <option value="todos">Todos los métodos</option>
+                <option value="EFECTIVO" <?php echo $metodo === "EFECTIVO" ? "selected" : ""; ?>>Efectivo</option>
+                <option value="TRANSFERENCIA" <?php echo $metodo === "TRANSFERENCIA" ? "selected" : ""; ?>>Transferencia</option>
+                <option value="DEPOSITO" <?php echo $metodo === "DEPOSITO" ? "selected" : ""; ?>>Depósito</option>
+                <option value="TARJETA" <?php echo $metodo === "TARJETA" ? "selected" : ""; ?>>Tarjeta</option>
             </select>
+        </label>
 
-
-            <!-- ESTADO -->
-
+        <label class="hist-campo">
+            <span>Estado</span>
             <select name="estado" class="filtro">
-
-                <option value="todos">
-                    Todos los estados
-                </option>
-
-                <option value="PAGADO"
-                    <?php echo $estado === "PAGADO" ? "selected" : ""; ?>>
-                    Pagado
-                </option>
-
-                <option value="PENDIENTE"
-                    <?php echo $estado === "PENDIENTE" ? "selected" : ""; ?>>
-                    Pendiente
-                </option>
-
-                <option value="CANCELADO"
-                    <?php echo $estado === "CANCELADO" ? "selected" : ""; ?>>
-                    Cancelado
-                </option>
-
+                <option value="todos">Todos los estados</option>
+                <option value="PAGADO" <?php echo $estado === "PAGADO" ? "selected" : ""; ?>>Pagado</option>
+                <option value="PENDIENTE" <?php echo $estado === "PENDIENTE" ? "selected" : ""; ?>>Pendiente</option>
+                <option value="CANCELADO" <?php echo $estado === "CANCELADO" ? "selected" : ""; ?>>Cancelado</option>
             </select>
+        </label>
 
-
-            <!-- BÚSQUEDA -->
-
-            <div class="buscador">
-
-                <input
-                    type="text"
-                    name="buscar"
-                    value="<?php echo htmlspecialchars($buscar); ?>"
-                    placeholder="Buscar cliente o referencia..."
-                >
-
-                <button type="submit">
-                    🔎
-                </button>
-
-            </div>
-
-
-        </form>
-
-
-        <!-- =============================================
-             RESUMEN
-        ============================================== -->
-
-        <div class="tarjetas">
-
-
-            <div class="tarjeta">
-
-                <div class="tarjeta-titulo">
-
-                    <span>💳</span>
-
-                    <span>MOVIMIENTOS</span>
-
-                </div>
-
-                <strong class="numero">
-
-                    <?php echo $total_movimientos; ?>
-
-                </strong>
-
-                <small>
-                    pagos registrados
-                </small>
-
-            </div>
-
-
-
-            <div class="tarjeta">
-
-                <div class="tarjeta-titulo">
-
-                    <span>💰</span>
-
-                    <span>RECAUDADO</span>
-
-                </div>
-
-                <strong class="numero">
-
-                    $<?php echo number_format($total_recaudado, 2); ?>
-
-                </strong>
-
-                <small>
-                    monto del período
-                </small>
-
-            </div>
-
-
-
-            <div class="tarjeta">
-
-                <div class="tarjeta-titulo">
-
-                    <span>✅</span>
-
-                    <span>PAGADOS</span>
-
-                </div>
-
-                <strong class="numero">
-
-                    <?php echo $total_pagados; ?>
-
-                </strong>
-
-                <small>
-                    pagos confirmados
-                </small>
-
-            </div>
-
-
+        <div class="hist-buscador">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <input
+                type="text"
+                name="buscar"
+                value="<?php echo htmlspecialchars($buscar); ?>"
+                placeholder="Buscar cliente o referencia..."
+                aria-label="Buscar cliente o referencia"
+            >
+            <button type="submit">Buscar</button>
         </div>
 
+    </form>
 
-        <!-- =============================================
-             TABLA
-        ============================================== -->
 
-        <div class="tabla-contenedor">
+    <!-- =================================================
+         RESUMEN
+    ================================================== -->
+
+    <div class="cc-kpis hist-kpis">
+
+        <div class="cc-kpi cc-kpi--pagos">
+            <div class="cc-kpi-cabeza">
+                <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg></span>
+                <span class="cc-kpi-nombre">Movimientos</span>
+            </div>
+            <strong class="cc-kpi-numero"><?php echo number_format($total_movimientos); ?></strong>
+            <span class="cc-kpi-detalle">Pagos registrados con estos filtros</span>
+        </div>
+
+        <div class="cc-kpi cc-kpi--activos">
+            <div class="cc-kpi-cabeza">
+                <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+                <span class="cc-kpi-nombre">Recaudado</span>
+            </div>
+            <strong class="cc-kpi-numero">$<?php echo number_format($total_recaudado, 2); ?></strong>
+            <span class="cc-kpi-detalle">Monto de los pagos confirmados</span>
+        </div>
+
+        <div class="cc-kpi hist-kpi--confirmados">
+            <div class="cc-kpi-cabeza">
+                <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg></span>
+                <span class="cc-kpi-nombre">Pagados</span>
+            </div>
+            <strong class="cc-kpi-numero"><?php echo number_format($total_pagados); ?></strong>
+            <span class="cc-kpi-detalle">Pagos confirmados (sin créditos de cortesía)</span>
+        </div>
+
+    </div>
+
+
+    <!-- =================================================
+         TABLA
+    ================================================== -->
+
+    <section class="cc-panel hist-tabla">
+
+        <div class="hist-tabla-scroll">
 
             <table>
 
                 <thead>
-
                     <tr>
-
-                        <th>CLIENTE</th>
-
-                        <th>SERVICIO</th>
-
-                        <th>FECHA</th>
-
-                        <th>MÉTODO</th>
-
-                        <th>REFERENCIA</th>
-
-                        <th>MONTO</th>
-
-                        <th>ESTADO</th>
-
-                        <th>ACCIONES</th>
-
+                        <th>Cliente</th>
+                        <th>Servicio</th>
+                        <th>Fecha</th>
+                        <th>Método</th>
+                        <th>Referencia</th>
+                        <th class="hist-num">Monto</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
                     </tr>
-
                 </thead>
-
 
                 <tbody>
 
-
                 <?php if (count($pagos) > 0): ?>
-
 
                     <?php foreach ($pagos as $pago): ?>
 
-
                         <tr>
 
-
-                            <td>
-
-                                Cliente #
-
-                                <?php
-                                echo htmlspecialchars(
-                                    $pago["id_cliente"]
-                                );
-                                ?>
-
+                            <td class="hist-fuerte">
+                                Cliente #<?php echo htmlspecialchars($pago["id_cliente"]); ?>
                             </td>
 
                             <td>
                                 <?php
                                 echo $pago["id_servicio"] !== null
-                                ? "Servicio #" . (int)$pago["id_servicio"]
-                                : "Sin servicio";
+                                    ? "Servicio #" . (int)$pago["id_servicio"]
+                                    : '<span class="hist-suave">Sin servicio</span>';
                                 ?>
-                                </td>
-
-
-                            <td>
-
-                                <?php
-                                echo date(
-                                    "d/m/Y H:i",
-                                    strtotime($pago["fecha_pago"])
-                                );
-                                ?>
-
                             </td>
 
+                            <td class="hist-fecha">
+                                <?php echo date("d/m/Y", strtotime($pago["fecha_pago"])); ?>
+                                <span><?php echo date("H:i", strtotime($pago["fecha_pago"])); ?></span>
+                            </td>
 
                             <td>
-                                <span class="metodo-pago">
-
-                                <?php
-                                echo htmlspecialchars($pago["metodo_pago"]);?>
+                                <span class="hist-pildora hist-pildora--metodo">
+                                    <?php echo htmlspecialchars($pago["metodo_pago"]); ?>
                                 </span>
-
                             </td>
 
-
-                            <td>
-
-                                <?php
-
-                                echo htmlspecialchars(
-                                    $pago["referencia"] ?? "Sin referencia"
-                                );
-
-                                ?>
-
+                            <td class="hist-referencia">
+                                <?php echo htmlspecialchars($pago["referencia"] ?? "Sin referencia"); ?>
                             </td>
 
-
-                            <td>
-
-                                <strong>
-
-                                    $<?php
-                                    echo number_format(
-                                        $pago["monto"],
-                                        2
-                                    );
-                                    ?>
-
-                                </strong>
-
+                            <td class="hist-num hist-fuerte">
+                                $<?php echo number_format($pago["monto"], 2); ?>
                             </td>
 
-
                             <td>
-
-                                <span class="estado estado-<?php echo strtolower ($pago["estado_pago"]); ?>">
+                                <span class="hist-pildora hist-estado-<?php echo htmlspecialchars(strtolower($pago["estado_pago"])); ?>">
                                     <?php echo htmlspecialchars($pago["estado_pago"]); ?>
-
                                 </span>
-
                             </td>
 
                             <td>
-                                <a href="ver_cliente.php?id=<?php echo (int) $pago['id_cliente']; ?>">
-                                    Ver cliente 
-                                </a>
+                                <div class="hist-acciones">
+                                    <a class="hist-boton" href="ver_cliente.php?id=<?php echo (int) $pago['id_cliente']; ?>" title="Ver cliente">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>
+                                        Cliente
+                                    </a>
 
-                                <?php if (!empty($pago['id_servicio'])): ?>
-                                    <br>
-                                    <a href="ver_servicio.php?id=<?php echo (int) $pago['id_servicio']; ?>">
-                                            Ver servicio
-                                            </a>
-                                            <?php endif; ?>
+                                    <?php if (!empty($pago['id_servicio'])): ?>
+                                        <a class="hist-boton" href="ver_servicio.php?id=<?php echo (int) $pago['id_servicio']; ?>" title="Ver servicio">
+                                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><path d="M12 19.5h.01"/></svg>
+                                            Servicio
+                                        </a>
+                                    <?php endif; ?>
 
-                                <br>
-                                <a href="comprobante.php?id=<?php echo (int) $pago['id_pago']; ?>"
-                                   target="_blank"
-                                   rel="noopener noreferrer">
-                                    📄 Ver comprobante
-                                </a>
-
-                            </td>    
-
+                                    <a class="hist-boton hist-boton--principal"
+                                       href="comprobante.php?id=<?php echo (int) $pago['id_pago']; ?>"
+                                       target="_blank"
+                                       rel="noopener noreferrer"
+                                       title="Ver comprobante">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>
+                                        Comprobante
+                                    </a>
+                                </div>
+                            </td>
 
                         </tr>
 
-
                     <?php endforeach; ?>
-
 
                 <?php else: ?>
 
-
                     <tr>
-
-                        <td colspan="6">
-
+                        <td colspan="8" class="hist-vacio">
                             No existen pagos para los filtros seleccionados.
-
                         </td>
-
                     </tr>
 
-
                 <?php endif; ?>
-
 
                 </tbody>
 
@@ -559,9 +385,7 @@ if ($consulta) {
 
         </div>
 
-
     </section>
-
 
 </main>
 

@@ -1,0 +1,298 @@
+/* =========================================================
+   HISTORIAL (historial.php)
+   Se apoya en tablero.css (.cc, .cc-cabecera, .cc-kpi, .cc-panel)
+   para verse igual que el Centro de control.
+========================================================= */
+
+/* ---------- Filtros ---------- */
+
+.hist-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 14px;
+    padding: 16px 18px;
+    margin-bottom: 18px;
+}
+
+.hist-campo {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 170px;
+}
+
+.hist-campo > span {
+    color: var(--cc-texto-suave);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .4px;
+    text-transform: uppercase;
+}
+
+.hist-campo select {
+    height: 42px;
+    padding: 0 36px 0 13px;
+    border: 1px solid var(--cc-borde);
+    border-radius: 11px;
+    background:
+        #fff
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239a5aa6' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+        no-repeat right 13px center;
+    color: var(--cc-texto);
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.hist-campo select:hover {
+    border-color: #d9bde0;
+}
+
+.hist-campo select:focus,
+.hist-buscador:focus-within {
+    outline: none;
+    border-color: var(--cc-morado-medio);
+    box-shadow: 0 0 0 3px rgba(154, 90, 166, .15);
+}
+
+.hist-buscador {
+    display: flex;
+    align-items: center;
+    flex: 1 1 300px;
+    height: 42px;
+    margin-left: auto;
+    padding-left: 13px;
+    overflow: hidden;
+    border: 1px solid var(--cc-borde);
+    border-radius: 11px;
+    background: #fff;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.hist-buscador svg {
+    flex: 0 0 17px;
+    width: 17px;
+    height: 17px;
+    fill: none;
+    stroke: var(--cc-morado-medio);
+    stroke-width: 2;
+    stroke-linecap: round;
+}
+
+.hist-buscador input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    padding: 0 10px;
+    border: 0;
+    background: transparent;
+    color: var(--cc-texto);
+    font: inherit;
+    font-size: 14px;
+    outline: none;
+}
+
+.hist-buscador input::placeholder {
+    color: #a596a9;
+}
+
+.hist-buscador button {
+    height: 100%;
+    padding: 0 20px;
+    border: 0;
+    background: linear-gradient(135deg, #a96db5, #8a4a98);
+    color: #fff;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: filter .15s ease;
+}
+
+.hist-buscador button:hover {
+    filter: brightness(1.07);
+}
+
+/* ---------- Indicadores ---------- */
+
+.hist-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-bottom: 18px;
+}
+
+.hist .cc-kpi:hover {
+    transform: none;
+}
+
+.hist-kpi--confirmados {
+    --cc-acento: #3d5aa8;
+    --cc-acento-fondo: #eef2fc;
+    --cc-acento-borde: #d6e0f6;
+    border-color: var(--cc-acento-borde);
+    background: linear-gradient(160deg, var(--cc-acento-fondo) 0%, var(--cc-acento-fondo) 60%, #ffffff 140%);
+}
+
+/* ---------- Tabla ---------- */
+
+.hist-tabla {
+    overflow: hidden;
+}
+
+.hist-tabla-scroll {
+    overflow-x: auto;
+}
+
+.hist-tabla table {
+    width: 100%;
+    min-width: 900px;
+    border-collapse: collapse;
+}
+
+.hist-tabla thead th {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--cc-borde);
+    background: var(--cc-morado-suave);
+    color: var(--cc-morado);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .5px;
+    text-align: left;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.hist-tabla tbody td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #f3eaf5;
+    color: var(--cc-texto);
+    font-size: 13.5px;
+    vertical-align: middle;
+}
+
+.hist-tabla tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.hist-tabla tbody tr:hover {
+    background: #fcf8fd;
+}
+
+.hist-tabla .hist-num {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.hist-fuerte {
+    font-weight: 700;
+}
+
+.hist-suave {
+    color: var(--cc-texto-suave);
+}
+
+.hist-fecha {
+    white-space: nowrap;
+}
+
+.hist-fecha span {
+    display: block;
+    color: var(--cc-texto-suave);
+    font-size: 12px;
+}
+
+.hist-referencia {
+    color: var(--cc-texto-suave);
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: 12.5px;
+}
+
+.hist-vacio {
+    padding: 36px 16px !important;
+    color: var(--cc-texto-suave) !important;
+    text-align: center;
+}
+
+/* ---------- Píldoras ---------- */
+
+.hist-pildora {
+    display: inline-block;
+    padding: 5px 11px;
+    border-radius: 999px;
+    background: var(--cc-inactivo-fondo);
+    color: var(--cc-inactivo);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .3px;
+    white-space: nowrap;
+}
+
+.hist-pildora--metodo {
+    background: var(--cc-morado-suave);
+    color: var(--cc-morado);
+}
+
+.hist-estado-pagado { background: var(--cc-ok-fondo); color: var(--cc-ok); }
+.hist-estado-pendiente { background: var(--cc-atencion-fondo); color: var(--cc-atencion); }
+.hist-estado-cancelado { background: var(--cc-error-fondo); color: var(--cc-error); }
+
+/* ---------- Acciones ---------- */
+
+.hist-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.hist-boton {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 10px;
+    border: 1px solid var(--cc-borde);
+    border-radius: 9px;
+    background: #fff;
+    color: var(--cc-morado);
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background .15s ease, border-color .15s ease;
+}
+
+.hist-boton:hover {
+    border-color: #dcc0e2;
+    background: var(--cc-morado-suave);
+}
+
+.hist-boton svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.hist-boton--principal {
+    border-color: transparent;
+    background: linear-gradient(135deg, #a96db5, #8a4a98);
+    color: #fff;
+}
+
+.hist-boton--principal:hover {
+    border-color: transparent;
+    background: linear-gradient(135deg, #b47cbf, #96549f);
+}
+
+/* ---------- Pantallas chicas ---------- */
+
+@media (max-width: 900px) {
+    .hist-kpis { grid-template-columns: minmax(0, 1fr); }
+    .hist-campo { flex: 1 1 140px; min-width: 0; }
+    .hist-buscador { flex-basis: 100%; margin-left: 0; }
+}
