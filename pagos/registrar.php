@@ -2,6 +2,7 @@
 
 require_once "conexion.php";
 require_once __DIR__ . "/../vendor/autoload.php";
+require_once __DIR__ . "/includes/ticket_pago.php";
 
 /* Búsqueda de solo lectura de clientes y servicios remotos. */
 if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET["buscar_clientes"])) {
@@ -380,6 +381,93 @@ function validarReferenciaUbb(int $idCliente, int $idServicio): bool
     }
 }
 
+/*
+ * Datos legibles del cliente y servicio para el ticket (nombre, códigos, paquete).
+ * Si la base remota no responde, devuelve lo que tenga y el ticket usa los números.
+ */
+function obtenerDatosTicket(int $idCliente, ?int $idServicio): array
+{
+    $datos = [
+        "nombre" => "",
+        "codigo_cliente" => "",
+        "codigo_servicio" => "",
+        "paquete" => "",
+        "tecnologia" => "",
+    ];
+
+    $remota = null;
+
+    try {
+        $remota = require __DIR__ . "/conexion_plataforma.php";
+
+        if (!$remota instanceof mysqli) {
+            throw new RuntimeException("La conexión remota no devolvió una conexión mysqli.");
+        }
+
+        $stmt = $remota->prepare(
+            "SELECT nombre, apellido_paterno, apellido_materno, codigo_cliente
+             FROM clientes
+             WHERE id_cliente = ?
+             LIMIT 1"
+        );
+
+        if ($stmt) {
+            $stmt->bind_param("i", $idCliente);
+
+            if ($stmt->execute()) {
+                $fila = $stmt->get_result()->fetch_assoc();
+
+                if ($fila) {
+                    $datos["nombre"] = trim(implode(" ", array_filter([
+                        trim((string)$fila["nombre"]),
+                        trim((string)$fila["apellido_paterno"]),
+                        trim((string)$fila["apellido_materno"]),
+                    ], "strlen")));
+                    $datos["codigo_cliente"] = trim((string)$fila["codigo_cliente"]);
+                }
+            }
+
+            $stmt->close();
+        }
+
+        if ($idServicio !== null) {
+            $stmt = $remota->prepare(
+                "SELECT codigo_servicio, paquete_referencia, tecnologia
+                 FROM servicios
+                 WHERE id_servicio = ? AND id_cliente = ?
+                 LIMIT 1"
+            );
+
+            if ($stmt) {
+                $stmt->bind_param("ii", $idServicio, $idCliente);
+
+                if ($stmt->execute()) {
+                    $fila = $stmt->get_result()->fetch_assoc();
+
+                    if ($fila) {
+                        $datos["codigo_servicio"] = trim((string)$fila["codigo_servicio"]);
+                        $datos["paquete"] = trim((string)$fila["paquete_referencia"]);
+                        $datos["tecnologia"] = trim((string)$fila["tecnologia"]);
+                    }
+                }
+
+                $stmt->close();
+            }
+        }
+
+    } catch (Throwable $e) {
+        error_log("Datos del ticket UBB: " . $e->getMessage());
+
+    } finally {
+        if ($remota instanceof mysqli) {
+            $remota->close();
+        }
+    }
+
+    return $datos;
+}
+
+
 $mensaje = "";
 $error = "";
 $enlace_comprobante = "";
@@ -482,6 +570,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             $transaccionIniciada = true;
             $saldo_centavos = 0;
+            $periodo_obligacion = "";
+            $concepto_obligacion = "";
 
             /*
              * Factura de la plataforma (servicios con factura_en_plataforma = 1).
@@ -507,6 +597,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $sqlObligacion = "
                     SELECT
                         o.id_obligacion,
+                        o.periodo,
+                        o.concepto,
                         o.monto,
                         o.estado,
                         o.id_factura,
@@ -559,6 +651,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 ) {
                     throw new DomainException("La mensualidad no existe o ya no está pendiente.");
                 }
+
+                // Para el ticket: qué periodo se está pagando.
+                $periodo_obligacion = (string)($filaObligacion["periodo"] ?? "");
+                $concepto_obligacion = (string)($filaObligacion["concepto"] ?? "");
 
                 // Mensualidad que viene de una factura de la plataforma: el pago se liga a esa
                 // factura y, si no se capturó referencia, se usa su folio (FAC-000001).
@@ -823,342 +919,32 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         );
                     }
 
-                    $folio = $folio_pago;
+                    $datosTicket = obtenerDatosTicket($id_cliente, $id_servicio);
 
-                    $cliente_pdf = htmlspecialchars(
-                        (string)$id_cliente,
-                        ENT_QUOTES,
-                        "UTF-8"
-                    );
+                    $html = construirHtmlTicket([
+                        "folio" => $folio_pago,
+                        "estado_pago" => $estadoPago,
+                        "id_cliente" => $id_cliente,
+                        "id_servicio" => $id_servicio,
+                        "nombre" => $datosTicket["nombre"],
+                        "codigo_cliente" => $datosTicket["codigo_cliente"],
+                        "codigo_servicio" => $datosTicket["codigo_servicio"],
+                        "paquete" => $datosTicket["paquete"],
+                        "tecnologia" => $datosTicket["tecnologia"],
+                        "periodo" => $periodo_obligacion,
+                        "concepto" => $concepto_obligacion,
+                        // Lo que queda por pagar de la mensualidad después de este pago.
+                        "saldo_restante_centavos" => $periodo_obligacion !== ""
+                            ? $saldo_centavos - $monto_centavos
+                            : 0,
+                        "monto" => $monto,
+                        "referencia" => $referencia,
+                        "metodo_pago" => $metodo_pago,
+                        "fecha_pago" => $fecha_pago,
+                        "ruta_logo" => __DIR__ . "/../assets/img/globo-ubb-transparente.png",
+                    ]);
 
-                    $servicio_texto = ($id_servicio === null)
-                        ? "No especificado"
-                        : "Servicio #" . $id_servicio;
-
-                    $servicio_pdf = htmlspecialchars(
-                        $servicio_texto,
-                        ENT_QUOTES,
-                        "UTF-8"
-                    );
-
-                    $referencia_pdf = htmlspecialchars(
-                        $referencia !== "" ? $referencia : "Sin referencia",
-                        ENT_QUOTES,
-                        "UTF-8"
-                    );
-
-                    $monto_pdf = number_format($monto, 2);
-
-                    $nombres_metodos_pdf = [
-                        "EFECTIVO" => "EFECTIVO",
-                        "TRANSFERENCIA" => "TRANSFERENCIA",
-                        "DEPOSITO" => "DEPOSITO",
-                        "TARJETA" => "TARJETA / TERMINAL"
-                    ];
-
-                    $metodo_pdf = htmlspecialchars(
-                        $nombres_metodos_pdf[$metodo_pago] ?? $metodo_pago,
-                        ENT_QUOTES,
-                        "UTF-8"
-                    );
-
-                    $fecha_pdf = date(
-                        "d/m/Y",
-                        strtotime($fecha_pago)
-                    );
-
-                    $ruta_logo_pdf = __DIR__ . "/../assets/img/globo-ubb-transparente.png";
-                    if (!is_file($ruta_logo_pdf)) {
-                        throw new RuntimeException("No se encontró el logo del comprobante.");
-                    }
-                    $logo_pdf = "data:image/png;base64," . base64_encode(
-                        file_get_contents($ruta_logo_pdf)
-                    );
-
-                    $html = '
-                    <!DOCTYPE html>
-                    <html lang="es">
-                    <head>
-                        <meta charset="UTF-8">
-                        <style>
-                        @page { margin: 4mm; }
-
-                        * { box-sizing: border-box; }
-
-                        body {
-                            font-family: DejaVu Sans, sans-serif;
-                            color: #20202a;
-                            font-size: 9px;
-                            background: #ffffff;
-                            line-height: 1.35;
-                        }
-
-                        .encabezado {
-                            background: #ffffff;
-                            color: #20202a;
-                            padding: 5px 1px 8px;
-                            border-bottom: 1px solid #333333;
-                        }
-
-                        .tabla-encabezado {
-                            width: 100%;
-                            border-collapse: collapse;
-                            margin: 0;
-                        }
-
-                        .tabla-encabezado td {
-                            border: 0;
-                            padding: 0;
-                            vertical-align: middle;
-                        }
-
-                        .tabla-encabezado .celda-logo {
-                            width: 57px;
-                            text-align: left;
-                            padding-right: 6px;
-                        }
-
-                        .logo-ticket {
-                            display: block;
-                            width: 51px;
-                            height: auto;
-                        }
-
-                        .tabla-encabezado .celda-marca {
-                            text-align: left;
-                        }
-
-                        .encabezado h1 {
-                            font-size: 12px;
-                            letter-spacing: 0.1px;
-                            margin: 0 0 3px;
-                        }
-
-                        .lema {
-                            font-size: 8px;
-                            color: #555555;
-                        }
-
-                        .subtitulo {
-                            font-size: 9px;
-                            font-weight: bold;
-                            margin-top: 7px;
-                        }
-
-                        .servicios {
-                            font-size: 8px;
-                            margin-top: 3px;
-                            color: #444444;
-                        }
-
-                        .contenido { padding: 5px 1px; }
-
-                        .datos-folio {
-                            width: 100%;
-                            border-collapse: collapse;
-                            margin: 5px 0 8px;
-                        }
-
-                        .datos-folio td {
-                            padding: 2px 0;
-                            border: 0;
-                            vertical-align: top;
-                        }
-
-                        .datos-folio td:first-child {
-                            width: 48%;
-                            color: #555555;
-                        }
-
-                        .seccion {
-                            font-size: 9px;
-                            font-weight: bold;
-                            margin: 9px 0 5px;
-                            padding-bottom: 3px;
-                            border-bottom: 1px solid #aaaaaa;
-                        }
-
-                        .dato {
-                            margin: 3px 0;
-                            overflow-wrap: break-word;
-                        }
-
-                        .dato strong { font-weight: bold; }
-
-                        .resumen {
-                            text-align: center;
-                            padding: 8px 3px;
-                            margin: 8px 0;
-                            border: 1px solid #bbbbbb;
-                        }
-
-                        .etiqueta-monto {
-                            font-size: 8px;
-                            font-weight: bold;
-                            color: #555555;
-                        }
-
-                        .monto {
-                            font-size: 20px;
-                            font-weight: bold;
-                            margin: 4px 0;
-                        }
-
-                        .estado {
-                            display: inline-block;
-                            border: 1px solid #333333;
-                            padding: 3px 8px;
-                            font-size: 8px;
-                            font-weight: bold;
-                        }
-
-                        .tabla-concepto {
-                            width: 100%;
-                            border-collapse: collapse;
-                            margin-top: 5px;
-                        }
-
-                        .tabla-concepto th {
-                            text-align: left;
-                            font-size: 8px;
-                            padding: 4px 2px;
-                            border-bottom: 1px solid #777777;
-                        }
-
-                        .tabla-concepto td {
-                            padding: 5px 2px;
-                            border-bottom: 1px solid #dddddd;
-                            vertical-align: top;
-                            overflow-wrap: break-word;
-                        }
-
-                        .importe {
-                            text-align: right;
-                            white-space: nowrap;
-                        }
-
-                        .detalle-pago {
-                            width: 100%;
-                            border-collapse: collapse;
-                        }
-
-                        .detalle-pago td {
-                            padding: 3px 1px;
-                            border: 0;
-                            vertical-align: top;
-                        }
-
-                        .detalle-pago td:first-child {
-                            width: 48%;
-                            color: #555555;
-                        }
-
-                        .confirmacion {
-                            border: 1px solid #555555;
-                            padding: 8px 3px;
-                            margin-top: 10px;
-                            text-align: center;
-                        }
-
-                        .confirmacion strong {
-                            display: block;
-                            font-size: 10px;
-                        }
-
-                        .pie {
-                            margin-top: 10px;
-                            padding-top: 7px;
-                            border-top: 1px solid #777777;
-                            text-align: center;
-                            color: #444444;
-                            font-size: 8px;
-                            line-height: 1.5;
-                        }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="encabezado">
-                            <table class="tabla-encabezado">
-                                <tr>
-                                    <td class="celda-logo">
-                                        <img class="logo-ticket" src="' . $logo_pdf . '" alt="Logo UBB">
-                                    </td>
-                                    <td class="celda-marca">
-                                        <h1>UBB COMUNICACIONES</h1>
-                                        <div class="lema">UNIENDO TU MUNDO</div>
-                                        <div class="subtitulo">COMPROBANTE DE PAGO</div>
-                                        <div class="servicios">Internet · Telefonía · Conectividad</div>
-                                    </td>
-                                </tr>
-                            </table>
-                        </div>
-
-                        <div class="contenido">
-                            <table class="datos-folio">
-                                <tr>
-                                    <td>Folio de pago:</td>
-                                    <td><strong>' . $folio . '</strong></td>
-                                </tr>
-                                <tr>
-                                    <td>Fecha de pago:</td>
-                                    <td>' . $fecha_pdf . '</td>
-                                </tr>
-                            </table>
-
-                            <div class="seccion">DATOS DEL CLIENTE</div>
-                            <div class="dato">Identificador de cliente: <strong>#' . $cliente_pdf . '</strong></div>
-
-                            <div class="seccion">DATOS DEL SERVICIO</div>
-                            <div class="dato"><strong>' . $servicio_pdf . '</strong></div>
-
-                            <div class="seccion">CONCEPTO</div>
-                            <table class="tabla-concepto">
-                                <tr>
-                                    <th>DESCRIPCIÓN</th>
-                                    <th class="importe">TOTAL</th>
-                                </tr>
-                                <tr>
-                                    <td>Pago de servicio de internet</td>
-                                    <td class="importe">$' . $monto_pdf . ' MXN</td>
-                                </tr>
-                            </table>
-
-                            <div class="resumen">
-                                <div class="etiqueta-monto">' . ($estadoPago === "PENDIENTE" ? "IMPORTE REGISTRADO" : "IMPORTE RECIBIDO") . '</div>
-                                <div class="monto">$' . $monto_pdf . ' MXN</div>
-                                <span class="estado">' . ($estadoPago === "PENDIENTE" ? "PENDIENTE DE CONFIRMACIÓN" : "PAGO CONFIRMADO") . '</span>
-                            </div>
-
-                            <div class="seccion">DETALLE DEL PAGO</div>
-                            <table class="detalle-pago">
-                                <tr>
-                                    <td>Método de pago:</td>
-                                    <td><strong>' . $metodo_pdf . '</strong></td>
-                                </tr>
-                                <tr>
-                                    <td>Referencia:</td>
-                                    <td>' . $referencia_pdf . '</td>
-                                </tr>
-                            </table>
-
-                            <div class="confirmacion">
-                                <strong>' . ($estadoPago === "PENDIENTE" ? "PENDIENTE DE CONFIRMACIÓN BANCARIA" : "PAGO CONFIRMADO") . '</strong>
-                                ' . ($estadoPago === "PENDIENTE" ? "Este registro se confirmará cuando BBVA reporte la recepción del dinero." : "Gracias por tu preferencia") . '
-                            </div>
-
-                            <div class="pie">
-                                <strong>¡Seguimos conectándote!</strong><br>
-                                UBB Comunicaciones<br>
-                                Tu mejor conexión, siempre.
-                            </div>
-                        </div>
-                    </body>
-                    </html>';
-
-                    $dompdf = new \Dompdf\Dompdf();
-                    $dompdf->loadHtml($html, "UTF-8");
-                    $dompdf->setPaper([0, 0, 226.77, 700]);
-                    $dompdf->render();
+                    $pdf_ticket = generarPdfTicket($html);
 
                     $nombre_archivo = "comprobante_pago_"
                         . $id_pago . ".pdf";
@@ -1171,7 +957,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
                     $resultado_pdf = file_put_contents(
                         $ruta_absoluta,
-                        $dompdf->output()
+                        $pdf_ticket
                     );
 
                     if ($resultado_pdf === false) {
