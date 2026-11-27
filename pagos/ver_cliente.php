@@ -326,79 +326,99 @@ function exp_estado_clase(string $estado): string {
     <title>Expediente de cliente | UBB Comunicaciones</title>
     <link rel="stylesheet" href="css/pagos.css?v=<?php echo filemtime(__DIR__ . '/css/pagos.css'); ?>">
 
+    <link rel="stylesheet" href="css/tablero.css?v=<?php echo filemtime(__DIR__ . '/css/tablero.css'); ?>">
+    <link rel="stylesheet" href="css/listados.css?v=<?php echo filemtime(__DIR__ . '/css/listados.css'); ?>">
+
     <style>
-        .expediente { display:grid; gap:22px; padding-bottom:35px; }
-        .exp-hero {
-            display:flex; justify-content:space-between; align-items:center;
-            flex-wrap:wrap; gap:16px;
-        }
-        .exp-hero h2 { color:#683572; margin:7px 0; }
-        .exp-hero p { color:#71677d; margin:4px 0; }
-        .exp-acciones { display:flex; flex-wrap:wrap; gap:9px; }
-        .exp-btn {
-            display:inline-flex; align-items:center; justify-content:center;
-            padding:10px 15px; border-radius:9px;
-            background:#ac70b7; color:white; text-decoration:none;
-            font-weight:600;
-        }
-        .exp-btn.secundario { background:#f7ebf9; color:#7e4589; }
+        .expediente { display:grid; gap:18px; padding-bottom:35px; }
+
+        /* Cabecera: nombre del cliente, estado y acciones */
+        .exp-cabecera { margin-bottom:0 !important; }
+        .exp-cabecera .cc-cabecera-texto p { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+        .exp-acciones { display:flex; flex-wrap:wrap; gap:8px; }
+        .exp-acciones .hist-boton { padding:9px 14px; font-size:13px; }
+
+        /* Datos de contacto */
         .exp-datos {
             display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
-            gap:13px;
+            gap:0; padding:0; overflow:hidden;
         }
-        .exp-dato {
-            background:#fff; border:1px solid #ede3ef;
-            border-radius:12px; padding:15px;
+        .exp-dato { display:flex; gap:12px; align-items:center; padding:16px 18px; min-width:0; }
+        .exp-dato + .exp-dato { border-left:1px solid var(--cc-borde); }
+        .exp-dato-icono {
+            display:grid; place-items:center; flex:0 0 38px; width:38px; height:38px;
+            border-radius:50%; background:var(--cc-morado-suave); color:var(--cc-morado-medio);
         }
-        .exp-dato span { display:block; color:#71677d; font-size:12px; margin-bottom:7px; }
-        .exp-dato strong { color:#683572; overflow-wrap:anywhere; }
-        .exp-indicadores {
-            display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
-            gap:14px;
+        .exp-dato-icono svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+        .exp-dato span { display:block; color:var(--cc-texto-suave); font-size:11px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; margin-bottom:3px; }
+        .exp-dato strong { display:block; color:var(--cc-texto); font-size:14px; overflow-wrap:anywhere; }
+
+        /* Indicadores */
+        .exp-kpis { grid-template-columns:repeat(5,minmax(0,1fr)); margin-bottom:0 !important; }
+        .exp-kpis .cc-kpi-numero { font-size:28px; }
+        .exp-kpi--gris {
+            --cc-acento:#8a8a96; --cc-acento-fondo:#f4f4f7; --cc-acento-borde:#e3e3ea;
+            border-color:var(--cc-acento-borde);
+            background:linear-gradient(160deg,var(--cc-acento-fondo) 0%,var(--cc-acento-fondo) 60%,#fff 140%);
         }
-        .exp-indicador {
-            background:#fff; border:1px solid #ede3ef;
-            border-radius:13px; padding:17px;
-        }
-        .exp-indicador span { display:block; color:#71677d; font-size:13px; }
-        .exp-indicador strong { display:block; color:#7c4587; font-size:24px; margin-top:8px; }
+
+        /* Secciones con tabla: panel blanco como en los listados */
         .exp-seccion {
-            background:#fff; border:1px solid #ede3ef;
-            border-radius:14px; padding:20px; min-width:0;
+            min-width:0; overflow:hidden;
+            background:#fff; border:1px solid var(--cc-borde);
+            border-radius:16px; box-shadow:var(--cc-sombra);
         }
-        .exp-seccion h3 { color:#683572; margin:0 0 16px; }
-        .exp-tabla-scroll { overflow-x:auto; }
-        .exp-tabla { width:100%; border-collapse:collapse; min-width:760px; }
-        .exp-tabla th,.exp-tabla td {
-            padding:12px 10px; border-bottom:1px solid #f1e9f2;
-            text-align:left; font-size:13px; vertical-align:top;
+        .cc .exp-seccion h3 {
+            margin:0; padding:18px 20px 0;
+            color:var(--cc-texto); font-size:17px; font-weight:800;
         }
-        .exp-tabla th { background:#faf6fb; color:#765a7b; }
-        .exp-tabla small { display:block; color:#77718b; margin-top:4px; }
-        .exp-badge {
-            display:inline-block; padding:5px 9px; border-radius:20px;
-            font-size:11px; font-weight:700; white-space:nowrap;
-        }
-        .exp-badge.activo,.exp-badge.pagado { background:#e2f5e9; color:#247044; }
-        .exp-badge.pendiente { background:#fff2d7; color:#946000; }
-        .exp-badge.suspendido,.exp-badge.baja,.exp-badge.cancelado {
-            background:#fce8ed; color:#a52c56;
-        }
-        .exp-badge.inactivo,.exp-badge.neutral { background:#eeeef2; color:#666; }
-        .exp-vacio { padding:24px; text-align:center; color:#77718b; background:#faf6fb; border-radius:10px; }
         .exp-nota {
-            padding:13px 15px; border-radius:10px; background:#faf6fb;
-            color:#765f7b; font-size:13px; line-height:1.6; margin-bottom:15px;
+            margin:10px 20px 0; padding:12px 15px; border-radius:11px;
+            background:#fcf8fd; border:1px solid #f0e4f3;
+            color:var(--cc-texto-suave); font-size:13px; line-height:1.6;
         }
-        .exp-enlace { color:#8b5496; font-weight:600; }
+        .exp-nota strong { color:var(--cc-texto); }
+        .exp-vacio {
+            margin:16px 20px 20px; padding:24px; border-radius:11px;
+            background:#fcf8fd; text-align:center; color:var(--cc-texto-suave);
+        }
+        .exp-tabla-scroll { overflow-x:auto; margin-top:16px; border-top:1px solid var(--cc-borde); }
+        .exp-tabla { width:100%; border-collapse:collapse; min-width:760px; }
+        .exp-tabla thead th {
+            padding:13px 16px; border-bottom:1px solid var(--cc-borde);
+            background:var(--cc-morado-suave); color:var(--cc-morado);
+            font-size:11px; font-weight:800; letter-spacing:.5px; text-align:left;
+            text-transform:uppercase; white-space:nowrap;
+        }
+        .exp-tabla tbody td {
+            padding:13px 16px; border-bottom:1px solid #f3eaf5;
+            color:var(--cc-texto); font-size:13.5px; text-align:left; vertical-align:top;
+        }
+        .exp-tabla tbody tr:last-child td { border-bottom:0; }
+        .exp-tabla tbody tr:hover { background:#fcf8fd; }
+        .exp-tabla small { display:block; color:var(--cc-texto-suave); font-size:12px; margin-top:3px; }
+        .exp-codigo { display:block; font-family:ui-monospace,"Cascadia Mono",Consolas,monospace; font-size:12.5px; color:var(--cc-texto-suave); }
+
+        /* Estados */
+        .exp-badge {
+            display:inline-block; padding:5px 11px; border-radius:999px;
+            font-size:11px; font-weight:800; letter-spacing:.3px; white-space:nowrap;
+        }
+        .exp-badge.activo,.exp-badge.pagado { background:var(--cc-ok-fondo); color:var(--cc-ok); }
+        .exp-badge.pendiente { background:var(--cc-atencion-fondo); color:var(--cc-atencion); }
+        .exp-badge.suspendido,.exp-badge.baja,.exp-badge.cancelado { background:var(--cc-error-fondo); color:var(--cc-error); }
+        .exp-badge.inactivo,.exp-badge.neutral { background:#eeeef2; color:#666; }
+
+        @media(max-width:1200px) {
+            .exp-kpis { grid-template-columns:repeat(3,minmax(0,1fr)); }
+        }
         @media(max-width:900px) {
-            .exp-datos,.exp-indicadores { grid-template-columns:repeat(2,minmax(0,1fr)); }
+            .exp-datos { grid-template-columns:repeat(2,minmax(0,1fr)); }
+            .exp-dato + .exp-dato { border-left:0; }
+            .exp-kpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
         }
         @media(max-width:520px) {
-            .exp-datos,.exp-indicadores { grid-template-columns:1fr 1fr; gap:8px; }
-            .exp-dato,.exp-indicador { padding:12px; }
-            .exp-indicador strong { font-size:20px; }
-            .exp-seccion { padding:14px; }
+            .exp-datos,.exp-kpis { grid-template-columns:1fr; }
         }
     </style>
 </head>
@@ -407,86 +427,144 @@ function exp_estado_clase(string $estado): string {
 <?php require __DIR__ . "/includes/encabezado.php"; ?>
 <?php require __DIR__ . "/includes/panel_lateral.php"; ?>
 
-<main class="contenedor">
+<main class="contenedor cc hist">
 <div class="expediente">
 
     <?php if ($error): ?>
-        <section class="panel">
-            <h2>No se pudo cargar el expediente</h2>
-            <p><?= exp_h($error) ?></p>
-            <a class="exp-btn secundario" href="clientes.php">Volver a clientes</a>
-        </section>
+        <header class="cc-cabecera exp-cabecera">
+            <div class="cc-cabecera-texto">
+                <span class="cc-cabecera-icono" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>
+                </span>
+                <div>
+                    <h1>No se pudo cargar el expediente</h1>
+                    <p><?= exp_h($error) ?></p>
+                </div>
+            </div>
+            <div class="exp-acciones">
+                <a class="hist-boton" href="clientes.php">← Volver a clientes</a>
+            </div>
+        </header>
     <?php elseif ($cliente): ?>
 
-        <section class="panel">
-            <div class="exp-hero">
+        <!-- =================================================
+             CABECERA: cliente, estado y acciones
+        ================================================== -->
+
+        <header class="cc-cabecera exp-cabecera">
+            <div class="cc-cabecera-texto">
+                <span class="cc-cabecera-icono" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>
+                </span>
                 <div>
-                    <span class="etiqueta-seccion">EXPEDIENTE INDIVIDUAL</span>
-                    <h2><?= exp_h($nombreCompleto) ?></h2>
+                    <h1><?= exp_h($nombreCompleto) ?></h1>
                     <p>
                         Cliente #<?= (int)$cliente["id_cliente"] ?>
                         · Código <?= exp_h($cliente["codigo_cliente"] ?: "Sin código") ?>
+                        <span class="exp-badge <?= exp_estado_clase($cliente["estado"]) ?>">
+                            <?= exp_h($cliente["estado"]) ?>
+                        </span>
                     </p>
-                    <span class="exp-badge <?= exp_estado_clase($cliente["estado"]) ?>">
-                        <?= exp_h($cliente["estado"]) ?>
-                    </span>
-                </div>
-                <div class="exp-acciones">
-                    <a class="exp-btn secundario" href="clientes.php">← Volver a clientes</a>
-                    <?php if (puedeModificar()): ?><a class="exp-btn" href="registrar.php">Registrar pago</a><?php endif; ?>
                 </div>
             </div>
+            <div class="exp-acciones">
+                <a class="hist-boton" href="clientes.php">← Volver a clientes</a>
+                <?php if (puedeModificar()): ?>
+                    <a class="hist-boton hist-boton--principal" href="registrar.php">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+                        Registrar pago
+                    </a>
+                <?php endif; ?>
+            </div>
+        </header>
 
-            <div class="exp-datos">
-                <div class="exp-dato">
+
+        <!-- =================================================
+             DATOS DE CONTACTO
+        ================================================== -->
+
+        <section class="cc-panel exp-datos">
+            <div class="exp-dato">
+                <span class="exp-dato-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z"/></svg></span>
+                <div>
                     <span>Teléfono</span>
                     <strong><?= exp_h($cliente["telefono"] ?: "No registrado") ?></strong>
                 </div>
-                <div class="exp-dato">
+            </div>
+            <div class="exp-dato">
+                <span class="exp-dato-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span>
+                <div>
                     <span>Correo electrónico</span>
                     <strong><?= exp_h($cliente["correo"] ?: "No registrado") ?></strong>
                 </div>
-                <div class="exp-dato">
+            </div>
+            <div class="exp-dato">
+                <span class="exp-dato-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg></span>
+                <div>
                     <span>Identificador UISP</span>
                     <strong><?= exp_h($cliente["uisp_id"] ?: "Sin vincular") ?></strong>
                 </div>
-                <div class="exp-dato">
+            </div>
+            <div class="exp-dato">
+                <span class="exp-dato-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><path d="M12 19.5h.01"/></svg></span>
+                <div>
                     <span>Servicios contratados</span>
                     <strong><?= count($servicios) ?></strong>
                 </div>
             </div>
-
-            <?php if ((int)$cliente["datos_incompletos"] === 1): ?>
-                <div class="exp-nota">Este cliente tiene datos marcados como incompletos en la base de servicios.</div>
-            <?php endif; ?>
-
-            <?php if ((int)$cliente["uisp_archivado"] === 1): ?>
-                <div class="exp-nota">El registro del cliente aparece archivado en UISP.</div>
-            <?php endif; ?>
         </section>
 
-        <section class="exp-indicadores">
-            <div class="exp-indicador">
-                <span>Pagos registrados UBB</span>
-                <strong><?= (int)$resumen["total"] ?></strong>
+        <?php if ((int)$cliente["datos_incompletos"] === 1): ?>
+            <div class="exp-nota" style="margin:0">Este cliente tiene datos marcados como incompletos en la base de servicios.</div>
+        <?php endif; ?>
+
+        <?php if ((int)$cliente["uisp_archivado"] === 1): ?>
+            <div class="exp-nota" style="margin:0">El registro del cliente aparece archivado en UISP.</div>
+        <?php endif; ?>
+
+
+        <!-- =================================================
+             INDICADORES
+        ================================================== -->
+
+        <div class="cc-kpis hist-kpis exp-kpis">
+            <div class="cc-kpi cc-kpi--pagos">
+                <div class="cc-kpi-cabeza">
+                    <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg></span>
+                    <span class="cc-kpi-nombre">Pagos registrados UBB</span>
+                </div>
+                <strong class="cc-kpi-numero"><?= (int)$resumen["total"] ?></strong>
             </div>
-            <div class="exp-indicador">
-                <span>Pagos confirmados UBB</span>
-                <strong><?= (int)$resumen["pagados"] ?></strong>
+            <div class="cc-kpi cc-kpi--activos">
+                <div class="cc-kpi-cabeza">
+                    <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg></span>
+                    <span class="cc-kpi-nombre">Pagos confirmados UBB</span>
+                </div>
+                <strong class="cc-kpi-numero"><?= (int)$resumen["pagados"] ?></strong>
             </div>
-            <div class="exp-indicador">
-                <span>Total pagado en UBB</span>
-                <strong>$<?= number_format((float)$resumen["total_pagado"], 2) ?></strong>
+            <div class="cc-kpi hist-kpi--confirmados">
+                <div class="cc-kpi-cabeza">
+                    <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+                    <span class="cc-kpi-nombre">Total pagado en UBB</span>
+                </div>
+                <strong class="cc-kpi-numero">$<?= number_format((float)$resumen["total_pagado"], 2) ?></strong>
             </div>
-            <div class="exp-indicador">
-                <span>Saldo a favor</span>
-                <strong>$<?= number_format($saldoAFavor ?? 0, 2) ?></strong>
+            <div class="cc-kpi cc-kpi--proximos">
+                <div class="cc-kpi-cabeza">
+                    <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 12v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"/><path d="M2 7h20v5H2zM12 22V7M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7ZM12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7Z"/></svg></span>
+                    <span class="cc-kpi-nombre">Saldo a favor</span>
+                </div>
+                <strong class="cc-kpi-numero">$<?= number_format($saldoAFavor ?? 0, 2) ?></strong>
             </div>
-            <div class="exp-indicador">
-                <span>Pagos históricos UISP</span>
-                <strong><?= (int)$totalUisp ?></strong>
+            <div class="cc-kpi exp-kpi--gris">
+                <div class="cc-kpi-cabeza">
+                    <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg></span>
+                    <span class="cc-kpi-nombre">Pagos históricos UISP</span>
+                </div>
+                <strong class="cc-kpi-numero"><?= (int)$totalUisp ?></strong>
             </div>
-        </section>
+        </div>
+
 
         <section class="exp-seccion">
             <h3>Servicios contratados</h3>
@@ -615,14 +693,13 @@ function exp_estado_clase(string $estado): string {
                                     </span>
                                 </td>
                                 <td>
-                                    <?= exp_h($p["referencia"] ?: "—") ?>
-                                    <small>
-                                        <a class="exp-enlace"
-                                           href="comprobante.php?id=<?= (int)$p["id_pago"] ?>"
-                                           target="_blank" rel="noopener">
-                                            Ver comprobante
-                                        </a>
-                                    </small>
+                                    <span class="exp-codigo"><?= exp_h($p["referencia"] ?: "—") ?></span>
+                                    <a class="hist-boton hist-boton--principal" style="margin-top:6px"
+                                       href="comprobante.php?id=<?= (int)$p["id_pago"] ?>"
+                                       target="_blank" rel="noopener">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>
+                                        Comprobante
+                                    </a>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
