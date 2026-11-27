@@ -162,235 +162,55 @@ function urlPagina(int $pagina, string $busqueda, string $estado): string {
     <title>Clientes | UBB Comunicaciones</title>
     <link rel="stylesheet" href="css/pagos.css?v=<?php echo filemtime(__DIR__ . '/css/pagos.css'); ?>">
 
+    <link rel="stylesheet" href="css/tablero.css?v=<?php echo filemtime(__DIR__ . '/css/tablero.css'); ?>">
+    <link rel="stylesheet" href="css/listados.css?v=<?php echo filemtime(__DIR__ . '/css/listados.css'); ?>">
     <style>
-        .clientes-contenedor {
-            max-width: none;
-            margin: 0;
-            padding: 0 0 40px;
-        }
-
-        .clientes-encabezado {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-
-        .clientes-encabezado h2 {
-            color: #683572;
-            margin: 0 0 6px;
-        }
-
-        .clientes-encabezado p {
-            color: #71677d;
-            margin: 0;
-        }
-
-        .clientes-resumen {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 16px;
-            margin-bottom: 22px;
-        }
-
-        .cliente-indicador {
-            background: #fff;
-            border: 1px solid #ede3ef;
-            border-radius: 14px;
-            padding: 19px;
-            box-shadow: 0 3px 12px rgba(85,41,94,.05);
-        }
-
-        .cliente-indicador span {
-            display: block;
-            color: #71677d;
-            font-size: 13px;
-            margin-bottom: 8px;
-        }
-
-        .cliente-indicador strong {
-            color: #7c4587;
-            font-size: 27px;
-        }
-
-        .clientes-filtros {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            background: #fff;
-            border: 1px solid #ede3ef;
-            border-radius: 14px;
-            padding: 18px;
-            margin-bottom: 18px;
-        }
-
-        .clientes-filtros input,
-        .clientes-filtros select {
-            min-height: 43px;
-            border: 1px solid #e4d6e7;
-            border-radius: 9px;
-            padding: 9px 12px;
-            font: inherit;
-            background: #fff;
-        }
-
-        .clientes-filtros input {
-            flex: 1 1 280px;
-        }
-
-        .clientes-filtros select {
-            flex: 0 1 190px;
-        }
-
-        .btn-clientes {
-            border: 0;
-            border-radius: 9px;
-            padding: 11px 18px;
-            background: #ac70b7;
-            color: #fff;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .btn-clientes:hover {
-            background: #a35ab2;
-        }
-
-        .clientes-tabla-contenedor {
-            background: #fff;
-            border: 1px solid #ede3ef;
-            border-radius: 14px;
-            overflow: hidden;
-        }
-
-        .clientes-tabla-scroll {
-            overflow-x: auto;
-        }
-
-        .clientes-tabla {
-            width: 100%;
-            min-width: 850px;
-            border-collapse: collapse;
-        }
-
-        .clientes-tabla th,
-        .clientes-tabla td {
-            padding: 14px 16px;
-            border-bottom: 1px solid #f1eaf2;
-            text-align: left;
-            font-size: 13px;
-        }
-
-        .clientes-tabla th {
-            background: #f6f2f7;
-            color: #6a4c70;
-            font-weight: 700;
-        }
-
-        .clientes-tabla tbody tr:hover {
-            background: #fbf8fc;
-        }
-
-        .cliente-nombre {
-            color: #54315b;
-            font-weight: 700;
-        }
-
-        .cliente-secundario {
-            display: block;
-            color: #82788d;
-            font-size: 12px;
-            margin-top: 4px;
-        }
-
+        /* Estado del cliente */
         .cliente-estado {
             display: inline-block;
-            border-radius: 20px;
-            padding: 5px 10px;
+            padding: 5px 11px;
+            border-radius: 999px;
             font-size: 11px;
-            font-weight: 700;
+            font-weight: 800;
+            letter-spacing: .3px;
             white-space: nowrap;
         }
+        .cliente-estado.activo { color: #166534; background: #dcfce7; }
+        .cliente-estado.inactivo { color: #991b1b; background: #fee2e2; }
+        .cliente-estado.revisar { color: #92400e; background: #fef3c7; }
 
-        .cliente-estado.activo {
-            color: #166534;
-            background: #dcfce7;
+        /* Tarjetas que filtran por estado */
+        .clientes-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .hist a.cc-kpi:hover { transform: translateY(-2px); }
+        .clientes-kpi--activa { box-shadow: 0 0 0 2px var(--cc-acento), var(--cc-sombra) !important; }
+        .clientes-kpi--inactivos {
+            --cc-acento: #8a8a96;
+            --cc-acento-fondo: #f4f4f7;
+            --cc-acento-borde: #e3e3ea;
+            border-color: var(--cc-acento-borde);
+            background: linear-gradient(160deg, var(--cc-acento-fondo) 0%, var(--cc-acento-fondo) 60%, #ffffff 140%);
         }
 
-        .cliente-estado.inactivo {
-            color: #991b1b;
-            background: #fee2e2;
-        }
+        .cliente-servicios { text-align: center; font-weight: 700; }
+        .cliente-correo { color: var(--cc-texto-suave); overflow-wrap: anywhere; }
 
-        .cliente-estado.revisar {
-            color: #92400e;
-            background: #fef3c7;
-        }
-
-        .cliente-servicios {
-            text-align: center;
-            font-weight: 700;
-            color: #7c4587;
-        }
-
-        .cliente-accion {
-            color: #8b4c97;
-            font-weight: 700;
-            text-decoration: none;
-        }
-
-        .cliente-accion:hover {
-            text-decoration: underline;
-        }
-
-        .clientes-vacio,
-        .clientes-error {
-            padding: 28px;
-            text-align: center;
-            color: #71677d;
-        }
-
-        .clientes-error {
-            color: #991b1b;
-            background: #fef2f2;
-            border-radius: 12px;
-        }
-
+        /* Paginación */
         .clientes-paginacion {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
             flex-wrap: wrap;
-            gap: 12px;
-            padding: 18px;
-        }
-
-        .clientes-paginacion span {
-            color: #71677d;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 13px 16px;
+            border-top: 1px solid var(--cc-borde);
+            background: #fcf8fd;
+            color: var(--cc-texto-suave);
             font-size: 13px;
         }
+        .clientes-paginacion div { display: flex; gap: 8px; }
 
-        .clientes-paginacion a {
-            color: #8b4c97;
-            font-weight: 700;
-            text-decoration: none;
-            margin-left: 14px;
-        }
-
-        @media (max-width: 650px) {
-            .clientes-resumen {
-                grid-template-columns: 1fr;
-            }
-
-            .clientes-contenedor {
-                padding: 0 12px 30px;
-            }
+        @media (max-width: 900px) {
+            .clientes-kpis { grid-template-columns: minmax(0, 1fr); }
         }
     </style>
 </head>
@@ -401,71 +221,139 @@ require __DIR__ . "/includes/encabezado.php";
 require __DIR__ . "/includes/panel_lateral.php";
 ?>
 
-<main class="contenedor clientes-contenedor">
+<main class="contenedor cc hist clientes">
 
-    <div class="clientes-encabezado">
-        <div>
-            <h2>Directorio de clientes</h2>
-            <p>Información consultada desde la plataforma de servicios.</p>
+    <!-- =================================================
+         CABECERA
+    ================================================== -->
+
+    <header class="cc-cabecera">
+        <div class="cc-cabecera-texto">
+            <span class="cc-cabecera-icono" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M16 3.2a4 4 0 0 1 0 7.6M20 21v-2a4 4 0 0 0-3-3.9"/></svg>
+            </span>
+            <div>
+                <h1>Directorio de clientes</h1>
+                <p>Información consultada desde la plataforma de servicios.</p>
+            </div>
         </div>
-
-        <a class="btn-clientes" href="index.php">← Volver al centro de control</a>
-    </div>
+    </header>
 
     <?php if ($error !== null): ?>
 
-        <div class="clientes-error">
+        <div class="cc-panel nt-error-panel">
             <?= escapar($error) ?>
         </div>
 
     <?php else: ?>
 
-        <section class="clientes-resumen">
-            <div class="cliente-indicador">
-                <span>Clientes activos</span>
-                <strong><?= number_format($conteos['ACTIVO']) ?></strong>
+        <!-- =================================================
+             RESUMEN (cada tarjeta filtra por su estado)
+        ================================================== -->
+
+        <div class="cc-kpis hist-kpis clientes-kpis">
+
+            <a class="cc-kpi cc-kpi--activos <?= $estado === 'ACTIVO' ? 'clientes-kpi--activa' : '' ?>"
+               href="<?= escapar(urlPagina(1, $busqueda, $estado === 'ACTIVO' ? '' : 'ACTIVO')) ?>">
+                <div class="cc-kpi-cabeza">
+                    <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg></span>
+                    <span class="cc-kpi-nombre">Clientes activos</span>
+                </div>
+                <strong class="cc-kpi-numero"><?= number_format($conteos['ACTIVO']) ?></strong>
+                <span class="cc-kpi-detalle"><?= $estado === 'ACTIVO' ? 'Mostrando solo activos · clic para quitar' : 'Clic para ver solo activos' ?></span>
+            </a>
+
+            <a class="cc-kpi cc-kpi--proximos <?= $estado === 'POR_REVISAR' ? 'clientes-kpi--activa' : '' ?>"
+               href="<?= escapar(urlPagina(1, $busqueda, $estado === 'POR_REVISAR' ? '' : 'POR_REVISAR')) ?>">
+                <div class="cc-kpi-cabeza">
+                    <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5M11 8v3M11 14h.01"/></svg></span>
+                    <span class="cc-kpi-nombre">Clientes por revisar</span>
+                </div>
+                <strong class="cc-kpi-numero"><?= number_format($conteos['POR_REVISAR']) ?></strong>
+                <span class="cc-kpi-detalle"><?= $estado === 'POR_REVISAR' ? 'Mostrando solo por revisar · clic para quitar' : 'Clic para ver solo por revisar' ?></span>
+            </a>
+
+            <a class="cc-kpi clientes-kpi--inactivos <?= $estado === 'INACTIVO' ? 'clientes-kpi--activa' : '' ?>"
+               href="<?= escapar(urlPagina(1, $busqueda, $estado === 'INACTIVO' ? '' : 'INACTIVO')) ?>">
+                <div class="cc-kpi-cabeza">
+                    <span class="cc-kpi-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg></span>
+                    <span class="cc-kpi-nombre">Clientes inactivos</span>
+                </div>
+                <strong class="cc-kpi-numero"><?= number_format($conteos['INACTIVO']) ?></strong>
+                <span class="cc-kpi-detalle"><?= $estado === 'INACTIVO' ? 'Mostrando solo inactivos · clic para quitar' : 'Clic para ver solo inactivos' ?></span>
+            </a>
+
+        </div>
+
+
+        <!-- =================================================
+             FILTROS (buscan solos al escribir)
+        ================================================== -->
+
+        <form class="cc-panel hist-filtros" id="filtroEstadoClientes" method="GET" action="clientes.php">
+
+            <label class="hist-campo">
+                <span>Estado</span>
+                <select name="estado" id="estadoClientes">
+                    <option value="">Todos los estados</option>
+                    <option value="ACTIVO" <?= $estado === 'ACTIVO' ? 'selected' : '' ?>>Activos</option>
+                    <option value="INACTIVO" <?= $estado === 'INACTIVO' ? 'selected' : '' ?>>Inactivos</option>
+                    <option value="POR_REVISAR" <?= $estado === 'POR_REVISAR' ? 'selected' : '' ?>>Por revisar</option>
+                </select>
+            </label>
+
+            <div class="hist-buscador">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                <input type="search" name="q" id="buscarCliente"
+                       value="<?= escapar($busqueda) ?>"
+                       placeholder="Buscar por nombre, teléfono, correo, código o ID..."
+                       aria-label="Buscar cliente"
+                       autocomplete="off">
+                <button type="submit">Buscar</button>
             </div>
 
-            <div class="cliente-indicador">
-                <span>Clientes por revisar</span>
-                <strong><?= number_format($conteos['POR_REVISAR']) ?></strong>
-            </div>
+            <?php if ($busqueda !== '' || $estado !== ''): ?>
+                <div class="hist-activos">
+                    <span class="hist-activos-texto">Mostrando resultados filtrados:</span>
+                    <?php if ($busqueda !== ''): ?>
+                        <span class="hist-activos-etiqueta">Búsqueda: «<?= escapar($busqueda) ?>»</span>
+                    <?php endif; ?>
+                    <?php if ($estado !== ''): ?>
+                        <span class="hist-activos-etiqueta">Estado: <?= escapar(str_replace('_', ' ', $estado)) ?></span>
+                    <?php endif; ?>
+                    <a class="hist-limpiar" href="clientes.php">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                        Limpiar filtros
+                    </a>
+                </div>
+            <?php endif; ?>
 
-            <div class="cliente-indicador">
-                <span>Clientes inactivos</span>
-                <strong><?= number_format($conteos['INACTIVO']) ?></strong>
-            </div>
-        </section>
-
-        <form class="clientes-filtros" id="filtroEstadoClientes" method="GET">
-            <label for="estadoClientes">Filtrar por estado:</label>
-            <select name="estado" id="estadoClientes">
-                <option value="">Todos los estados</option>
-                <option value="ACTIVO" <?= $estado === 'ACTIVO' ? 'selected' : '' ?>>Activos</option>
-                <option value="INACTIVO" <?= $estado === 'INACTIVO' ? 'selected' : '' ?>>Inactivos</option>
-                <option value="POR_REVISAR" <?= $estado === 'POR_REVISAR' ? 'selected' : '' ?>>Por revisar</option>
-            </select>
         </form>
 
-        <section class="clientes-tabla-contenedor">
+
+        <!-- =================================================
+             TABLA
+        ================================================== -->
+
+        <section class="cc-panel hist-tabla clientes-tabla">
 
             <?php if (count($clientes) === 0): ?>
 
-                <div class="clientes-vacio">
+                <div class="hist-vacio">
                     No se encontraron clientes con esos criterios.
                 </div>
 
             <?php else: ?>
 
-                <div class="clientes-tabla-scroll">
-                    <table class="clientes-tabla">
+                <div class="hist-tabla-scroll">
+                    <table>
                         <thead>
                             <tr>
-                                <th>Cliente</th>
+                                <th class="mens-col-cliente">Cliente</th>
                                 <th>Código</th>
                                 <th>Teléfono</th>
                                 <th>Correo</th>
-                                <th>Servicios</th>
+                                <th class="cliente-servicios">Servicios</th>
                                 <th>Estado</th>
                                 <th>Acción</th>
                             </tr>
@@ -486,18 +374,14 @@ require __DIR__ . "/includes/panel_lateral.php";
                             ][$cliente['estado']] ?? 'revisar';
                             ?>
                             <tr>
-                                <td>
-                                    <span class="cliente-nombre">
-                                        <?= escapar($nombre !== '' ? $nombre : 'Sin nombre registrado') ?>
-                                    </span>
-                                    <span class="cliente-secundario">
-                                        ID <?= escapar($cliente['id_cliente']) ?>
-                                    </span>
+                                <td class="hist-cliente mens-col-cliente">
+                                    <strong><?= escapar($nombre !== '' ? $nombre : 'Sin nombre registrado') ?></strong>
+                                    <span>ID <?= escapar($cliente['id_cliente']) ?></span>
                                 </td>
 
-                                <td><?= escapar($cliente['codigo_cliente'] ?: '—') ?></td>
-                                <td><?= escapar($cliente['telefono'] ?: '—') ?></td>
-                                <td><?= escapar($cliente['correo'] ?: '—') ?></td>
+                                <td class="hist-referencia"><?= escapar($cliente['codigo_cliente'] ?: '—') ?></td>
+                                <td class="hist-fecha"><?= escapar($cliente['telefono'] ?: '—') ?></td>
+                                <td class="cliente-correo"><?= escapar($cliente['correo'] ?: '—') ?></td>
 
                                 <td class="cliente-servicios">
                                     <?= (int)$cliente['total_servicios'] ?>
@@ -510,10 +394,9 @@ require __DIR__ . "/includes/panel_lateral.php";
                                 </td>
 
                                 <td>
-                                    <a
-                                        class="cliente-accion"
-                                        href="ver_cliente.php?id=<?= (int)$cliente['id_cliente'] ?>"
-                                    >
+                                    <a class="hist-boton hist-boton--principal"
+                                       href="ver_cliente.php?id=<?= (int)$cliente['id_cliente'] ?>">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>
                                         Ver pagos
                                     </a>
                                 </td>
@@ -533,13 +416,13 @@ require __DIR__ . "/includes/panel_lateral.php";
 
                 <div>
                     <?php if ($pagina > 1): ?>
-                        <a href="<?= escapar(urlPagina($pagina - 1, $busqueda, $estado)) ?>">
+                        <a class="hist-boton" href="<?= escapar(urlPagina($pagina - 1, $busqueda, $estado)) ?>">
                             ← Anterior
                         </a>
                     <?php endif; ?>
 
                     <?php if ($pagina < $totalPaginas): ?>
-                        <a href="<?= escapar(urlPagina($pagina + 1, $busqueda, $estado)) ?>">
+                        <a class="hist-boton" href="<?= escapar(urlPagina($pagina + 1, $busqueda, $estado)) ?>">
                             Siguiente →
                         </a>
                     <?php endif; ?>
@@ -553,36 +436,72 @@ require __DIR__ . "/includes/panel_lateral.php";
 </main>
 
 <script>
-(() => {
+/* Búsqueda automática: al escribir (tras una pausa) o al cambiar el estado
+   se piden los resultados y solo se reemplazan los filtros activos y la
+   tabla, sin recargar ni perder el cursor. */
+(function () {
+    const formulario = document.getElementById("filtroEstadoClientes");
+    if (!formulario) return;
+
     const buscador = document.getElementById("buscarCliente");
-    const filtro = document.getElementById("filtroEstadoClientes");
     const estado = document.getElementById("estadoClientes");
+    let espera = null;
+    let peticion = null;
 
-    if (!buscador || !filtro || !estado) return;
+    async function actualizar() {
+        const datos = new URLSearchParams();
+        if (buscador.value.trim()) datos.set("q", buscador.value.trim());
+        if (estado.value) datos.set("estado", estado.value);
+        const url = "clientes.php" + (datos.toString() ? "?" + datos.toString() : "");
 
-    const parametros = new URLSearchParams(window.location.search);
-    buscador.value = parametros.get("q") || "";
+        if (peticion) peticion.abort();
+        peticion = new AbortController();
+        document.body.classList.add("hist-cargando");
 
-    function aplicarBusqueda() {
-        const nuevos = new URLSearchParams();
-        const termino = buscador.value.trim();
+        try {
+            const respuesta = await fetch(url, { signal: peticion.signal, credentials: "same-origin" });
+            if (!respuesta.ok) throw new Error("HTTP " + respuesta.status);
 
-        if (termino) nuevos.set("q", termino);
-        if (estado.value) nuevos.set("estado", estado.value);
+            const nuevoDoc = new DOMParser().parseFromString(await respuesta.text(), "text/html");
 
-        window.location.href = "clientes.php" +
-            (nuevos.toString() ? "?" + nuevos.toString() : "");
+            const avisoActual = formulario.querySelector(".hist-activos");
+            const avisoNuevo = nuevoDoc.querySelector(".hist-activos");
+            if (avisoActual) avisoActual.remove();
+            if (avisoNuevo) formulario.appendChild(avisoNuevo);
+
+            ["main .clientes-kpis", "main .clientes-tabla"].forEach(function (selector) {
+                const actual = document.querySelector(selector);
+                const nuevo = nuevoDoc.querySelector(selector);
+                if (actual && nuevo) actual.replaceWith(nuevo);
+            });
+
+            history.replaceState(null, "", url);
+        } catch (error) {
+            if (error.name !== "AbortError") {
+                window.location.href = url; // Si algo falla, recarga la página normal
+            }
+        } finally {
+            document.body.classList.remove("hist-cargando");
+        }
     }
 
-    buscador.addEventListener("keydown", (evento) => {
-        if (evento.key === "Enter") {
-            evento.preventDefault();
-            aplicarBusqueda();
-        }
+    buscador.addEventListener("input", function () {
+        clearTimeout(espera);
+        espera = setTimeout(actualizar, 400);
     });
 
-    estado.addEventListener("change", aplicarBusqueda);
+    estado.addEventListener("change", function () {
+        clearTimeout(espera);
+        actualizar();
+    });
+
+    formulario.addEventListener("submit", function (evento) {
+        evento.preventDefault();
+        clearTimeout(espera);
+        actualizar();
+    });
 })();
 </script>
-\n</body>
+
+</body>
 </html>
