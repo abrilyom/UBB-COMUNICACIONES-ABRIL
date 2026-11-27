@@ -318,6 +318,40 @@ if ($plataforma !== null && count($ids_clientes) > 0) {
             <button type="submit">Buscar</button>
         </div>
 
+        <?php
+        // Filtros activos: se muestran como etiquetas con opción de limpiarlos
+        $etiquetas_periodo = ["hoy" => "Hoy", "semana" => "Esta semana", "mes" => "Este mes"];
+        $etiquetas_metodo = ["EFECTIVO" => "Efectivo", "TRANSFERENCIA" => "Transferencia", "DEPOSITO" => "Depósito", "TARJETA" => "Tarjeta"];
+        $etiquetas_estado = ["PAGADO" => "Pagado", "PENDIENTE" => "Pendiente", "CANCELADO" => "Cancelado"];
+
+        $filtros_activos = [];
+        if ($buscar !== "") {
+            $filtros_activos[] = "Búsqueda: «" . $buscar . "»";
+        }
+        if (isset($etiquetas_periodo[$periodo])) {
+            $filtros_activos[] = "Período: " . $etiquetas_periodo[$periodo];
+        }
+        if (isset($etiquetas_metodo[$metodo])) {
+            $filtros_activos[] = "Método: " . $etiquetas_metodo[$metodo];
+        }
+        if (isset($etiquetas_estado[$estado])) {
+            $filtros_activos[] = "Estado: " . $etiquetas_estado[$estado];
+        }
+        ?>
+
+        <?php if (count($filtros_activos) > 0): ?>
+            <div class="hist-activos">
+                <span class="hist-activos-texto">Mostrando resultados filtrados:</span>
+                <?php foreach ($filtros_activos as $filtro_activo): ?>
+                    <span class="hist-activos-etiqueta"><?php echo htmlspecialchars($filtro_activo); ?></span>
+                <?php endforeach; ?>
+                <a class="hist-limpiar" href="historial.php">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    Limpiar filtros
+                </a>
+            </div>
+        <?php endif; ?>
+
     </form>
 
 
@@ -398,7 +432,7 @@ if ($plataforma !== null && count($ids_clientes) > 0) {
                                 <?php endif; ?>
                             </td>
 
-                            <td>
+                            <td class="hist-servicio">
                                 <?php
                                 echo $pago["id_servicio"] !== null
                                     ? "Servicio #" . (int)$pago["id_servicio"]
