@@ -425,6 +425,15 @@ a.cc-pildora:hover { filter: brightness(.97); text-decoration: underline; }
     color: var(--cc-texto-suave);
 }
 
+.cc-filas dt a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: #d8bfdd;
+    text-underline-offset: 3px;
+}
+
+.cc-filas dt a:hover { color: var(--cc-morado); }
+
 .cc-filas dd {
     margin: 0;
     color: var(--cc-texto);

@@ -242,6 +242,30 @@
     font-weight: 700;
 }
 
+.cs-sin-datos {
+    display: block;
+    margin-top: 2px;
+    color: #a0681a;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* Adeudo del servicio cortado: permite descartar que fue por falta de pago. */
+.cs-adeudo {
+    display: inline-block;
+    max-width: 230px;
+    padding: 5px 10px;
+    border-radius: 14px;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.cs-adeudo-con { color: #a32929; background: #fde8e8; }
+.cs-adeudo-sin { color: #1e6b3a; background: #e3f5e9; }
+.cs-adeudo-pendiente { color: #7a5200; background: #fff3d6; }
+.cs-adeudo-nd { color: #666; background: #eee; }
+
 .cs-avatar {
     display: grid;
     place-items: center;

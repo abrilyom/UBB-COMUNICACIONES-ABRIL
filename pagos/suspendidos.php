@@ -6,14 +6,24 @@ function escaparSuspendido($valor) {
     return htmlspecialchars((string)($valor ?? ""), ENT_QUOTES, "UTF-8");
 }
 
-function urlClientesSuspendidos($pagina, $buscar, $paquete, $porPagina) {
+function urlClientesSuspendidos($pagina, $buscar, $paquete, $porPagina, $adeudo = "") {
     return "?" . http_build_query([
         "pagina" => $pagina,
         "buscar" => $buscar,
         "paquete" => $paquete,
+        "adeudo" => $adeudo,
         "por_pagina" => $porPagina
     ]);
 }
+
+/*
+ * Situación de pago de cada servicio cortado, para descartar (o confirmar)
+ * que el corte fue por adeudo. Misma regla que Vencidos y el tablero.
+ */
+const SUSPENDIDOS_ADEUDO = [
+    "con" => "Con adeudo vencido",
+    "sin" => "Sin adeudo vencido",
+];
 
 /* CONSULTA DE ESTADOS REALES DESDE GREZZ */
 $serviciosSuspendidos = [];
@@ -55,10 +65,13 @@ try {
 
         $conexion_plataforma = require __DIR__ . "/conexion_plataforma.php";
 
+        // LEFT JOIN: los servicios sin datos del cliente también se cortan
+        // (para que el cliente llame y los dé) y deben aparecer en la lista.
         $sql = "
             SELECT
                 s.id_servicio,
                 s.id_cliente,
+                c.id_cliente AS cliente_registrado,
                 c.nombre,
                 c.apellido_paterno,
                 c.apellido_materno,
@@ -75,7 +88,7 @@ try {
                 s.fecha_instalacion,
                 s.fecha_contratacion
             FROM servicios s
-            INNER JOIN clientes c
+            LEFT JOIN clientes c
                 ON c.id_cliente = s.id_cliente
             LEFT JOIN direcciones_servicio d
                 ON d.id_direccion = s.id_direccion
@@ -101,8 +114,34 @@ try {
             $fila["plan_grezz"] = $datosGrezz["plan"] ?? null;
             $fila["vlan"] = $datosGrezz["vlan"] ?? null;
             $fila["suspendido_por"] = $datosGrezz["suspendido_por"] ?? null;
+            $fila["sin_datos_cliente"] = $fila["cliente_registrado"] === null;
 
             $serviciosSuspendidos[] = $fila;
+            unset($suspendidosGrezz[$idServicio]);
+        }
+
+        // Cortados en RADIUS que ni siquiera están en la plataforma.
+        foreach ($suspendidosGrezz as $idServicio => $datosGrezz) {
+            $serviciosSuspendidos[] = [
+                "id_servicio" => $idServicio,
+                "id_cliente" => null,
+                "nombre" => null,
+                "apellido_paterno" => null,
+                "apellido_materno" => null,
+                "telefono" => null,
+                "correo" => null,
+                "paquete_referencia" => null,
+                "fecha_instalacion" => null,
+                "fecha_contratacion" => null,
+                "estado" => $datosGrezz["estado_actual"],
+                "tecnologia" => $datosGrezz["tipo"] ?? "Sin información",
+                "ip" => $datosGrezz["ip"] ?? null,
+                "mac" => $datosGrezz["mac"] ?? null,
+                "plan_grezz" => $datosGrezz["plan"] ?? null,
+                "vlan" => $datosGrezz["vlan"] ?? null,
+                "suspendido_por" => $datosGrezz["suspendido_por"] ?? null,
+                "sin_datos_cliente" => true,
+            ];
         }
     }
 
@@ -111,12 +150,59 @@ try {
     $errorCarga = "No fue posible verificar los servicios suspendidos con Grezz. Intenta nuevamente más tarde.";
 }
 
+/* SITUACIÓN DE PAGO DE CADA SERVICIO CORTADO (ubb_pagos, solo lectura) */
+$adeudoDisponible = false;
+$conteoAdeudo = ["con" => 0, "sin" => 0];
+
+if ($serviciosSuspendidos) {
+    try {
+        require_once __DIR__ . "/conexion.php";
+        require_once __DIR__ . "/includes/estado_pagos.php";
+        $estadoPagos = estadoPagosPorServicio($conexion);
+        $adeudoDisponible = true;
+    } catch (Throwable $e) {
+        error_log("Suspendidos: no se pudo calcular el adeudo: " . $e->getMessage());
+        $estadoPagos = [];
+    }
+
+    foreach ($serviciosSuspendidos as &$fila) {
+        $ciclo = $estadoPagos[(int)$fila["id_servicio"]] ?? null;
+        $tipo = $ciclo["tipo"] ?? null;
+
+        // "con" solo si tiene una mensualidad fuera de gracia (lo que provoca
+        // el corte automático); lo demás cuenta como sin adeudo vencido.
+        $fila["adeudo"] = $tipo === "vencido" ? "con" : "sin";
+
+        if (!$adeudoDisponible) {
+            $fila["adeudo_texto"] = "—";
+            $fila["adeudo_clase"] = "nd";
+        } elseif ($tipo === "vencido") {
+            $fila["adeudo_texto"] = "Debe " . textoAdeudo($ciclo);
+            $fila["adeudo_clase"] = "con";
+        } elseif ($ciclo !== null && $tipo !== "futuro") {
+            $fila["adeudo_texto"] = "Sin adeudo vencido · " . textoAdeudo($ciclo) . " " . mb_strtolower($ciclo["situacion"], "UTF-8");
+            $fila["adeudo_clase"] = "pendiente";
+        } else {
+            $fila["adeudo_texto"] = "Sin adeudo";
+            $fila["adeudo_clase"] = "sin";
+        }
+
+        $conteoAdeudo[$fila["adeudo"]]++;
+    }
+    unset($fila);
+}
+
 /* TOTAL REAL */
 $totalSuspendidos = count($serviciosSuspendidos);
 
 /* PARÁMETROS DE BÚSQUEDA Y PAGINACIÓN */
 $buscar = trim((string)($_GET["buscar"] ?? ""));
 $paqueteSeleccionado = trim((string)($_GET["paquete"] ?? ""));
+$adeudoSeleccionado = (string)($_GET["adeudo"] ?? "");
+
+if (!$adeudoDisponible || !isset(SUSPENDIDOS_ADEUDO[$adeudoSeleccionado])) {
+    $adeudoSeleccionado = "";
+}
 
 $porPagina = filter_var(
     $_GET["por_pagina"] ?? 7,
@@ -154,7 +240,7 @@ foreach ($serviciosSuspendidos as $fila) {
     $paquete = trim((string)($fila["paquete_referencia"] ?? ""));
 
     $textoBusqueda = implode(" ", [
-        $nombre,
+        $nombre !== "" ? $nombre : "sin datos del cliente",
         $fila["id_cliente"],
         $fila["id_servicio"],
         $fila["telefono"],
@@ -172,7 +258,12 @@ foreach ($serviciosSuspendidos as $fila) {
         $paquete === $paqueteSeleccionado
     );
 
-    if ($coincideBusqueda && $coincidePaquete) {
+    $coincideAdeudo = (
+        $adeudoSeleccionado === "" ||
+        $fila["adeudo"] === $adeudoSeleccionado
+    );
+
+    if ($coincideBusqueda && $coincidePaquete && $coincideAdeudo) {
         $serviciosFiltrados[] = $fila;
     }
 }
@@ -296,6 +387,17 @@ $hasta = min($inicio + $porPagina, $totalFiltrados);
                     <?php endforeach; ?>
                 </select>
 
+                <?php if ($adeudoDisponible): ?>
+                <select name="adeudo" id="csAdeudo" class="cs-select" aria-label="Filtrar por adeudo">
+                    <option value="">Con y sin adeudo</option>
+                    <?php foreach (SUSPENDIDOS_ADEUDO as $clave => $texto): ?>
+                        <option value="<?= $clave ?>" <?= $adeudoSeleccionado === $clave ? "selected" : "" ?>>
+                            <?= escaparSuspendido($texto) ?> (<?= number_format($conteoAdeudo[$clave]) ?>)
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <?php endif; ?>
+
                 <input type="hidden" name="por_pagina"
                        value="<?= $porPagina ?>">
 
@@ -316,6 +418,7 @@ $hasta = min($inicio + $porPagina, $totalFiltrados);
                             <th>PAQUETE</th>
                             <th>TECNOLOGÍA</th>
                             <th>FECHA DE SUSPENSIÓN</th>
+                            <th>ADEUDO</th>
                             <th>ESTADO</th>
                             <th>ACCIONES</th>
                         </tr>
@@ -356,6 +459,8 @@ $hasta = min($inicio + $porPagina, $totalFiltrados);
                         if ($direccionMostrar === "") {
                             $direccionMostrar = "Sin información";
                         }
+
+                        $nombreMostrar = $nombre !== "" ? $nombre : "Sin datos del cliente";
                         ?>
 
                         <tr>
@@ -371,7 +476,14 @@ $hasta = min($inicio + $porPagina, $totalFiltrados);
                                         </svg>
                                     </span>
 
-                                    <strong><?= escaparSuspendido($nombre) ?></strong>
+                                    <div>
+                                        <strong><?= escaparSuspendido($nombreMostrar) ?></strong>
+                                        <?php if ($fila["sin_datos_cliente"] && $nombre !== ""): ?>
+                                            <small class="cs-sin-datos">Sin datos del cliente</small>
+                                        <?php elseif ($fila["sin_datos_cliente"]): ?>
+                                            <small class="cs-sin-datos">Pedir datos cuando llame</small>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
                             </td>
 
@@ -390,6 +502,12 @@ $hasta = min($inicio + $porPagina, $totalFiltrados);
                             <td>No registrada</td>
 
                             <td>
+                                <span class="cs-adeudo cs-adeudo-<?= escaparSuspendido($fila["adeudo_clase"]) ?>">
+                                    <?= escaparSuspendido($fila["adeudo_texto"]) ?>
+                                </span>
+                            </td>
+
+                            <td>
                                 <span class="cs-estado">
                                     <?= escaparSuspendido($fila["estado"]) ?>
                                 </span>
@@ -397,8 +515,9 @@ $hasta = min($inicio + $porPagina, $totalFiltrados);
 
                             <td class="cs-acciones">
                                 <button type="button" class="cs-btn-ver"
-                                    aria-label="Ver detalles de <?= escaparSuspendido($nombre) ?>"
-                                    data-nombre="<?= escaparSuspendido($nombre) ?>"
+                                    aria-label="Ver detalles de <?= escaparSuspendido($nombreMostrar) ?>"
+                                    data-nombre="<?= escaparSuspendido($nombreMostrar) ?>"
+                                    data-adeudo="<?= escaparSuspendido($fila["adeudo_texto"]) ?>"
                                     data-telefono="<?= escaparSuspendido($fila["telefono"] ?: "Sin información") ?>"
                                     data-correo="<?= escaparSuspendido($fila["correo"] ?: "Sin información") ?>"
                                     data-direccion="<?= escaparSuspendido($direccionMostrar) ?>"
@@ -432,7 +551,7 @@ $hasta = min($inicio + $porPagina, $totalFiltrados);
 
                     <?php if ($totalFiltrados === 0): ?>
                         <tr>
-                            <td colspan="7" class="cs-vacio">
+                            <td colspan="8" class="cs-vacio">
                                 No se encontraron servicios suspendidos con los criterios seleccionados.
                             </td>
                         </tr>
@@ -520,6 +639,11 @@ $hasta = min($inicio + $porPagina, $totalFiltrados);
                             <span>Estado</span>
                             <strong id="csDetalleEstado"></strong>
                         </div>
+
+                        <div class="cs-modal-dato cs-modal-dato-principal">
+                            <span>Adeudo</span>
+                            <strong id="csDetalleAdeudo"></strong>
+                        </div>
                     </div>
 
                     <footer class="cs-modal-pie">
@@ -542,7 +666,7 @@ $hasta = min($inicio + $porPagina, $totalFiltrados);
                     <?php if ($pagina > 1): ?>
                         <a class="cs-pagina"
                            href="<?= escaparSuspendido(urlClientesSuspendidos(
-                               $pagina - 1, $buscar, $paqueteSeleccionado, $porPagina
+                               $pagina - 1, $buscar, $paqueteSeleccionado, $porPagina, $adeudoSeleccionado
                            )) ?>">‹</a>
                     <?php endif; ?>
 
@@ -554,7 +678,7 @@ $hasta = min($inicio + $porPagina, $totalFiltrados);
                     <?php if ($inicioPaginas > 1): ?>
                         <a class="cs-pagina"
                            href="<?= escaparSuspendido(urlClientesSuspendidos(
-                               1, $buscar, $paqueteSeleccionado, $porPagina
+                               1, $buscar, $paqueteSeleccionado, $porPagina, $adeudoSeleccionado
                            )) ?>">1</a>
 
                         <?php if ($inicioPaginas > 2): ?>
@@ -565,7 +689,7 @@ $hasta = min($inicio + $porPagina, $totalFiltrados);
                     <?php for ($i = $inicioPaginas; $i <= $finPaginas; $i++): ?>
                         <a class="cs-pagina <?= $i === $pagina ? "activa" : "" ?>"
                            href="<?= escaparSuspendido(urlClientesSuspendidos(
-                               $i, $buscar, $paqueteSeleccionado, $porPagina
+                               $i, $buscar, $paqueteSeleccionado, $porPagina, $adeudoSeleccionado
                            )) ?>"
                            <?= $i === $pagina ? 'aria-current="page"' : "" ?>>
                             <?= $i ?>
@@ -580,7 +704,7 @@ $hasta = min($inicio + $porPagina, $totalFiltrados);
 
                         <a class="cs-pagina"
                            href="<?= escaparSuspendido(urlClientesSuspendidos(
-                               $totalPaginas, $buscar, $paqueteSeleccionado, $porPagina
+                               $totalPaginas, $buscar, $paqueteSeleccionado, $porPagina, $adeudoSeleccionado
                            )) ?>">
                             <?= $totalPaginas ?>
                         </a>
@@ -590,7 +714,7 @@ $hasta = min($inicio + $porPagina, $totalFiltrados);
                     <?php if ($pagina < $totalPaginas): ?>
                         <a class="cs-pagina"
                            href="<?= escaparSuspendido(urlClientesSuspendidos(
-                               $pagina + 1, $buscar, $paqueteSeleccionado, $porPagina
+                               $pagina + 1, $buscar, $paqueteSeleccionado, $porPagina, $adeudoSeleccionado
                            )) ?>">›</a>
                     <?php endif; ?>
 
@@ -603,6 +727,9 @@ $hasta = min($inicio + $porPagina, $totalFiltrados);
 
                     <input type="hidden" name="paquete"
                            value="<?= escaparSuspendido($paqueteSeleccionado) ?>">
+
+                    <input type="hidden" name="adeudo"
+                           value="<?= escaparSuspendido($adeudoSeleccionado) ?>">
 
                     <label for="csPorPagina">Por página</label>
 
@@ -631,6 +758,9 @@ $hasta = min($inicio + $porPagina, $totalFiltrados);
     const formulario = document.getElementById("csFormularioFiltros");
     const buscador = document.getElementById("csBuscar");
     const paquete = document.getElementById("csPaquete");
+    const adeudo = document.getElementById("csAdeudo");
+
+    adeudo?.addEventListener("change", () => formulario?.requestSubmit());
 
     if (formulario && buscador && paquete) {
         let temporizador = null;
@@ -660,7 +790,8 @@ $hasta = min($inicio + $porPagina, $totalFiltrados);
         tecnologia: "csDetalleTecnologia",
         contratacion: "csDetalleContratacion",
         instalacion: "csDetalleInstalacion",
-        estado: "csDetalleEstado"
+        estado: "csDetalleEstado",
+        adeudo: "csDetalleAdeudo"
     };
 
     let botonAnterior = null;
