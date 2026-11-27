@@ -171,6 +171,17 @@
     stroke-linecap: round;
 }
 
+/* Mientras se busca, las tarjetas y la tabla se atenúan un poco */
+.hist-kpis,
+.hist-tabla {
+    transition: opacity .15s ease;
+}
+
+.hist-cargando .hist-kpis,
+.hist-cargando .hist-tabla {
+    opacity: .55;
+}
+
 /* ---------- Indicadores ---------- */
 
 .hist-kpis {

@@ -515,13 +515,81 @@ if ($plataforma !== null && count($ids_clientes) > 0) {
 </main>
 
 <script>
-document.querySelectorAll(".filtro").forEach(function(filtro) {
+/* Búsqueda automática: al escribir (o cambiar un filtro) se vuelve a
+   pedir la página y solo se reemplazan el aviso de filtros, las tarjetas
+   y la tabla. El cursor se queda en el buscador. */
+(function () {
+    const formulario = document.querySelector(".hist-filtros");
+    if (!formulario) return;
 
-    filtro.addEventListener("change", function() {
-        this.form.submit();
+    const campoBuscar = formulario.querySelector('input[name="buscar"]');
+    let espera = null;
+    let peticion = null;
+
+    function reemplazar(selector, nuevoDoc) {
+        const actual = document.querySelector(selector);
+        const nuevo = nuevoDoc.querySelector(selector);
+        if (actual && nuevo) actual.replaceWith(nuevo);
+    }
+
+    async function actualizar() {
+        const url = "historial.php?" + new URLSearchParams(new FormData(formulario)).toString();
+
+        if (peticion) peticion.abort();
+        peticion = new AbortController();
+        document.body.classList.add("hist-cargando");
+
+        try {
+            const respuesta = await fetch(url, {
+                signal: peticion.signal,
+                credentials: "same-origin"
+            });
+            if (!respuesta.ok) throw new Error("HTTP " + respuesta.status);
+
+            const nuevoDoc = new DOMParser().parseFromString(await respuesta.text(), "text/html");
+
+            // Aviso de filtros activos: puede aparecer o desaparecer
+            const avisoActual = formulario.querySelector(".hist-activos");
+            const avisoNuevo = nuevoDoc.querySelector(".hist-activos");
+            if (avisoActual) avisoActual.remove();
+            if (avisoNuevo) formulario.appendChild(avisoNuevo);
+
+            reemplazar(".hist-kpis", nuevoDoc);
+            reemplazar(".hist-tabla", nuevoDoc);
+
+            history.replaceState(null, "", url);
+        } catch (error) {
+            if (error.name !== "AbortError") {
+                formulario.submit(); // Si algo falla, recarga la página normal
+            }
+        } finally {
+            document.body.classList.remove("hist-cargando");
+        }
+    }
+
+    // Escribir en el buscador: espera una pausa corta antes de buscar
+    if (campoBuscar) {
+        campoBuscar.addEventListener("input", function () {
+            clearTimeout(espera);
+            espera = setTimeout(actualizar, 400);
+        });
+    }
+
+    // Cambiar período, método o estado: busca de inmediato
+    formulario.querySelectorAll(".filtro").forEach(function (filtro) {
+        filtro.addEventListener("change", function () {
+            clearTimeout(espera);
+            actualizar();
+        });
     });
 
-});
+    // Enter o botón Buscar: busca de inmediato sin recargar
+    formulario.addEventListener("submit", function (evento) {
+        evento.preventDefault();
+        clearTimeout(espera);
+        actualizar();
+    });
+})();
 </script>
 
 
